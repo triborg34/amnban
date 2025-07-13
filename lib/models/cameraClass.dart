@@ -13,6 +13,7 @@ class CameraClass {
   String? created;
   String? updated;
   String? port;
+  bool? isRtsp;
 
   CameraClass(
       {this.collectionId,
@@ -28,6 +29,7 @@ class CameraClass {
       this.rtspName,
       this.created,
       this.port,
+      this.isRtsp,
       this.updated});
 
   CameraClass.fromJson(Map<String, dynamic> json) {
@@ -45,6 +47,7 @@ class CameraClass {
     created = json['created'];
     updated = json['updated'];
     port=json['port'];
+    isRtsp=json['isRtsp'];
   }
 
   Map<String, dynamic> toJson() {
@@ -63,6 +66,7 @@ class CameraClass {
     data['created'] = this.created;
     data['updated'] = this.updated;
     data['port']=this.port;
+    data['isRtsp']=this.isRtsp;
     return data;
   }
 }

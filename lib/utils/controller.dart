@@ -20,6 +20,16 @@ class cameraController extends GetxController {
   var cameras = <CameraClass>[].obs;
   var searchCameras = <Map<String, dynamic>>[].obs;
 
+  var isRtspEnabled = false.obs;
+  var gateWayc = 'entre'.obs;
+  TextEditingController nameController = TextEditingController();
+  TextEditingController ipController = TextEditingController();
+  TextEditingController portController = TextEditingController();
+  TextEditingController rtspNameController = TextEditingController();
+  TextEditingController rtspController = TextEditingController();
+  TextEditingController usernameController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
+
   void startSub() {
     pb.collection('cameras').subscribe(
       '*',
