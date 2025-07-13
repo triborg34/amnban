@@ -121,12 +121,39 @@ class videoFeedController extends GetxController {
 class reportController extends GetxController {
   var engishalphabet = ''.obs;
   var persianalhpabet = ''.obs;
-
+  var selectedModel = <databaseClass>[].obs;
   TextEditingController firstTwoDigit = TextEditingController();
   TextEditingController threeDigit = TextEditingController();
   TextEditingController lastTwoDigit = TextEditingController();
 
   var pickerPlate = ''.obs;
+
+  var firstDate = ''.obs;
+  var lastDate = ''.obs;
+  var fistTime = ''.obs;
+  var lastTime = ''.obs;
+  var isDate = false.obs;
+  var isTime = false.obs;
+  var isCompleted = false.obs;
+
+  inilazed() {
+    engishalphabet = ''.obs;
+    persianalhpabet = ''.obs;
+    selectedModel.clear();
+    firstTwoDigit = TextEditingController();
+    threeDigit = TextEditingController();
+    lastTwoDigit = TextEditingController();
+
+    pickerPlate = ''.obs;
+
+    firstDate = ''.obs;
+    lastDate = ''.obs;
+    fistTime = ''.obs;
+    lastTime = ''.obs;
+    isDate = false.obs;
+    isTime = false.obs;
+    isCompleted = false.obs;
+  }
 }
 
 class knowPersonController extends GetxController {

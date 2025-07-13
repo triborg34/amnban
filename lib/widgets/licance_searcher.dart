@@ -104,6 +104,8 @@ class licanceSearcher extends StatelessWidget {
                 onPressed: () {
                   rcontroller.pickerPlate.value =
                       "${rcontroller.firstTwoDigit.text}${rcontroller.engishalphabet}${rcontroller.threeDigit.text}${rcontroller.lastTwoDigit.text}";
+
+                      rcontroller.update();
                   Navigator.pop(context);
                 },
                 child: Text("ثبت")),
