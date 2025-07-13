@@ -1,5 +1,6 @@
 import 'package:amnban/screens/camera_screen.dart';
 import 'package:amnban/screens/home_sceen.dart';
+import 'package:amnban/screens/person_screen.dart';
 import 'package:amnban/screens/reportscreen.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
@@ -59,15 +60,25 @@ class MainScreen extends StatelessWidget {
                 return Center(
                   child: Text("درباره"),
                 );
+              case 1:
+                return Center(
+                  child: Text("تظنیمات"),
+                );
               case 2:
-                return CameraScreen();
+                return PersonScreen();
               case 3:
-                return Reportscreen();
+                return CameraScreen();
               case 4:
-                return HomeSceen(mController: mcontroller,);
+                return Reportscreen();
+              case 5:
+                return HomeSceen(
+                  mController: mcontroller,
+                );
 
               default:
-                return HomeSceen(mController: mcontroller,);
+                return HomeSceen(
+                  mController: mcontroller,
+                );
             }
           },
         ),

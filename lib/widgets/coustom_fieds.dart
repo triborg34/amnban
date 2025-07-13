@@ -3,6 +3,48 @@
 import 'package:flutter/material.dart';
 
 
+class CoustomTextField1 extends StatelessWidget {
+  
+   CoustomTextField1({
+required this.controller,
+required this.hint,
+required this.width,
+    super.key,
+  });
+  double width;
+  String hint;
+  TextEditingController controller;
+  
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      
+      child: TextField(
+        
+        controller: controller,
+        decoration: InputDecoration(
+          hintText: hint,
+            fillColor: Colors.white,
+            filled: true,
+            focusedBorder: OutlineInputBorder(
+                borderRadius:
+                    BorderRadius.circular(10),
+                borderSide: BorderSide(
+                    color: Colors.transparent,
+                    width: 3.0)),
+            enabledBorder: OutlineInputBorder(
+              borderRadius:
+                  BorderRadius.circular(10),
+              borderSide: BorderSide(
+                  color: Colors.transparent,
+                  width: 3.0),
+            )),
+      ),
+    );
+  }
+}
 
 
 class CoustomTextField2 extends StatelessWidget {

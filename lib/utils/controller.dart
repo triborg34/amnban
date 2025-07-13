@@ -169,6 +169,9 @@ class reportController extends GetxController {
 class knowPersonController extends GetxController {
   var knowPerson = <knowPersonBox>[].obs;
 
+  var engishAlphabet=''.obs;
+  var persianAlhpabet=''.obs;
+
   void startSub() {
     pb.collection('cameras').subscribe(
       '*',
