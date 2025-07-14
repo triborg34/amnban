@@ -75,7 +75,7 @@ class Reportscreen extends StatelessWidget {
                       var d = picked!.toGregorian();
                       rcontroller.firstDate.value =
                           d.toDateTime().toString().split(' ')[0];
-                      print(DateTime.parse(rcontroller.firstDate.value));
+
                       rcontroller.isDate.value = true;
                     },
                     child: Obx(() => Text(
@@ -190,9 +190,7 @@ class Reportscreen extends StatelessWidget {
               SizedBox(
                 width: 10,
               ),
-              ElevatedButton(
-                  onPressed: saveToPdf,
-                  child: Text("ذخیره"))
+              ElevatedButton(onPressed: saveToPdf, child: Text("ذخیره"))
             ],
           ),
           SizedBox(
@@ -341,6 +339,39 @@ class Reportscreen extends StatelessWidget {
                                   decoration: BoxDecoration(
                                       border: Border(
                                           left: BorderSide(color: purpule))),
+                                  width: 5.w,
+                                  child: Center(
+                                    child: Text(
+                                      kcontroller.knowPerson
+                                              .where(
+                                                (element) =>
+                                                    element.plateNumber ==
+                                                    rcontroller
+                                                        .selectedModel[index]
+                                                        .plateNum,
+                                              )
+                                              .isEmpty
+                                          ? "-"
+                                          : kcontroller
+                                              .knowPerson[kcontroller.knowPerson
+                                                  .indexWhere(
+                                              (element) =>
+                                                  element.plateNumber ==
+                                                  rcontroller
+                                                      .selectedModel[index]
+                                                      .plateNum,
+                                            )]
+                                              .role!,
+                                      style: TextStyle(
+                                          color: Colors.white, fontSize: 18),
+                                    ),
+                                  )),
+                              Container(
+                                  padding: EdgeInsets.all(3.0),
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                      border: Border(
+                                          left: BorderSide(color: purpule))),
                                   width: 12.w,
                                   child: Center(
                                     child: Text(
@@ -436,231 +467,190 @@ class Reportscreen extends StatelessWidget {
   }
 
   void saveToPdf() async {
-                  final doc = pw.Document();
-                  final ttf =
-                      await fontFromAssetBundle('assets/fonts/arial.ttf');
-                  doc.addPage(
-                    pw.MultiPage(
-                      textDirection: pw.TextDirection.rtl,
-                      mainAxisAlignment: pw.MainAxisAlignment.start,
-                      crossAxisAlignment: pw.CrossAxisAlignment.end,
-                      build: (pw.Context context) {
-                        return [
-                          // Replace the Column with a list of widgets
-                          pw.Row(children: [
-                            pw.Container(
-                              height: 30,
-                              width: 75,
-                              alignment: pw.Alignment.center,
-                              decoration:
-                                  pw.BoxDecoration(border: pw.Border.all()),
-                              child: pw.Text('پلاک',
-                                  style: pw.TextStyle(
-                                      font: ttf) // Apply the font
-                                  ),
-                            ),
-                            pw.Container(
-                              height: 30,
-                              width: 75,
-                              alignment: pw.Alignment.center,
-                              decoration:
-                                  pw.BoxDecoration(border: pw.Border.all()),
-                              child: pw.Text('تاریخ',
-                                  style: pw.TextStyle(
-                                      font: ttf) // Apply the font
-                                  ),
-                            ),
-                            pw.Container(
-                              height: 30,
-                              width: 75,
-                              alignment: pw.Alignment.center,
-                              decoration:
-                                  pw.BoxDecoration(border: pw.Border.all()),
-                              child: pw.Text('ساعت',
-                                  style: pw.TextStyle(
-                                      font: ttf) // Apply the font
-                                  ),
-                            ),
-                            pw.Container(
-                              height: 30,
-                              width: 75,
-                              alignment: pw.Alignment.center,
-                              decoration:
-                                  pw.BoxDecoration(border: pw.Border.all()),
-                              child: pw.Text('نام و نام خانوادگی',
-                                  style: pw.TextStyle(
-                                      font: ttf,
-                                      fontSize: 8) // Apply the font
-                                  ),
-                            ),
-                            pw.Container(
-                              height: 30,
-                              width: 75,
-                              alignment: pw.Alignment.center,
-                              decoration:
-                                  pw.BoxDecoration(border: pw.Border.all()),
-                              child: pw.Text('ماشین',
-                                  style: pw.TextStyle(
-                                      font: ttf) // Apply the font
-                                  ),
-                            ),
-                            pw.Container(
-                              height: 30,
-                              width: 75,
-                              alignment: pw.Alignment.center,
-                              decoration:
-                                  pw.BoxDecoration(border: pw.Border.all()),
-                              child: pw.Text('نام دوربین',
-                                  style: pw.TextStyle(
-                                      font: ttf) // Apply the font
-                                  ),
-                            ),
-                          ]),
-                          for (var i in rcontroller.selectedModel)
-                            i.isarvand == 'arvand' ||
-                                    convertToPersianString(
-                                            i.plateNum!, alphabetP2) !=
-                                        '-'
-                                ? pw.Container(
-                                    child: pw.Row(children: [
-                                    pw.Container(
-                                      height: 30,
-                                      width: 75,
-                                      alignment: pw.Alignment.center,
-                                      decoration: pw.BoxDecoration(
-                                          border: pw.Border.all()),
-                                      child: pw.Text(
-                                          i.isarvand == 'arvand'
-                                              ? i.plateNum!.contains(
-                                                      RegExp('[a-zA-Z]'))
-                                                  ? "-"
-                                                  : i.plateNum
-                                                      .toString()
-                                                      .toPersianDigit()
-                                              : convertToPersianString(
-                                                  i.plateNum!, alphabetP2),
-                                          style: pw.TextStyle(
-                                              font: ttf) // Apply the font
-                                          ),
-                                    ),
-                                    pw.Container(
-                                      height: 30,
-                                      width: 75,
-                                      alignment: pw.Alignment.center,
-                                      decoration: pw.BoxDecoration(
-                                          border: pw.Border.all()),
-                                      child: pw.Text(
-                                          i.eDate.toString().toPersianDate(),
-                                          style: pw.TextStyle(
-                                              font: ttf) // Apply the font
-                                          ),
-                                    ),
-                                    pw.Container(
-                                      height: 30,
-                                      width: 75,
-                                      alignment: pw.Alignment.center,
-                                      decoration: pw.BoxDecoration(
-                                          border: pw.Border.all()),
-                                      child: pw.Text(
-                                          i.eTime.toString().toPersianDigit(),
-                                          style: pw.TextStyle(
-                                              font: ttf) // Apply the font
-                                          ),
-                                    ),
-                                    pw.Container(
-                                      height: 30,
-                                      width: 75,
-                                      alignment: pw.Alignment.center,
-                                      decoration: pw.BoxDecoration(
-                                          border: pw.Border.all()),
-                                      child: pw.Text(
-                                          kcontroller.knowPerson
-                                                  .where(
-                                                    (element) =>
-                                                        element.plateNumber ==
-                                                        i.plateNum,
-                                                  )
-                                                  .isEmpty
-                                              ? "-"
-                                              : kcontroller
-                                                  .knowPerson[kcontroller
-                                                      .knowPerson
-                                                      .indexWhere(
-                                                  (element) =>
-                                                      element.plateNumber ==
-                                                      i.plateNum,
-                                                )]
-                                                  .name!,
-                                          style: pw.TextStyle(
-                                              font: ttf) // Apply the font
-                                          ),
-                                    ),
-                                    pw.Container(
-                                      height: 30,
-                                      width: 75,
-                                      alignment: pw.Alignment.center,
-                                      decoration: pw.BoxDecoration(
-                                          border: pw.Border.all()),
-                                      child: pw.Text(
-                                          kcontroller.knowPerson
-                                                  .where((element) =>
-                                                      element.plateNumber ==
-                                                      i.plateNum)
-                                                  .isEmpty
-                                              ? '-'
-                                              : kcontroller
-                                                  .knowPerson[kcontroller
-                                                      .knowPerson
-                                                      .indexWhere((element) =>
-                                                          element
-                                                              .plateNumber ==
-                                                          i.plateNum)]
-                                                  .carName!,
-                                          style: pw.TextStyle(
-                                              font: ttf) // Apply the font
-                                          ),
-                                    ),
-                                    pw.Container(
-                                      height: 30,
-                                      width: 75,
-                                      alignment: pw.Alignment.center,
-                                      decoration: pw.BoxDecoration(
-                                          border: pw.Border.all()),
-                                      child: Get.find<cameraController>()
-                                                  .cameras
-                                                  .length ==
-                                              0
-                                          ? pw.Text("No Camera")
-                                          : pw.Text(
-                                              Get.find<cameraController>()
-                                                  .cameras
-                                                  .firstWhere(
-                                                    (element) =>
-                                                        element.path ==
-                                                        i.rtpath,
-                                                  )
-                                                  .gate!,
-                                              style: pw.TextStyle(
-                                                  font: ttf) // Apply the font
-                                              ),
-                                    ),
-                                  ]))
-                                : pw.SizedBox()
-                        ];
-                      },
-                      // Optional: Add header/footer to all pages
-                      footer: (pw.Context context) => pw.Text(
-                          ' صفحه  ${context.pageNumber}',
-                          style: pw.TextStyle(font: ttf),
-                          textDirection: pw.TextDirection.rtl),
+    final doc = pw.Document();
+    final ttf = await fontFromAssetBundle('assets/fonts/arial.ttf');
+    doc.addPage(
+      pw.MultiPage(
+        textDirection: pw.TextDirection.rtl,
+        mainAxisAlignment: pw.MainAxisAlignment.start,
+        crossAxisAlignment: pw.CrossAxisAlignment.end,
+        build: (pw.Context context) {
+          return [
+            // Replace the Column with a list of widgets
+            pw.Row(children: [
+              pw.Container(
+                height: 30,
+                width: 75,
+                alignment: pw.Alignment.center,
+                decoration: pw.BoxDecoration(border: pw.Border.all()),
+                child: pw.Text('پلاک',
+                    style: pw.TextStyle(font: ttf) // Apply the font
                     ),
-                  );
-                  await Printing.layoutPdf(
-                      format: PdfPageFormat.a4,
-                      dynamicLayout: true,
-                      usePrinterSettings: true,
-                      onLayout: (PdfPageFormat format) async => doc.save());
-                }
+              ),
+              pw.Container(
+                height: 30,
+                width: 75,
+                alignment: pw.Alignment.center,
+                decoration: pw.BoxDecoration(border: pw.Border.all()),
+                child: pw.Text('تاریخ',
+                    style: pw.TextStyle(font: ttf) // Apply the font
+                    ),
+              ),
+              pw.Container(
+                height: 30,
+                width: 75,
+                alignment: pw.Alignment.center,
+                decoration: pw.BoxDecoration(border: pw.Border.all()),
+                child: pw.Text('ساعت',
+                    style: pw.TextStyle(font: ttf) // Apply the font
+                    ),
+              ),
+              pw.Container(
+                height: 30,
+                width: 75,
+                alignment: pw.Alignment.center,
+                decoration: pw.BoxDecoration(border: pw.Border.all()),
+                child: pw.Text('نام و نام خانوادگی',
+                    style:
+                        pw.TextStyle(font: ttf, fontSize: 8) // Apply the font
+                    ),
+              ),
+              pw.Container(
+                height: 30,
+                width: 75,
+                alignment: pw.Alignment.center,
+                decoration: pw.BoxDecoration(border: pw.Border.all()),
+                child: pw.Text('ماشین',
+                    style: pw.TextStyle(font: ttf) // Apply the font
+                    ),
+              ),
+              pw.Container(
+                height: 30,
+                width: 75,
+                alignment: pw.Alignment.center,
+                decoration: pw.BoxDecoration(border: pw.Border.all()),
+                child: pw.Text('نام دوربین',
+                    style: pw.TextStyle(font: ttf) // Apply the font
+                    ),
+              ),
+            ]),
+            for (var i in rcontroller.selectedModel)
+              i.isarvand == 'arvand' ||
+                      convertToPersianString(i.plateNum!, alphabetP2) != '-'
+                  ? pw.Container(
+                      child: pw.Row(children: [
+                      pw.Container(
+                        height: 30,
+                        width: 75,
+                        alignment: pw.Alignment.center,
+                        decoration: pw.BoxDecoration(border: pw.Border.all()),
+                        child: pw.Text(
+                            i.isarvand == 'arvand'
+                                ? i.plateNum!.contains(RegExp('[a-zA-Z]'))
+                                    ? "-"
+                                    : i.plateNum.toString().toPersianDigit()
+                                : convertToPersianString(
+                                    i.plateNum!, alphabetP2),
+                            style: pw.TextStyle(font: ttf) // Apply the font
+                            ),
+                      ),
+                      pw.Container(
+                        height: 30,
+                        width: 75,
+                        alignment: pw.Alignment.center,
+                        decoration: pw.BoxDecoration(border: pw.Border.all()),
+                        child: pw.Text(i.eDate.toString().toPersianDate(),
+                            style: pw.TextStyle(font: ttf) // Apply the font
+                            ),
+                      ),
+                      pw.Container(
+                        height: 30,
+                        width: 75,
+                        alignment: pw.Alignment.center,
+                        decoration: pw.BoxDecoration(border: pw.Border.all()),
+                        child: pw.Text(i.eTime.toString().toPersianDigit(),
+                            style: pw.TextStyle(font: ttf) // Apply the font
+                            ),
+                      ),
+                      pw.Container(
+                        height: 30,
+                        width: 75,
+                        alignment: pw.Alignment.center,
+                        decoration: pw.BoxDecoration(border: pw.Border.all()),
+                        child: pw.Text(
+                            kcontroller.knowPerson
+                                    .where(
+                                      (element) =>
+                                          element.plateNumber == i.plateNum,
+                                    )
+                                    .isEmpty
+                                ? "-"
+                                : kcontroller
+                                    .knowPerson[
+                                        kcontroller.knowPerson.indexWhere(
+                                    (element) =>
+                                        element.plateNumber == i.plateNum,
+                                  )]
+                                    .name!,
+                            style: pw.TextStyle(font: ttf) // Apply the font
+                            ),
+                      ),
+                      pw.Container(
+                        height: 30,
+                        width: 75,
+                        alignment: pw.Alignment.center,
+                        decoration: pw.BoxDecoration(border: pw.Border.all()),
+                        child: pw.Text(
+                            kcontroller.knowPerson
+                                    .where((element) =>
+                                        element.plateNumber == i.plateNum)
+                                    .isEmpty
+                                ? '-'
+                                : kcontroller
+                                    .knowPerson[kcontroller.knowPerson
+                                        .indexWhere((element) =>
+                                            element.plateNumber == i.plateNum)]
+                                    .carName!,
+                            style: pw.TextStyle(font: ttf) // Apply the font
+                            ),
+                      ),
+                      pw.Container(
+                        height: 30,
+                        width: 75,
+                        alignment: pw.Alignment.center,
+                        decoration: pw.BoxDecoration(border: pw.Border.all()),
+                        child: Get.find<cameraController>().cameras.length == 0
+                            ? pw.Text("No Camera")
+                            : pw.Text(
+                                Get.find<cameraController>()
+                                            .cameras
+                                            .firstWhere(
+                                              (element) =>
+                                                  element.path == i.rtpath,
+                                            )
+                                            .gate ==
+                                        'entre'
+                                    ? "ورود"
+                                    : "خروج",
+                                style: pw.TextStyle(font: ttf) // Apply the font
+                                ),
+                      ),
+                    ]))
+                  : pw.SizedBox()
+          ];
+        },
+        // Optional: Add header/footer to all pages
+        footer: (pw.Context context) => pw.Text(' صفحه  ${context.pageNumber}',
+            style: pw.TextStyle(font: ttf),
+            textDirection: pw.TextDirection.rtl),
+      ),
+    );
+    await Printing.layoutPdf(
+        format: PdfPageFormat.a4,
+        dynamicLayout: true,
+        usePrinterSettings: true,
+        onLayout: (PdfPageFormat format) async => doc.save());
+  }
 
   Future<bool> searchFunction(reportController rcontroller) async {
     // Clear previous results
@@ -691,7 +681,7 @@ class Reportscreen extends StatelessWidget {
     final records = await pb
         .collection('database')
         .getFullList(filter: filterString, sort: '-created');
-    print(records.first.data['eDate']);
+
     // Process each record
 
     var tempList = records.where((element) {

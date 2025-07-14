@@ -16,6 +16,11 @@ class knowPersonBox {
   String? plateNumber;
   String? created;
   String? updated;
+  String? firstTwoDigit;
+  String? threeDigit;
+  String? lastTwoDigit;
+  String? engishAlphabet;
+  String? persianAlhpabet;
 
   knowPersonBox(
       {this.collectionId,
@@ -34,6 +39,11 @@ class knowPersonBox {
       this.rtpath,
       this.plateNumber,
       this.created,
+      this.firstTwoDigit,
+      this.lastTwoDigit,
+      this.threeDigit,
+      this.engishAlphabet,
+      this.persianAlhpabet,
       this.updated});
 
   knowPersonBox.fromJson(Map<String, dynamic> json) {
@@ -54,6 +64,11 @@ class knowPersonBox {
     plateNumber = json['plateNumber'];
     created = json['created'];
     updated = json['updated'];
+    firstTwoDigit = json['firstTwoDigit'];
+    threeDigit = json['threeDigit'];
+    lastTwoDigit = json['lastTwoDigit'];
+    persianAlhpabet = json['persinalAlphabet'];
+    engishAlphabet = json['englishAlphabet'];
   }
 
   Map<String, dynamic> toJson() {
@@ -75,6 +90,12 @@ class knowPersonBox {
     data['plateNumber'] = this.plateNumber;
     data['created'] = this.created;
     data['updated'] = this.updated;
+    data['firstTwoDigit'] = this.firstTwoDigit;
+    data['threeDigit'] = this.threeDigit;
+    data['lastTwoDigit'] = this.lastTwoDigit;
+    data['persianAlhpabet'] = this.persianAlhpabet;
+    data['englishAlphabet'] = this.engishAlphabet;
+
     return data;
   }
 }

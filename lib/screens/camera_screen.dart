@@ -19,7 +19,7 @@ class CameraScreen extends StatelessWidget {
     return Container(
         height: MediaQuery.of(context).size.height,
         width: MediaQuery.of(context).size.width,
-        margin: EdgeInsets.all(10),
+
         padding: EdgeInsets.all(10),
         decoration: BoxDecoration(
             border: Border.all(color: purpule),

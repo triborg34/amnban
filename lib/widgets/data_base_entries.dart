@@ -1,6 +1,7 @@
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/utils/converFunctions.dart';
+import 'package:amnban/widgets/add_or_edit_person.dart';
 import 'package:amnban/widgets/arvandpelak.dart';
 import 'package:amnban/widgets/lisancepage.dart';
 import 'package:flutter/material.dart';
@@ -47,7 +48,7 @@ class dataBaseEntries extends StatelessWidget {
                             mController.isSelected.value = true;
                             dcontroller.tableContect.value =
                                 dcontroller.entries[index];
-                            dcontroller.selectedIndex.value=index;
+                            dcontroller.selectedIndex.value = index;
                           },
                           child: Container(
                             height: 80,
@@ -84,63 +85,140 @@ class dataBaseEntries extends StatelessWidget {
                                 VerticalDivider(
                                   color: Colors.black,
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.only(left: 8),
-                                  child: Container(
-                                    width: 8.w,
-                                    child: kcontroller.knowPerson
-                                            .where(
-                                              (element) =>
-                                                  element.plateNumber ==
-                                                  dcontroller
-                                                      .entries[index].plateNum,
-                                            )
-                                            .isNotEmpty
-                                        ? Container(
-                                            decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(15),
-                                                color: Colors.transparent),
-                                            child: Center(
-                                              child: Text(
-                                                kcontroller
-                                                    .knowPerson[kcontroller
-                                                        .knowPerson
-                                                        .indexWhere(
+                                Obx(() => Padding(
+                                      padding: const EdgeInsets.only(left: 8),
+                                      child: Container(
+                                        width: 8.w,
+                                        child: kcontroller.knowPerson
+                                                .where(
                                                   (element) =>
                                                       element.plateNumber ==
                                                       dcontroller.entries[index]
                                                           .plateNum,
-                                                )]
-                                                    .name!,
-                                                style: TextStyle(
-                                                    color: Colors.white),
+                                                )
+                                                .isNotEmpty
+                                            ? Container(
+                                                decoration: BoxDecoration(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            15),
+                                                    color: Colors.transparent),
+                                                child: Center(
+                                                  child: Text(
+                                                    kcontroller
+                                                        .knowPerson[kcontroller
+                                                            .knowPerson
+                                                            .indexWhere(
+                                                      (element) =>
+                                                          element.plateNumber ==
+                                                          dcontroller
+                                                              .entries[index]
+                                                              .plateNum,
+                                                    )]
+                                                        .name!,
+                                                    style: TextStyle(
+                                                        color: Colors.white),
+                                                  ),
+                                                ),
+                                              )
+                                            : IconButton(
+                                                onPressed: () async {
+                                                  String plateNum = dcontroller
+                                                      .entries[index].plateNum!
+                                                      .trim();
+                                                  String name = '';
+                                                  String lastName = '';
+                                                  String carName = '';
+                                                  String role = "مجاز";
+                                                  bool isEdit = false;
+                                                  bool isDiscover = true;
+                                                  bool isArvand = dcontroller
+                                                              .entries[index]
+                                                              .isarvand ==
+                                                          "arvand"
+                                                      ? true
+                                                      : false;
+                                                  String arvandDigits = '';
+                                                  String firstTwoDigit = '';
+                                                  String threeDigit = '';
+                                                  String lastTwoDigit = '';
+                                                  String persianAlhpabet = '';
+                                                  String engishAlphabet = '';
+                                                  if (isArvand) {
+                                                    arvandDigits = plateNum;
+                                                  } else {
+                                                    String charechter = plateNum
+                                                        .split(RegExp(r'[0-9]'))
+                                                        .toList()[2]
+                                                        .toString();
+                                                    var persianLetterIndex =
+                                                        plateAlphabet.keys
+                                                            .toList()
+                                                            .indexOf(
+                                                                charechter);
+                                                    var persianCharechter =
+                                                        plateAlphabet.values
+                                                            .elementAt(
+                                                                persianLetterIndex);
+
+                                                    persianAlhpabet =
+                                                        persianCharechter;
+                                                    engishAlphabet = charechter;
+
+                                                    firstTwoDigit = plateNum
+                                                        .split(RegExp(
+                                                            r'[a-z,A-Z]'))[0]
+                                                        .toString();
+                                                    threeDigit = plateNum
+                                                        .split(RegExp(
+                                                            r'[a-z,A-Z]'))[1]
+                                                        .substring(0, 3);
+                                                    lastTwoDigit = plateNum
+                                                        .split(RegExp(
+                                                            r'[a-z,A-Z]'))[1]
+                                                        .substring(3, 5);
+                                                  }
+
+                                                  await showAdaptiveDialog(
+                                                    context: context,
+                                                    builder: (context) =>
+                                                        add_or_edit_person(
+                                                            name: name,
+                                                            lastName: lastName,
+                                                            carName: carName,
+                                                            firstTwoDigit:
+                                                                firstTwoDigit,
+                                                            threeDigit:
+                                                                threeDigit,
+                                                            lastTwoDigit:
+                                                                lastTwoDigit,
+                                                            role: role,
+                                                            arvandDigits:
+                                                                arvandDigits,
+                                                            isArvand: isArvand,
+                                                            isEdit: isEdit,
+                                                            index: index,
+                                                            isDiscover:
+                                                                isDiscover,
+                                                            engishAlphabet:
+                                                                engishAlphabet,
+                                                            persianAlhpabet:
+                                                                persianAlhpabet,
+                                                            kcontroller:
+                                                                kcontroller),
+                                                  );
+                                                },
+                                                hoverColor:
+                                                    const Color.fromARGB(
+                                                        255, 29, 14, 55),
+                                                icon: Icon(
+                                                    Icons.add_box_outlined),
+                                                color: Colors.white70,
+                                                iconSize: 36,
                                               ),
-                                            ),
-                                          )
-                                        : IconButton(
-                                            onPressed: () {
-                                              // showDialog(
-                                              //   context: context,
-                                              //   builder: (context) {
-                                              //     return EnhancedCarRegistrationDialog(
-                                              //       entry: entry,
-                                              //       isEditing: false,
-                                              //       isRegister: false,
-                                              //       index: index,
-                                              //     );
-                                              //   },
-                                              // );
-                                            },
-                                            hoverColor: const Color.fromARGB(
-                                                255, 29, 14, 55),
-                                            icon: Icon(Icons.add_box_outlined),
-                                            color: Colors.white70,
-                                            iconSize: 36,
-                                          ),
-                                    height: 50,
-                                  ),
-                                ),
+                                        height: 50,
+                                      ),
+                                    )),
                                 VerticalDivider(
                                   color: Colors.black,
                                 ),

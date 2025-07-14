@@ -169,11 +169,23 @@ class reportController extends GetxController {
 class knowPersonController extends GetxController {
   var knowPerson = <knowPersonBox>[].obs;
 
-  var engishAlphabet=''.obs;
-  var persianAlhpabet=''.obs;
+  var engishAlphabet = ''.obs;
+  var persianAlhpabet = ''.obs;
+  var isArvand = false.obs;
+
+  TextEditingController firstTwoDigit = TextEditingController();
+  TextEditingController threeDigit = TextEditingController();
+  TextEditingController lastTwoDigit = TextEditingController();
+
+  TextEditingController arvandDigits=TextEditingController();
+
+  TextEditingController name = TextEditingController();
+  TextEditingController lastName = TextEditingController();
+  TextEditingController carNmae = TextEditingController();
+  var role = 'مجاز'.obs;
 
   void startSub() {
-    pb.collection('cameras').subscribe(
+    pb.collection('registredDb').subscribe(
       '*',
       (e) {
         if (e.action == 'create') {
@@ -194,7 +206,7 @@ class knowPersonController extends GetxController {
   }
 
   fetchFirstData() async {
-    final mList = await pb.collection('cameras').getFullList();
+    final mList = await pb.collection('registredDb').getFullList();
     for (var json in mList) {
       knowPerson.add(knowPersonBox.fromJson(json.data));
     }

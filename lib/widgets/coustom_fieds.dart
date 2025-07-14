@@ -22,9 +22,10 @@ required this.width,
       width: width,
       
       child: TextField(
-        
+        textDirection: hint !='' ? TextDirection.rtl : TextDirection.ltr,
         controller: controller,
         decoration: InputDecoration(
+          hintTextDirection: TextDirection.rtl,
           hintText: hint,
             fillColor: Colors.white,
             filled: true,

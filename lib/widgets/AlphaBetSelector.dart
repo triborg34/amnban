@@ -42,7 +42,8 @@ class Alphabetselector extends StatelessWidget {
                     Get.find<reportController>().persianalhpabet.value = letter;
                     Get.find<reportController>().engishalphabet.value = plateAlphabet.keys.toList()[index];
 
-                    // Get.find<knowPersonController>.persianAl
+                    Get.find<knowPersonController>().persianAlhpabet.value=letter;
+                    Get.find<knowPersonController>().engishAlphabet.value=plateAlphabet.keys.toList()[index];
                     
                    Navigator.pop(context);
                     

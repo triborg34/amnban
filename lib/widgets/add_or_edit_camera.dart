@@ -223,7 +223,7 @@ class AddOrEditCamera extends StatelessWidget {
                           'username': ccontroller.usernameController.text,
                           'password': base64.encode(
                               utf8.encode(ccontroller.passwordController.text)),
-                          'path':"rt/${ccontroller.cameras.length+1}"
+                          'path':"/rt${ccontroller.cameras.length+1}"
                         };
 
                         if (isEditing) {
