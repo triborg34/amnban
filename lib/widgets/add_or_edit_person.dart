@@ -71,7 +71,7 @@ class add_or_edit_person extends StatelessWidget {
           textDirection: TextDirection.rtl,
           children: [
             Text(
-              'ثبت افراد',
+              isEdit? "ویرایش افراد": 'ثبت افراد',
               style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,

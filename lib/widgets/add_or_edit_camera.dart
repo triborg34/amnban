@@ -58,6 +58,7 @@ class AddOrEditCamera extends StatelessWidget {
     ccontroller.gateWayc.value = gate;
     return Center(
       child: Material(
+        color: Colors.transparent,
         child: Container(
           padding: EdgeInsets.all(15),
           decoration: BoxDecoration(
@@ -74,7 +75,7 @@ class AddOrEditCamera extends StatelessWidget {
                 Center(
                   child: Text(
                     isEditing ? "ویرایش دوربین" : "اضافه کردن دوربین",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,color: Colors.white),
                   ),
                 ),
                 SizedBox(

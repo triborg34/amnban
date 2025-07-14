@@ -2,6 +2,7 @@ import 'package:amnban/screens/camera_screen.dart';
 import 'package:amnban/screens/home_sceen.dart';
 import 'package:amnban/screens/person_screen.dart';
 import 'package:amnban/screens/reportscreen.dart';
+import 'package:amnban/screens/setting_screen.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:flutter/material.dart';
@@ -61,9 +62,7 @@ class MainScreen extends StatelessWidget {
                   child: Text("درباره"),
                 );
               case 1:
-                return Center(
-                  child: Text("تظنیمات"),
-                );
+                return SettingScreen();
               case 2:
                 return PersonScreen();
               case 3:

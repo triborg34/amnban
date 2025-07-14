@@ -10,5 +10,7 @@ class MyBindings extends Bindings {
     Get.put(databaseController());
     Get.put(knowPersonController());
     Get.put(reportController());
+    Get.put(settingController());
+    Get.put(userController());
   }
 }

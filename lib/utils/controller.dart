@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:amnban/models/cameraClass.dart';
 import 'package:amnban/models/databaseEntry.dart';
 import 'package:amnban/models/knowPersonClass.dart';
+import 'package:amnban/models/settingClass.dart';
+import 'package:amnban/models/userClass.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -10,7 +12,7 @@ import 'dart:html' as html;
 import 'package:http/http.dart' as http;
 
 class mainPageConroller extends GetxController {
-  var navitaionIndex = 2.obs;
+  var navitaionIndex = 1.obs;
   var videoIndex = (-1).obs;
 
   var isSelected = false.obs;
@@ -177,7 +179,7 @@ class knowPersonController extends GetxController {
   TextEditingController threeDigit = TextEditingController();
   TextEditingController lastTwoDigit = TextEditingController();
 
-  TextEditingController arvandDigits=TextEditingController();
+  TextEditingController arvandDigits = TextEditingController();
 
   TextEditingController name = TextEditingController();
   TextEditingController lastName = TextEditingController();
@@ -254,6 +256,96 @@ class databaseController extends GetxController {
       entries.add(databaseClass.fromJson(json.data));
     }
     tableContect.value = entries.first;
+  }
+
+  @override
+  void onReady() async {
+    await fetchFirstData();
+    startSub();
+    super.onReady();
+  }
+}
+
+class settingController extends GetxController {
+  var settings = <setting_class>[].obs;
+
+  var isUsers = true.obs;
+
+  void startSub() {
+    pb.collection('setting').subscribe(
+      '*',
+      (e) {
+        if (e.action == 'create') {
+          settings.add(setting_class.fromJson(e.record!.data));
+        } else if (e.action == 'delete') {
+          settings.removeWhere(
+            (element) => element.id == e.record!.id,
+          );
+        } else {
+          int index =
+              settings.indexWhere((element) => element.id == e.record!.id);
+          if (index != -1) {
+            settings[index] = setting_class.fromJson(e.record!.toJson());
+          }
+        }
+      },
+    );
+  }
+
+  fetchFirstData() async {
+    final mList = await pb.collection('setting').getFullList(
+          sort: '-created',
+        );
+    for (var json in mList) {
+      settings.add(setting_class.fromJson(json.data));
+    }
+  }
+
+  @override
+  void onReady() async {
+    await fetchFirstData();
+    startSub();
+    super.onReady();
+  }
+}
+
+class userController extends GetxController {
+  var users = <userClass>[].obs;
+
+  TextEditingController name = TextEditingController();
+  TextEditingController lastName = TextEditingController();
+  TextEditingController email = TextEditingController();
+  TextEditingController username = TextEditingController();
+  TextEditingController password = TextEditingController();
+  var accsesslvl = "مدیر".obs;
+
+  void startSub() {
+    pb.collection('users').subscribe(
+      '*',
+      (e) {
+        if (e.action == 'create') {
+          users.add(userClass.fromJson(e.record!.data));
+        } else if (e.action == 'delete') {
+          users.removeWhere(
+            (element) => element.id == e.record!.id,
+          );
+        } else {
+          int index = users.indexWhere((element) => element.id == e.record!.id);
+          if (index != -1) {
+            users[index] = userClass.fromJson(e.record!.toJson());
+          }
+        }
+      },
+    );
+  }
+
+  fetchFirstData() async {
+    final mList = await pb.collection('users').getFullList(
+          sort: '-created',
+        );
+    for (var json in mList) {
+      users.add(userClass.fromJson(json.data));
+    }
   }
 
   @override
