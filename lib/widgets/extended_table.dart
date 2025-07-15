@@ -57,7 +57,7 @@ class ExtendedTable extends StatelessWidget {
                     child: Hero(
                       tag: 'heroTag${dcontroller.selectedIndex.value}',
                       child: Image.network(
-                        "http://127.0.0.1:8090/api/files/database/${dcontroller.tableContect.value.id}/${dcontroller.tableContect.value.imgpath}",
+                        "http://${url}:8090/api/files/database/${dcontroller.tableContect.value.id}/${dcontroller.tableContect.value.imgpath}",
                         fit: BoxFit.fill,
                         width: 205,
                       ),

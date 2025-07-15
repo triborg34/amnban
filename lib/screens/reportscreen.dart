@@ -261,7 +261,7 @@ class Reportscreen extends StatelessWidget {
                                         child: Hero(
                                             tag: "heroTag${index}",
                                             child: Image.network(
-                                              "http://127.0.0.1:8090/api/files/database/${rcontroller.selectedModel[index].id}/${rcontroller.selectedModel[index].imgpath}",
+                                              "http://${url}:8090/api/files/database/${rcontroller.selectedModel[index].id}/${rcontroller.selectedModel[index].imgpath}",
                                               fit: BoxFit.fill,
                                               width: 12.w,
                                               height: 48,

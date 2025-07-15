@@ -47,7 +47,7 @@ class Detailedscreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(15),
                   child: EasyImageView(
                     imageProvider: NetworkImage(
-                      "http://127.0.0.1:8090/api/files/database/${selectedModel.id}/${selectedModel.scrnPath}",
+                      "http://${url}:8090/api/files/database/${selectedModel.id}/${selectedModel.scrnPath}",
                     ),
                   ),
                 ),
@@ -91,7 +91,7 @@ class Detailedscreen extends StatelessWidget {
                         child: Hero(
                           tag: "heroTag${index}",
                           child: Image.network(
-                            "http://127.0.0.1:8090/api/files/database/${selectedModel.id}/${selectedModel.imgpath}",
+                            "http://${url}:8090/api/files/database/${selectedModel.id}/${selectedModel.imgpath}",
                             fit: BoxFit.fill,
                             width: 12.w,
                             height: 48,

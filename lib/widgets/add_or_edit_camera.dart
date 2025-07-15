@@ -27,6 +27,7 @@ class AddOrEditCamera extends StatelessWidget {
     required this.gate,
     required this.isEditing,
     required this.isDiscovery,
+    required this.path,
     this.id
   }  );
 
@@ -44,6 +45,7 @@ class AddOrEditCamera extends StatelessWidget {
   final bool isEditing;
   final bool isDiscovery;
   final String? id;
+  final String? path;
 
   @override
   Widget build(BuildContext context) {
@@ -174,8 +176,8 @@ class AddOrEditCamera extends StatelessWidget {
                           TextButton.styleFrom(backgroundColor: Color.fromARGB(255, 25, 32, 71)),
                       onPressed: () async {
                         if (isDiscovery) {
-                          var url =
-                              Uri.parse('http://127.0.0.1:8000/onvif/get-rtsp');
+                          var uri =
+                              Uri.parse('http://${url}:8000/onvif/get-rtsp');
                           final Map<String, dynamic> body = {
                             "ip": "${ccontroller.ipController.text}",
                             "port": "${ccontroller.portController.text}",
@@ -184,7 +186,7 @@ class AddOrEditCamera extends StatelessWidget {
                             "password": "${ccontroller.passwordController.text}"
                           };
 
-                          await http.post(url,
+                          await http.post(uri,
                               body: jsonEncode(body),
                               headers: {
                                 'Content-Type': "application/json"
@@ -224,7 +226,7 @@ class AddOrEditCamera extends StatelessWidget {
                           'username': ccontroller.usernameController.text,
                           'password': base64.encode(
                               utf8.encode(ccontroller.passwordController.text)),
-                          'path':"/rt${ccontroller.cameras.length+1}"
+                          'path':path
                         };
 
                         if (isEditing) {

@@ -138,7 +138,7 @@ class UserBox extends StatelessWidget {
                         VerticalDivider(
                           color: selecetpurpule,
                         ),
-                        SizedBox(
+                       SizedBox(
                           width: 5.w,
                           height: 50,
                           child: Center(

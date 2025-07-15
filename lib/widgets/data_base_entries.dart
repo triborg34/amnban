@@ -73,7 +73,7 @@ class dataBaseEntries extends StatelessWidget {
                                       child: ClipRRect(
                                     borderRadius: BorderRadius.circular(5),
                                     child: Image.network(
-                                      ("http://127.0.0.1:8090/api/files/database/${dcontroller.entries[index].id}/${dcontroller.entries[index].imgpath}"),
+                                      ("http://${url}:8090/api/files/database/${dcontroller.entries[index].id}/${dcontroller.entries[index].imgpath}"),
 
                                       ///
                                       fit: BoxFit.fill,

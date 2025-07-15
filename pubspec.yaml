@@ -49,8 +49,6 @@ dependencies:
   printing: ^5.14.2
   responsive_sizer: ^3.3.1
   shared_preferences: ^2.5.3
-  media_kit: ^1.1.11 # Primary package.
-  media_kit_video: ^1.2.5 # For video rendering.
 
 
   # The following adds the Cupertino Icons font to your application.

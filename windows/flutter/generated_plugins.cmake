@@ -4,9 +4,7 @@
 
 list(APPEND FLUTTER_PLUGIN_LIST
   audioplayers_windows
-  media_kit_video
   printing
-  volume_controller
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

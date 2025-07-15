@@ -41,7 +41,7 @@ class SettingBox extends StatelessWidget {
                         SizedBox(
                           height: 10,
                         ),
-                        ipFunction("آدرس شبکه", "127.0.0.1"),
+                        ipFunction("آدرس شبکه", "${url}"),
                         SizedBox(
                           height: 10,
                         ),

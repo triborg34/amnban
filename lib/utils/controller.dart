@@ -69,7 +69,7 @@ class cameraController extends GetxController {
 
   void startDiscovery() async {
     searchCameras.clear();
-    final uri = Uri.parse('http://127.0.0.1:8000/onvif/get-stream');
+    final uri = Uri.parse('http://${url}:8000/onvif/get-stream');
     final request = http.Request('GET', uri)
       ..headers['Accept'] = 'text/event-stream';
 

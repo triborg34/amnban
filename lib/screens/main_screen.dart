@@ -15,6 +15,7 @@ class MainScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print(role);
     return Scaffold(
       backgroundColor: Colors.black,
       extendBody: false,
@@ -56,25 +57,43 @@ class MainScreen extends StatelessWidget {
         width: MediaQuery.of(context).size.width,
         child: GetX<mainPageConroller>(
           builder: (controller) {
-            switch (controller.navitaionIndex.value) {
-            
-              case 0:
-                return SettingScreen();
-              case 1:
-                return PersonScreen();
-              case 2:
-                return CameraScreen();
-              case 3:
-                return Reportscreen();
-              case 4:
-                return HomeSceen(
-                  mController: mcontroller,
-                );
+            if (role == "ناظر") {
+              switch (controller.navitaionIndex.value) {
+          
+                case 0:
+                  return PersonScreen();
+                case 1:
+                  return Reportscreen();
+                case 2:
+                  return HomeSceen(
+                    mController: mcontroller,
+                  );
 
-              default:
-                return HomeSceen(
-                  mController: mcontroller,
-                );
+                default:
+                  return HomeSceen(
+                    mController: mcontroller,
+                  );
+              }
+            } else {
+              switch (controller.navitaionIndex.value) {
+                case 0:
+                  return SettingScreen();
+                case 1:
+                  return PersonScreen();
+                case 2:
+                  return CameraScreen();
+                case 3:
+                  return Reportscreen();
+                case 4:
+                  return HomeSceen(
+                    mController: mcontroller,
+                  );
+
+                default:
+                  return HomeSceen(
+                    mController: mcontroller,
+                  );
+              }
             }
           },
         ),
