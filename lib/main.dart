@@ -1,7 +1,9 @@
 import 'package:amnban/utils/bindings.dart';
 import 'package:amnban/utils/consts.dart';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
 import 'package:responsive_sizer/responsive_sizer.dart';
 
 void main() {
@@ -23,6 +25,9 @@ class MyApp extends StatelessWidget {
   theme: ThemeData(fontFamily: 'byekan'),
   getPages: pages,
   initialRoute: '/',
+  onReady: () async{
+
+  },
  ),
     );
   }

@@ -1,7 +1,7 @@
 class setting_class {
   String? id;
-  int? plateConf;
-  int? charConf;
+  double? plateConf;
+  double? charConf;
   String? port;
   bool? isRfid;
   bool? rl1;
@@ -11,7 +11,7 @@ class setting_class {
   bool? alarm;
   int? quality;
   String? ip;
-
+  bool? rfconnect;
   setting_class(
 
       {
@@ -26,6 +26,7 @@ class setting_class {
       this.rfidport,
       this.alarm,
       this.quality,
+      this.rfconnect,
       this.ip});
 
   setting_class.fromJson(Map<String, dynamic> json) {
@@ -41,6 +42,7 @@ class setting_class {
     alarm = json['alarm'];
     quality = json['quality'];
     ip = json['ip'];
+    rfconnect=json['rfconnect'];
   }
 
   Map<String, dynamic> toJson() {
@@ -57,6 +59,7 @@ class setting_class {
     data['quality'] = this.quality;
     data['ip'] = this.ip;
     data["id"]=this.id;
+    data['rfconnect']=this.rfconnect;
     return data;
   }
 }

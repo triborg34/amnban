@@ -57,19 +57,16 @@ class MainScreen extends StatelessWidget {
         child: GetX<mainPageConroller>(
           builder: (controller) {
             switch (controller.navitaionIndex.value) {
+            
               case 0:
-                return Center(
-                  child: Text("درباره"),
-                );
-              case 1:
                 return SettingScreen();
-              case 2:
+              case 1:
                 return PersonScreen();
-              case 3:
+              case 2:
                 return CameraScreen();
-              case 4:
+              case 3:
                 return Reportscreen();
-              case 5:
+              case 4:
                 return HomeSceen(
                   mController: mcontroller,
                 );

@@ -12,7 +12,7 @@ import 'dart:html' as html;
 import 'package:http/http.dart' as http;
 
 class mainPageConroller extends GetxController {
-  var navitaionIndex = 1.obs;
+  var navitaionIndex = 4.obs;
   var videoIndex = (-1).obs;
 
   var isSelected = false.obs;
@@ -268,9 +268,22 @@ class databaseController extends GetxController {
 
 class settingController extends GetxController {
   var settings = <setting_class>[].obs;
+  var plateConf = 0.0.obs;
+  var charConf = 0.0.obs;
+  var quality = 0.0.obs;
 
-  var isUsers = true.obs;
+  var isRfid = false.obs;
+  TextEditingController rfipController = TextEditingController();
+  TextEditingController rfportConroller = TextEditingController();
+  var isrlOne = false.obs;
+  var isrlTwo = false.obs;
+  var rfconnect=false.obs;
 
+  var isAlarm = false.obs;
+
+  var isUsers = false.obs;
+  var isGeneral = false.obs;
+  var isInfo=false.obs;
   void startSub() {
     pb.collection('setting').subscribe(
       '*',
@@ -301,9 +314,24 @@ class settingController extends GetxController {
     }
   }
 
+  firstIniliazed() async {
+    plateConf.value = settings.first.plateConf!;
+    charConf.value = settings.first.charConf!;
+    quality.value = settings.first.quality!.toDouble();
+    isRfid.value = settings.first.isRfid!;
+    rfipController.text = settings.first.rfidip!;
+    rfportConroller.text = settings.first.rfidport!.toString();
+    isrlOne.value = settings.first.rl1!;
+    isrlTwo.value = settings.first.rl2!;
+    rfconnect.value=settings.first.rfconnect!;
+
+    isAlarm.value = settings.first.alarm!;
+  }
+
   @override
   void onReady() async {
     await fetchFirstData();
+    await firstIniliazed();
     startSub();
     super.onReady();
   }
