@@ -69,7 +69,7 @@ class cameraController extends GetxController {
 
   void startDiscovery() async {
     searchCameras.clear();
-    final uri = Uri.parse('http://${url}:8000/onvif/get-stream');
+    final uri = Uri.parse('http://${url}:${port}/onvif/get-stream');
     final request = http.Request('GET', uri)
       ..headers['Accept'] = 'text/event-stream';
 
@@ -230,9 +230,19 @@ class databaseController extends GetxController {
   void startSub() {
     pb.collection('database').subscribe(
       '*',
+
       (e) {
         if (e.action == 'create') {
-          entries.add(databaseClass.fromJson(e.record!.data));
+    
+          try{
+            entries.add(databaseClass.fromJson(e.record!.data));
+            print(entries.last.id);
+          }
+          catch(er){
+            print(er);
+          }
+
+
         } else if (e.action == 'delete') {
           entries.removeWhere(
             (element) => element.id == e.record!.id,
@@ -250,7 +260,7 @@ class databaseController extends GetxController {
 
   fetchFirstData() async {
     final mList = await pb.collection('database').getFullList(
-          sort: '-created',
+          sort: 'created',
         );
     for (var json in mList) {
       entries.add(databaseClass.fromJson(json.data));

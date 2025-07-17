@@ -22,9 +22,7 @@ class dataBaseEntries extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Obx(() => dcontroller.entries.length < 1
-        ? SizedBox.shrink()
-        : Expanded(
+    return  Obx(() => Expanded(
             child: SingleChildScrollView(
             child: Container(
               padding: EdgeInsets.all(5),
@@ -32,6 +30,7 @@ class dataBaseEntries extends StatelessWidget {
                   border: Border.all(color: purpule),
                   borderRadius: BorderRadius.circular(15)),
               child: ListView.separated(
+                controller: ScrollController(initialScrollOffset: 0.0),
                   itemBuilder: (context, index) => Visibility(
                         replacement: SizedBox.shrink(),
                         visible: dcontroller.entries[index].isarvand == 'arvand'
@@ -272,8 +271,10 @@ class dataBaseEntries extends StatelessWidget {
                   separatorBuilder: (context, index) => SizedBox(
                         height: 5,
                       ),
+                      reverse: true,
                   itemCount: dcontroller.entries.length),
               height: 450,
+              
             ),
           )));
   }

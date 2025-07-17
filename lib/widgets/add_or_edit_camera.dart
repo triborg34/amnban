@@ -177,7 +177,7 @@ class AddOrEditCamera extends StatelessWidget {
                       onPressed: () async {
                         if (isDiscovery) {
                           var uri =
-                              Uri.parse('http://${url}:8000/onvif/get-rtsp');
+                              Uri.parse('http://${url}:${port}/onvif/get-rtsp');
                           final Map<String, dynamic> body = {
                             "ip": "${ccontroller.ipController.text}",
                             "port": "${ccontroller.portController.text}",

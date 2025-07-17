@@ -11,6 +11,7 @@ List<GetPage> pages = [
 
 String role = '';
 String url='127.0.0.1';
+String port="8000";
 
 var pb = PocketBase('http://${url}:8090');
 

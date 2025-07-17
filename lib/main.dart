@@ -27,6 +27,7 @@ class MyApp extends StatelessWidget {
         onInit: () async {
           var host = getNetworkInfo();
           url = host['hostname'];
+          port=host['port'];
 
         },
       ),
