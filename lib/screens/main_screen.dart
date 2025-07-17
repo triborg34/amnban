@@ -15,7 +15,7 @@ class MainScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    print(role);
+
     return Scaffold(
       backgroundColor: Colors.black,
       extendBody: false,

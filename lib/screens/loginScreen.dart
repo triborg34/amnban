@@ -33,6 +33,7 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
       );
       if (user.rememberme!) {
         role=user.accsesslvl!;
+        email=user.email!;
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => MainScreen()),
         );
@@ -292,6 +293,7 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
         if (utf8.decode(base64.decode(user.password!)) ==
             _passwordController.text) {
               role=user.accsesslvl!;
+              email=user.email!;
           Get.to(() => MainScreen());
         }
       } catch (e) {

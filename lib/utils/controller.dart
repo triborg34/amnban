@@ -234,13 +234,11 @@ class databaseController extends GetxController {
       (e) {
         if (e.action == 'create') {
     
-          try{
             entries.add(databaseClass.fromJson(e.record!.data));
-            print(entries.last.id);
-          }
-          catch(er){
-            print(er);
-          }
+
+            alarmPlay(entries.last);
+            relayAutomatic(entries.last);
+      
 
 
         } else if (e.action == 'delete') {
@@ -334,7 +332,6 @@ class settingController extends GetxController {
     isrlOne.value = settings.first.rl1!;
     isrlTwo.value = settings.first.rl2!;
     rfconnect.value=settings.first.rfconnect!;
-
     isAlarm.value = settings.first.alarm!;
   }
 
