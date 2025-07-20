@@ -15,7 +15,7 @@ List<GetPage> pages = [
 ];
 
 String role = '';
-String email='';
+String email = '';
 String url = '127.0.0.1';
 String port = "8000";
 
@@ -46,46 +46,36 @@ void alarmPlay(databaseClass entry) {
           (element) => element.plateNumber != entry.plateNum,
         )
         .isNotEmpty) {
-  audioPlayer.play(UrlSource('assets/alarm.mp3'));
-
+      audioPlayer.play(UrlSource('assets/alarm.mp3'));
     }
- 
-    http.post(
-        Uri.parse('http://${url}:${port}/email?email=${email}'),
-        body: {
-          "plateNumber": entry.plateNum,
-          "eDate": entry.eDate,
-          "eTime": entry.eTime
-        });
+
+    http.post(Uri.parse('http://${url}:${port}/email?email=${email}'), body: {
+      "plateNumber": entry.plateNum,
+      "eDate": entry.eDate,
+      "eTime": entry.eTime
+    });
   }
 }
 
-
-
-void relayAutomatic(databaseClass entry){
+void relayAutomatic(databaseClass entry) {
   if (Get.find<settingController>().isRfid.value) {
-        
-  
-            
-              if (Get.find<knowPersonController>()
-                  .knowPerson
-                  .where(
-                    (element) => element.plateNumber == entry.plateNum,
-                  )
-                  .isNotEmpty) {
-                   
-                if (Get.find<settingController>().isrlOne.value &&
-                    Get.find<settingController>().isrlTwo.value) {
-             
-                  onRelayOne();
-                  onRelayTwo();
-                } else if (Get.find<settingController>().isrlOne.value == true &&
-                    Get.find<settingController>().isrlTwo.value == false) {
-                   
-    onRelayOne();
-                } else if (Get.find<settingController>().isrlOne.value == false &&
-                    Get.find<settingController>().isrlTwo.value == true) {
-               onRelayTwo();
-                } 
-              }
-}}
+    if (Get.find<knowPersonController>()
+        .knowPerson
+        .where(
+          (element) => element.plateNumber == entry.plateNum,
+        )
+        .isNotEmpty) {
+      if (Get.find<settingController>().isrlOne.value &&
+          Get.find<settingController>().isrlTwo.value) {
+        onRelayOne();
+        onRelayTwo();
+      } else if (Get.find<settingController>().isrlOne.value == true &&
+          Get.find<settingController>().isrlTwo.value == false) {
+        onRelayOne();
+      } else if (Get.find<settingController>().isrlOne.value == false &&
+          Get.find<settingController>().isrlTwo.value == true) {
+        onRelayTwo();
+      }
+    }
+  }
+}

@@ -54,7 +54,7 @@ class CameraScreen extends StatelessWidget {
                               context: context,
                               name: '',
                               ip: '',
-                              port: '',
+                              cport: '',
                               isRtsp: false,
                               gate: 'entre',
                               password: '',
@@ -210,7 +210,7 @@ class CameraScreen extends StatelessWidget {
                                                           context: context,
                                                           name: data.name!,
                                                           ip: data.ip!,
-                                                          port: data.port!,
+                                                          cport: data.port!,
                                                           rtsp: data.rtspUrl!,
                                                           rtspName: data.rtspName!,
                                                           username:
@@ -362,7 +362,7 @@ class CameraScreen extends StatelessWidget {
                                                             .searchCameras[index]
                                                                 ['ip']
                                                             .toString(),
-                                                        port: ccontroller
+                                                        cport: ccontroller
                                                             .searchCameras[index]
                                                                 ['port']
                                                             .toString(),

@@ -137,6 +137,7 @@ class reportController extends GetxController {
   TextEditingController firstTwoDigit = TextEditingController();
   TextEditingController threeDigit = TextEditingController();
   TextEditingController lastTwoDigit = TextEditingController();
+  TextEditingController arvandDigit=TextEditingController();
 
   var pickerPlate = ''.obs;
 
@@ -147,6 +148,8 @@ class reportController extends GetxController {
   var isDate = false.obs;
   var isTime = false.obs;
   var isCompleted = false.obs;
+
+  var isArvand = false.obs;
 
   inilazed() {
     engishalphabet = ''.obs;
@@ -230,17 +233,12 @@ class databaseController extends GetxController {
   void startSub() {
     pb.collection('database').subscribe(
       '*',
-
       (e) {
         if (e.action == 'create') {
-    
-            entries.add(databaseClass.fromJson(e.record!.data));
+          entries.add(databaseClass.fromJson(e.record!.data));
 
-            alarmPlay(entries.last);
-            relayAutomatic(entries.last);
-      
-
-
+          alarmPlay(entries.last);
+          relayAutomatic(entries.last);
         } else if (e.action == 'delete') {
           entries.removeWhere(
             (element) => element.id == e.record!.id,
@@ -285,13 +283,13 @@ class settingController extends GetxController {
   TextEditingController rfportConroller = TextEditingController();
   var isrlOne = false.obs;
   var isrlTwo = false.obs;
-  var rfconnect=false.obs;
+  var rfconnect = false.obs;
 
   var isAlarm = false.obs;
 
   var isUsers = false.obs;
   var isGeneral = false.obs;
-  var isInfo=false.obs;
+  var isInfo = false.obs;
   void startSub() {
     pb.collection('setting').subscribe(
       '*',
@@ -331,7 +329,7 @@ class settingController extends GetxController {
     rfportConroller.text = settings.first.rfidport!.toString();
     isrlOne.value = settings.first.rl1!;
     isrlTwo.value = settings.first.rl2!;
-    rfconnect.value=settings.first.rfconnect!;
+    rfconnect.value = settings.first.rfconnect!;
     isAlarm.value = settings.first.alarm!;
   }
 
@@ -339,8 +337,21 @@ class settingController extends GetxController {
   void onReady() async {
     await fetchFirstData();
     await firstIniliazed();
+    await checkForConnect();
     startSub();
     super.onReady();
+  }
+
+  checkForConnect() async {
+    if (isRfid.value && rfconnect.value) {
+      Uri uri = Uri.parse(
+          'http://${url}:${port}/iprelay?ip=${rfipController.text}&port=${rfportConroller.text}');
+
+      await http.post(
+        uri,
+        body: {"isconnect": true},
+      );
+    }
   }
 }
 

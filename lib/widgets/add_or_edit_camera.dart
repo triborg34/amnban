@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/widgets/coustom_fieds.dart';
 import 'package:amnban/widgets/rtspOff.dart';
@@ -8,7 +9,7 @@ import "package:http/http.dart" as http;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../utils/consts.dart';
+
 
 class AddOrEditCamera extends StatelessWidget {
   const AddOrEditCamera({
@@ -18,7 +19,7 @@ class AddOrEditCamera extends StatelessWidget {
     required this.context,
     required this.name,
     required this.ip,
-    required this.port,
+    required this.cport,
     required this.rtsp,
     required this.rtspName,
     required this.username,
@@ -35,7 +36,7 @@ class AddOrEditCamera extends StatelessWidget {
   final dynamic context;
   final String name;
   final String ip;
-  final String port;
+  final String cport;
   final String rtsp;
   final String rtspName;
   final String username;
@@ -51,7 +52,7 @@ class AddOrEditCamera extends StatelessWidget {
   Widget build(BuildContext context) {
     ccontroller.nameController.text = name;
     ccontroller.ipController.text = ip;
-    ccontroller.portController.text = port;
+    ccontroller.portController.text = cport;
     ccontroller.rtspController.text = rtsp;
     ccontroller.rtspNameController.text = rtspName;
     ccontroller.usernameController.text = username;

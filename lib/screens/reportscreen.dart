@@ -41,8 +41,21 @@ class Reportscreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               GetBuilder<reportController>(
-                  builder: (controller) =>
-                      PlatePicked(rcontroller: rcontroller)),
+                  builder: (controller) => rcontroller.isArvand.value
+                      ? Container(
+                          height: 40,
+                          width: 210,
+                          decoration: BoxDecoration(
+                              color: purpule,
+                              borderRadius: BorderRadius.circular(15)),
+                          child: Center(
+                            child: Text(
+                              rcontroller.pickerPlate.value,
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        )
+                      : PlatePicked(rcontroller: rcontroller)),
               TextButton(
                 onPressed: () async {
                   await showAdaptiveDialog(

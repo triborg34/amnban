@@ -1,3 +1,4 @@
+import 'package:amnban/screens/splashScreen.dart';
 import 'package:amnban/utils/bindings.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/network_info.dart';
@@ -23,7 +24,7 @@ class MyApp extends StatelessWidget {
         title: "AmnBan",
         theme: ThemeData(fontFamily: 'byekan'),
         getPages: pages,
-        initialRoute: '/splash',
+        home: SplashScreen(),
         onInit: () async {
           var host = getNetworkInfo();
           url = host['hostname'];
