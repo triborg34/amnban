@@ -235,7 +235,7 @@ class databaseController extends GetxController {
       '*',
       (e) {
         if (e.action == 'create') {
-          entries.add(databaseClass.fromJson(e.record!.data));
+          entries.insert(0,databaseClass.fromJson(e.record!.data));
 
           alarmPlay(entries.last);
           relayAutomatic(entries.last);
@@ -256,7 +256,7 @@ class databaseController extends GetxController {
 
   fetchFirstData() async {
     final mList = await pb.collection('database').getFullList(
-          sort: 'created',
+          sort: '-created',
         );
     for (var json in mList) {
       entries.add(databaseClass.fromJson(json.data));

@@ -52,7 +52,7 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                 border: Border.all(color: purpule),
                 borderRadius: BorderRadius.circular(15)),
             child: ListView.separated(
-              controller: _scrollController,
+      
                 itemBuilder: (context, index) => Visibility(
                       replacement: SizedBox.shrink(),
                       visible: widget.dcontroller.entries[index].isarvand ==
@@ -303,7 +303,7 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                 separatorBuilder: (context, index) => SizedBox(
                       height: 5,
                     ),
-                reverse: true,
+                reverse: false,
                 itemCount: widget.dcontroller.entries.length),
             height: 450,
           ),
