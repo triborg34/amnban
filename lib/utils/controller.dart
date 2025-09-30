@@ -237,8 +237,8 @@ class databaseController extends GetxController {
         if (e.action == 'create') {
           entries.insert(0,databaseClass.fromJson(e.record!.data));
 
-          alarmPlay(entries.last);
-          relayAutomatic(entries.last);
+          alarmPlay(entries.first);
+          relayAutomatic(entries.first,);
         } else if (e.action == 'delete') {
           entries.removeWhere(
             (element) => element.id == e.record!.id,
@@ -337,22 +337,22 @@ class settingController extends GetxController {
   void onReady() async {
     await fetchFirstData();
     await firstIniliazed();
-    await checkForConnect();
+    // await checkForConnect();
     startSub();
     super.onReady();
   }
 
-  checkForConnect() async {
-    if (isRfid.value && rfconnect.value) {
-      Uri uri = Uri.parse(
-          'http://${url}:${port}/iprelay?ip=${rfipController.text}&port=${rfportConroller.text}');
+  // checkForConnect() async {
+  //   if (isRfid.value && rfconnect.value) {
+  //     Uri uri = Uri.parse(
+  //         'http://${url}:${port}/iprelay?ip=${rfipController.text}&port=${rfportConroller.text}');
 
-      await http.post(
-        uri,
-        body: {"isconnect": true},
-      );
-    }
-  }
+  //     await http.post(
+  //       uri,
+  //       body: {"isconnect": true},
+  //     );
+  //   }
+  // }
 }
 
 class userController extends GetxController {

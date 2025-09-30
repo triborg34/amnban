@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:amnban/models/databaseEntry.dart';
+
 import 'package:amnban/screens/main_screen.dart';
 import 'package:amnban/screens/splashScreen.dart';
 import 'package:amnban/utils/controller.dart';
@@ -28,13 +31,35 @@ List<String> tabs = role == 'ناظر'
     : ['خانه', "گزارشات", 'دوربین', 'افراد', "تنظیمات"].reversed.toList();
 
 void onRelayOne() async {
-  Uri uri = Uri.parse("http://${url}:${port}/iprelay?onOff=true&relay=1");
-  await http.get(uri);
+  Uri uri = Uri.parse("http://${url}:${port}/utils/iprelay");
+
+  await http.post(uri,
+   headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+      body: jsonEncode(<String, String>{
+        'ip':  Get.find<settingController>().settings.last.rfidip!,
+        'port': Get.find<settingController>().settings.last.rfidport.toString(),
+        'username': "admin",
+        'password': "admin",
+        'relay_number': "1"
+      }));
 }
 
 void onRelayTwo() async {
-  Uri uri = Uri.parse("http://${url}:${port}/iprelay?onOff=true&relay=2");
-  await http.get(uri);
+  Uri uri = Uri.parse("http://${url}:${port}/utils/iprelay");
+
+  await http.post(uri,
+   headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+      body: jsonEncode(<String, String>{
+        'ip':  Get.find<settingController>().settings.last.rfidip!,
+        'port': Get.find<settingController>().settings.last.rfidport.toString(),
+        'username': "admin",
+        'password': "admin",
+        'relay_number': "2"
+      }));
 }
 
 void alarmPlay(databaseClass entry) {
@@ -65,6 +90,7 @@ void relayAutomatic(databaseClass entry) {
           (element) => element.plateNumber == entry.plateNum,
         )
         .isNotEmpty) {
+        
       if (Get.find<settingController>().isrlOne.value &&
           Get.find<settingController>().isrlTwo.value) {
         onRelayOne();

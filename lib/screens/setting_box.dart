@@ -3,7 +3,7 @@ import 'package:amnban/utils/controller.dart';
 import 'package:amnban/widgets/sliders_widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
+
 
 class SettingBox extends StatelessWidget {
   SettingBox({
@@ -81,6 +81,7 @@ class SettingBox extends StatelessWidget {
                           value: scontroller.isRfid.value,
                           onChanged: (value) async {
                             scontroller.isRfid.value = value;
+                            scontroller.rfconnect.value=value;
                           },
                         )),
                     Obx(() => Visibility(
@@ -147,57 +148,57 @@ class SettingBox extends StatelessWidget {
                                       scontroller.isrlTwo.value = value!;
                                     },
                                   )),
-                              TextButton(
-                                  onPressed: () async {
-                                    if (Get.find<settingController>()
-                                        .isRfid
-                                        .value) {
-                                      Uri uri = Uri.parse(
-                                          'http://${url}:${port}/iprelay?ip=${scontroller.rfipController.text}&port=${scontroller.rfportConroller.text}');
+                              // TextButton(
+                              //     onPressed: () async {
+                              //       if (Get.find<settingController>()
+                              //           .isRfid
+                              //           .value) {
+                              //         Uri uri = Uri.parse(
+                              //             'http://${url}:${port}/iprelay?ip=${scontroller.rfipController.text}&port=${scontroller.rfportConroller.text}');
 
-                                      var res = await http.post(
-                                        uri,
-                                        body: {"isconnect": false},
-                                      );
-                                      if (res.statusCode == 200) {
-                                        scontroller.rfconnect.value =
-                                            !scontroller.rfconnect.value;
-                                      }
+                              //         var res = await http.post(
+                              //           uri,
+                              //           body: {"isconnect": false},
+                              //         );
+                              //         if (res.statusCode == 200) {
+                              //           scontroller.rfconnect.value =
+                              //               !scontroller.rfconnect.value;
+                              //         }
 
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(SnackBar(
-                                              content: Text("اتصال قطع شد",
-                                                  textDirection:
-                                                      TextDirection.rtl)));
-                                    } else {
-                                      Uri uri = Uri.parse(
-                                          'http://${url}:${port}/iprelay?ip=${scontroller.rfipController.text}&port=${scontroller.rfportConroller.text}');
+                              //         ScaffoldMessenger.of(context)
+                              //             .showSnackBar(SnackBar(
+                              //                 content: Text("اتصال قطع شد",
+                              //                     textDirection:
+                              //                         TextDirection.rtl)));
+                              //       } else {
+                              //         Uri uri = Uri.parse(
+                              //             'http://${url}:${port}/iprelay?ip=${scontroller.rfipController.text}&port=${scontroller.rfportConroller.text}');
 
-                                      var res = await http.post(
-                                        uri,
-                                        body: {"isconnect": true},
-                                      );
-                                      if (res.statusCode == 200) {
-                                        scontroller.rfconnect.value =
-                                            !scontroller.rfconnect.value;
-                                      }
+                              //         var res = await http.post(
+                              //           uri,
+                              //           body: {"isconnect": true},
+                              //         );
+                              //         if (res.statusCode == 200) {
+                              //           scontroller.rfconnect.value =
+                              //               !scontroller.rfconnect.value;
+                              //         }
 
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(SnackBar(
-                                              content: Text("اتصال متصل شد",
-                                                  textDirection:
-                                                      TextDirection.rtl)));
-                                    }
+                              //         ScaffoldMessenger.of(context)
+                              //             .showSnackBar(SnackBar(
+                              //                 content: Text("اتصال متصل شد",
+                              //                     textDirection:
+                              //                         TextDirection.rtl)));
+                              //       }
 
-                                    scontroller.rfconnect.value =
-                                        !scontroller.rfconnect.value;
-                                  },
-                                  child: Text(
-                                    scontroller.rfconnect.value
-                                        ? "قطع"
-                                        : "اتصال",
-                                    style: TextStyle(fontSize: 16),
-                                  )),
+                              //       scontroller.rfconnect.value =
+                              //           !scontroller.rfconnect.value;
+                              //     },
+                              //     child: Text(
+                              //       scontroller.rfconnect.value
+                              //           ? "قطع"
+                              //           : "اتصال",
+                              //       style: TextStyle(fontSize: 16),
+                              //     )),
                             ],
                           ),
                         ))

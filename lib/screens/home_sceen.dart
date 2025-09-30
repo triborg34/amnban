@@ -72,7 +72,7 @@ class HomeSceen extends StatelessWidget {
               textDirection: TextDirection.rtl,
               children: [
                 IconButton(onPressed: () => onRelayOne(), icon: Icon(Icons.door_back_door)),SizedBox(width: 25,),
-                 IconButton(onPressed: () => onRelayOne(), icon: Icon(Icons.door_front_door))
+                 IconButton(onPressed: () => onRelayTwo(), icon: Icon(Icons.door_front_door))
               ],
             ) : SizedBox.shrink()
           ],
