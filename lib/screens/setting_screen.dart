@@ -207,7 +207,7 @@ class InfoBox extends StatelessWidget {
                 Divider(
                   color: purpule,
                 ),
-                KeyValueRow(keyString: "UpdateNo", valueString: "14040423"),
+                KeyValueRow(keyString: "UpdateNo", valueString: "14040828"),
                 Divider(
                   color: purpule,
                 ),
