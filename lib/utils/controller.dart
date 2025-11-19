@@ -237,6 +237,9 @@ class databaseController extends GetxController {
       (e) {
         if (e.action == 'create') {
           entries.insert(0,databaseClass.fromJson(e.record!.data));
+          if (entries.length > 30) {
+            entries.removeAt(entries.length -1);
+          }
 
           alarmPlay(entries.first);
           relayAutomatic(entries.first,);
@@ -264,7 +267,6 @@ class databaseController extends GetxController {
 
         );
     for (var json in mList.items) {
-      print(json.data);
       entries.add(databaseClass.fromJson(json.data));
     }
     tableContect.value = entries.first;

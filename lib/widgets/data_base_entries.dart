@@ -312,10 +312,17 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
               Container(
                 margin: EdgeInsets.all(10),
                 width: 450,
-                child: ElevatedButton(onPressed: (){
+                
+                child: ElevatedButton(
+                  
+                  style: TextButton.styleFrom(
+                    backgroundColor: purpule
+
+                  ),
+                  onPressed: (){
                   widget.dcontroller.inilazedPage=widget.dcontroller.inilazedPage+1;
                   widget.dcontroller.fetchFirstData(widget.dcontroller.inilazedPage, 30);
-                }, child: Text("Press Me")),
+                }, child: Text("بار گزاری بیشتر",style: TextStyle(color: Colors.white),)),
               )
               ],
             ),
