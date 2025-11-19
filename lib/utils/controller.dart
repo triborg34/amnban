@@ -229,6 +229,7 @@ class databaseController extends GetxController {
   var entries = <databaseClass>[].obs;
   var tableContect = databaseClass().obs;
   var selectedIndex = (-1).obs;
+  int inilazedPage=1;
 
   void startSub() {
     pb.collection('database').subscribe(
@@ -254,19 +255,25 @@ class databaseController extends GetxController {
     );
   }
 
-  fetchFirstData() async {
-    final mList = await pb.collection('database').getFullList(
+  fetchFirstData(int inpage,int inperpage) async {
+    final mList = await pb.collection('database').getList(
+      page: inpage,
+      perPage: 30,
+
           sort: '-created',
+
         );
-    for (var json in mList) {
+    for (var json in mList.items) {
+      print(json.data);
       entries.add(databaseClass.fromJson(json.data));
     }
     tableContect.value = entries.first;
   }
+  
 
   @override
   void onReady() async {
-    await fetchFirstData();
+    await fetchFirstData(inilazedPage,30);
     startSub();
     super.onReady();
   }
