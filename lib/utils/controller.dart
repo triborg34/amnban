@@ -148,7 +148,7 @@ class reportController extends GetxController {
   var isDate = false.obs;
   var isTime = false.obs;
   var isCompleted = false.obs;
-
+  var isLoading=false.obs;
   var isArvand = false.obs;
 
   inilazed() {

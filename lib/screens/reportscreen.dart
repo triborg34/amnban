@@ -81,6 +81,7 @@ class Reportscreen extends StatelessWidget {
                     onPressed: () async {
                       Jalali? picked = await showPersianDatePicker(
                           context: context,
+                          textDirection: TextDirection.ltr,
                           initialDate: Jalali.now(),
                           firstDate: Jalali(1385),
                           lastDate: Jalali(1499));
@@ -88,7 +89,7 @@ class Reportscreen extends StatelessWidget {
                       var d = picked!.toGregorian();
                       rcontroller.firstDate.value =
                           d.toDateTime().toString().split(' ')[0];
-
+                      print(rcontroller.firstDate.value);
                       rcontroller.isDate.value = true;
                     },
                     child: Obx(() => Text(
@@ -109,12 +110,14 @@ class Reportscreen extends StatelessWidget {
                       Jalali? picked = await showPersianDatePicker(
                           context: context,
                           initialDate: Jalali.now(),
+                          textDirection: TextDirection.ltr,
                           firstDate: Jalali(1385),
                           lastDate: Jalali(1499));
 
                       var d = picked!.toGregorian();
                       rcontroller.lastDate.value =
                           d.toDateTime().toString().split(' ')[0];
+                      print(rcontroller.lastDate.value);
                     },
                     child: Obx(() => Text(
                         rcontroller.lastDate.value.length == 0
@@ -196,8 +199,11 @@ class Reportscreen extends StatelessWidget {
               ),
               ElevatedButton(
                   onPressed: () async {
+                    rcontroller.isLoading.value = true;
+
                     rcontroller.isCompleted.value =
                         await searchFunction(rcontroller);
+                    rcontroller.isLoading.value = false;
                   },
                   child: Text("جستجو")),
               SizedBox(
@@ -214,7 +220,14 @@ class Reportscreen extends StatelessWidget {
                 crossFadeState: rcontroller.isCompleted.value
                     ? CrossFadeState.showSecond
                     : CrossFadeState.showFirst,
-                firstChild: SizedBox.shrink(),
+                firstChild: rcontroller.isLoading.value
+                    ? Center(
+                        child: SizedBox(
+                            width:100,
+                            height: 100,
+                            child: CircularProgressIndicator()),
+                      )
+                    : SizedBox.shrink(),
                 secondChild: SingleChildScrollView(
                   child: Container(
                     width: Get.width,
@@ -706,6 +719,7 @@ class Reportscreen extends StatelessWidget {
         DateTime fromDate = DateTime.parse(rcontroller.firstDate.value);
         DateTime untilDate = DateTime.parse(rcontroller.lastDate.value);
         DateTime initDate = DateTime.parse(element.data['eDate']);
+        print("${fromDate} , ${untilDate} , ${initDate}");
 
         if (rcontroller.firstDate.value == rcontroller.lastDate.value ||
             rcontroller.lastDate.value == '') {
@@ -744,7 +758,7 @@ class Reportscreen extends StatelessWidget {
     for (var json in tempList) {
       rcontroller.selectedModel.add(databaseClass.fromJson(json.data));
     }
-
+    
     return true;
   }
 
