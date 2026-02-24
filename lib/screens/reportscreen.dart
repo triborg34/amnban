@@ -424,25 +424,33 @@ class Reportscreen extends StatelessWidget {
                                         ? SizedBox(
                                             child: Text("No Camera"),
                                           )
-                                        : Text(
-                                            Get.find<cameraController>()
-                                                        .cameras
-                                                        .firstWhere(
-                                                          (element) =>
-                                                              element.path ==
-                                                              rcontroller
-                                                                  .selectedModel[
-                                                                      index]
-                                                                  .rtpath,
-                                                        )
-                                                        .gate ==
-                                                    "exit"
-                                                ? "دوربین خروجی"
-                                                : "دوربین ورودی",
-                                            style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 18),
-                                          ),
+                                        : Builder(
+                                          builder: (context) {
+                                            try {
+                                                return Text(
+                                                Get.find<cameraController>()
+                                                            .cameras
+                                                            .firstWhere(
+                                                              (element) =>
+                                                                  element.path ==
+                                                                  rcontroller
+                                                                      .selectedModel[
+                                                                          index]
+                                                                      .rtpath,
+                                                            )
+                                                            .name.toString(),
+                                                style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 18),
+                                              );
+                                            } catch (e) {
+                                              return Text("دوربین",          style: TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 18),);
+                                            }
+                                          
+                                          }
+                                        ),
                                   )),
                               Container(
                                   padding: EdgeInsets.all(3.0),
@@ -647,19 +655,23 @@ class Reportscreen extends StatelessWidget {
                         decoration: pw.BoxDecoration(border: pw.Border.all()),
                         child: Get.find<cameraController>().cameras.length == 0
                             ? pw.Text("No Camera")
-                            : pw.Text(
+                            :pw.Builder(builder: (context) {
+                              try {
+                                 return pw.Text(
                                 Get.find<cameraController>()
                                             .cameras
                                             .firstWhere(
                                               (element) =>
                                                   element.path == i.rtpath,
                                             )
-                                            .gate ==
-                                        'entre'
-                                    ? "ورود"
-                                    : "خروج",
+                                            .name.toString(),
                                 style: pw.TextStyle(font: ttf) // Apply the font
-                                ),
+                                );
+                              } catch (e) {
+                                return pw.Text("دوربین",     style: pw.TextStyle(font: ttf) );
+                              }
+                             
+                            },) 
                       ),
                     ]))
                   : pw.SizedBox()

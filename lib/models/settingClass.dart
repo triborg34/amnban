@@ -12,6 +12,7 @@ class setting_class {
   int? quality;
   String? ip;
   bool? rfconnect;
+  bool? notif;
   setting_class(
 
       {
@@ -27,7 +28,7 @@ class setting_class {
       this.alarm,
       this.quality,
       this.rfconnect,
-      this.ip});
+      this.ip,this.notif});
 
   setting_class.fromJson(Map<String, dynamic> json) {
     id=json['id'];
@@ -43,6 +44,7 @@ class setting_class {
     quality = json['quality'];
     ip = json['ip'];
     rfconnect=json['rfconnect'];
+    notif=json['notif'];
   }
 
   Map<String, dynamic> toJson() {
@@ -60,6 +62,7 @@ class setting_class {
     data['ip'] = this.ip;
     data["id"]=this.id;
     data['rfconnect']=this.rfconnect;
+    data['notif']=this.notif;
     return data;
   }
 }

@@ -55,17 +55,18 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
               children: [
                 Expanded(
                   child: ListView.separated(
-                        
                       itemBuilder: (context, index) => Visibility(
                             replacement: SizedBox.shrink(),
-                            visible: widget.dcontroller.entries[index].isarvand ==
+                            visible: widget
+                                        .dcontroller.entries[index].isarvand ==
                                     'arvand'
                                 ? widget.dcontroller.entries[index].plateNum!
                                         .contains(RegExp('[a-zA-Z]'))
                                     ? false
                                     : true
                                 : convertToPersian(
-                                        widget.dcontroller.entries[index].plateNum!,
+                                        widget.dcontroller.entries[index]
+                                            .plateNum!,
                                         alphabetP2)[0] !=
                                     '-',
                             child: InkWell(
@@ -86,11 +87,11 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                                                     .isarvand ==
                                                 'arvand'
                                             ? ArvandPelak2(
-                                                entry:
-                                                    widget.dcontroller.entries[index])
-                                            : LicanceNumber(
                                                 entry: widget
-                                                    .dcontroller.entries[index])),
+                                                    .dcontroller.entries[index])
+                                            : LicanceNumber(
+                                                entry: widget.dcontroller
+                                                    .entries[index])),
                                     VerticalDivider(
                                       color: Colors.black,
                                     ),
@@ -101,7 +102,7 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                                         borderRadius: BorderRadius.circular(5),
                                         child: Image.network(
                                           ("http://${url}:8090/api/files/database/${widget.dcontroller.entries[index].id}/${widget.dcontroller.entries[index].imgpath}"),
-                  
+
                                           ///
                                           fit: BoxFit.fill,
                                           width: 10.w,
@@ -113,7 +114,8 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                                       color: Colors.black,
                                     ),
                                     Obx(() => Padding(
-                                          padding: const EdgeInsets.only(left: 8),
+                                          padding:
+                                              const EdgeInsets.only(left: 8),
                                           child: Container(
                                             width: 8.w,
                                             child: widget.kcontroller.knowPerson
@@ -129,8 +131,10 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                                                 ? Container(
                                                     decoration: BoxDecoration(
                                                         borderRadius:
-                                                            BorderRadius.circular(15),
-                                                        color: Colors.transparent),
+                                                            BorderRadius
+                                                                .circular(15),
+                                                        color:
+                                                            Colors.transparent),
                                                     child: Center(
                                                       child: Text(
                                                         widget
@@ -140,15 +144,18 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                                                                 .knowPerson
                                                                 .indexWhere(
                                                           (element) =>
-                                                              element.plateNumber ==
+                                                              element
+                                                                  .plateNumber ==
                                                               widget
                                                                   .dcontroller
-                                                                  .entries[index]
+                                                                  .entries[
+                                                                      index]
                                                                   .plateNum,
                                                         )]
                                                             .name!,
                                                         style: TextStyle(
-                                                            color: Colors.white),
+                                                            color:
+                                                              isAllowed(index) ? Colors.green:  Colors.red),
                                                       ),
                                                     ),
                                                   )
@@ -167,7 +174,8 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                                                       bool isDiscover = true;
                                                       bool isArvand = widget
                                                                   .dcontroller
-                                                                  .entries[index]
+                                                                  .entries[
+                                                                      index]
                                                                   .isarvand ==
                                                               "arvand"
                                                           ? true
@@ -176,28 +184,34 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                                                       String firstTwoDigit = '';
                                                       String threeDigit = '';
                                                       String lastTwoDigit = '';
-                                                      String persianAlhpabet = '';
-                                                      String engishAlphabet = '';
+                                                      String persianAlhpabet =
+                                                          '';
+                                                      String engishAlphabet =
+                                                          '';
                                                       if (isArvand) {
                                                         arvandDigits = plateNum;
                                                       } else {
-                                                        String charechter = plateNum
-                                                            .split(RegExp(r'[0-9]'))
-                                                            .toList()[2]
-                                                            .toString();
+                                                        String charechter =
+                                                            plateNum
+                                                                .split(RegExp(
+                                                                    r'[0-9]'))
+                                                                .toList()[2]
+                                                                .toString();
                                                         var persianLetterIndex =
                                                             plateAlphabet.keys
                                                                 .toList()
-                                                                .indexOf(charechter);
+                                                                .indexOf(
+                                                                    charechter);
                                                         var persianCharechter =
                                                             plateAlphabet.values
                                                                 .elementAt(
                                                                     persianLetterIndex);
-                  
+
                                                         persianAlhpabet =
                                                             persianCharechter;
-                                                        engishAlphabet = charechter;
-                  
+                                                        engishAlphabet =
+                                                            charechter;
+
                                                         firstTwoDigit = plateNum
                                                             .split(RegExp(
                                                                 r'[a-z,A-Z]'))[0]
@@ -211,14 +225,16 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                                                                 r'[a-z,A-Z]'))[1]
                                                             .substring(3, 5);
                                                       }
-                  
+
                                                       await showAdaptiveDialog(
                                                         context: context,
                                                         builder: (context) =>
                                                             add_or_edit_person(
                                                                 name: name,
-                                                                lastName: lastName,
-                                                                carName: carName,
+                                                                lastName:
+                                                                    lastName,
+                                                                carName:
+                                                                    carName,
                                                                 firstTwoDigit:
                                                                     firstTwoDigit,
                                                                 threeDigit:
@@ -228,7 +244,8 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                                                                 role: role,
                                                                 arvandDigits:
                                                                     arvandDigits,
-                                                                isArvand: isArvand,
+                                                                isArvand:
+                                                                    isArvand,
                                                                 isEdit: isEdit,
                                                                 index: index,
                                                                 isDiscover:
@@ -241,10 +258,11 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                                                                     .kcontroller),
                                                       );
                                                     },
-                                                    hoverColor: const Color.fromARGB(
-                                                        255, 29, 14, 55),
-                                                    icon:
-                                                        Icon(Icons.add_box_outlined),
+                                                    hoverColor:
+                                                        const Color.fromARGB(
+                                                            255, 29, 14, 55),
+                                                    icon: Icon(
+                                                        Icons.add_box_outlined),
                                                     color: Colors.white70,
                                                     iconSize: 36,
                                                   ),
@@ -254,29 +272,39 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                                     VerticalDivider(
                                       color: Colors.black,
                                     ),
-                                    Expanded(
-                                        child: Center(
-                                            child: Container(
-                                      child: Text(
-                                        Get.find<cameraController>().cameras.isEmpty
-                                            ? '-'
-                                            : Get.find<cameraController>()
-                                                        .cameras
-                                                        .firstWhere(
-                                                          (element) =>
-                                                              element.path ==
-                                                              widget
-                                                                  .dcontroller
-                                                                  .entries[index]
-                                                                  .rtpath,
-                                                        )
-                                                        .gate ==
-                                                    "exit"
-                                                ? "دوربین خروجی"
-                                                : "دوربین ورودی",
-                                        style: TextStyle(
-                                            color: Colors.white, fontSize: 12.sp),
-                                      ),
+                                    Expanded(child: Center(child: Container(
+                                      child: Builder(builder: (context) {
+                                        try {
+                                          return Text(
+                                            Get.find<cameraController>()
+                                                    .cameras
+                                                    .isEmpty
+                                                ? '-'
+                                                : Get.find<cameraController>()
+                                                    .cameras
+                                                    .firstWhere(
+                                                      (element) =>
+                                                          element.path ==
+                                                          widget
+                                                              .dcontroller
+                                                              .entries[index]
+                                                              .rtpath,
+                                                    )
+                                                    .name
+                                                    .toString(),
+                                            style: TextStyle(
+                                                color:   Colors.white,
+                                                fontSize: 12.sp),
+                                          );
+                                        } catch (e) {
+                                          return Text(
+                                            "دوربین",
+                                            style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12.sp),
+                                          );
+                                        }
+                                      }),
                                     ))),
                                     VerticalDivider(
                                       color: Colors.black,
@@ -286,9 +314,10 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                                       height: 50,
                                       child: IconButton(
                                           onPressed: () async {
-                                            await pb.collection('database').delete(
-                                                widget
-                                                    .dcontroller.entries[index].id!);
+                                            await pb
+                                                .collection('database')
+                                                .delete(widget.dcontroller
+                                                    .entries[index].id!);
                                           },
                                           icon: Icon(
                                             Icons.delete,
@@ -309,25 +338,44 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                       reverse: false,
                       itemCount: widget.dcontroller.entries.length),
                 ),
-              Container(
-                margin: EdgeInsets.all(10),
-                width: 450,
-                
-                child: ElevatedButton(
-                  
-                  style: TextButton.styleFrom(
-                    backgroundColor: purpule
-
-                  ),
-                  onPressed: (){
-                  widget.dcontroller.inilazedPage=widget.dcontroller.inilazedPage+1;
-                  widget.dcontroller.fetchFirstData(widget.dcontroller.inilazedPage, 30);
-                }, child: Text("بار گزاری بیشتر",style: TextStyle(color: Colors.white),)),
-              )
+                Container(
+                  margin: EdgeInsets.all(10),
+                  width: 450,
+                  child: ElevatedButton(
+                      style: TextButton.styleFrom(backgroundColor: purpule),
+                      onPressed: () {
+                        widget.dcontroller.inilazedPage =
+                            widget.dcontroller.inilazedPage + 1;
+                        widget.dcontroller.fetchFirstData(
+                            widget.dcontroller.inilazedPage, 30);
+                      },
+                      child: Text(
+                        "بار گزاری بیشتر",
+                        style: TextStyle(color: Colors.white),
+                      )),
+                )
               ],
             ),
             height: 450,
           ),
         )));
+  }
+
+  bool isAllowed(index) {
+    var role=widget
+        .kcontroller
+        .knowPerson[widget.kcontroller.knowPerson.indexWhere(
+      (element) =>
+          element.plateNumber == widget.dcontroller.entries[index].plateNum,
+    )]
+        .role;
+        if (role=='مجاز'){
+          return true;
+        }
+        else{
+          return false;
+        }
+
+ 
   }
 }

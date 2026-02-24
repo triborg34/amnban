@@ -34,13 +34,14 @@ class GeneralSetting extends StatelessWidget {
                 "rfidport": int.parse(scontroller.rfportConroller.text),
                 "alarm": scontroller.isAlarm.value,
                 "quality": (scontroller.quality.value).toInt(),
-                'rfconnect':scontroller.rfconnect.value
+                'rfconnect':scontroller.rfconnect.value,
+                'notif':scontroller.isNotif.value
               };
 
               final record = await pb
                   .collection('setting')
                   .update(scontroller.settings.first.id!, body: body);
-              print(record.data);
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("ذخیره شد ${record.id}",  textDirection: TextDirection.rtl,)));
             },
             child: Text("ذخیره"))
       ],

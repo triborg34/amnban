@@ -137,7 +137,7 @@ class reportController extends GetxController {
   TextEditingController firstTwoDigit = TextEditingController();
   TextEditingController threeDigit = TextEditingController();
   TextEditingController lastTwoDigit = TextEditingController();
-  TextEditingController arvandDigit=TextEditingController();
+  TextEditingController arvandDigit = TextEditingController();
 
   var pickerPlate = ''.obs;
 
@@ -148,7 +148,7 @@ class reportController extends GetxController {
   var isDate = false.obs;
   var isTime = false.obs;
   var isCompleted = false.obs;
-  var isLoading=false.obs;
+  var isLoading = false.obs;
   var isArvand = false.obs;
 
   inilazed() {
@@ -228,25 +228,41 @@ class knowPersonController extends GetxController {
 class databaseController extends GetxController {
   var entries = <databaseClass>[].obs;
   var tableContect = databaseClass().obs;
+  var todayCount = 0.obs;
+  var goodPlate = 0.obs;
+  var badPlate = 0.obs;
+  var todayunallowed = <databaseClass>[];
+  var todayallowd = <databaseClass>[];
   var selectedIndex = (-1).obs;
-  int inilazedPage=1;
+  int inilazedPage = 1;
+  var knowPersone = Get.find<knowPersonController>().knowPerson;
 
   void startSub() {
     pb.collection('database').subscribe(
       '*',
       (e) {
         if (e.action == 'create') {
-          entries.insert(0,databaseClass.fromJson(e.record!.data));
+          entries.insert(0, databaseClass.fromJson(e.record!.data));
           if (entries.length > 30) {
-            entries.removeAt(entries.length -1);
+            entries.removeAt(entries.length - 1);
+          }
+          todayCount.value++;
+          if (e.record!.data['plateNum'].length >= 7) {
+            goodPlate.value++;
+          } else {
+            badPlate.value++;
           }
 
           alarmPlay(entries.first);
-          relayAutomatic(entries.first,);
+          relayAutomatic(
+            entries.first,
+          );
+          notifPlay(entries.first);
         } else if (e.action == 'delete') {
           entries.removeWhere(
             (element) => element.id == e.record!.id,
           );
+          todayCount.value--;
         } else {
           int index =
               entries.indexWhere((element) => element.id == e.record!.id);
@@ -258,24 +274,54 @@ class databaseController extends GetxController {
     );
   }
 
-  fetchFirstData(int inpage,int inperpage) async {
+  fetchFirstData(int inpage, int inperpage) async {
     final mList = await pb.collection('database').getList(
-      page: inpage,
-      perPage: 30,
-
+          page: inpage,
+          perPage: 30,
           sort: '-created',
-
         );
     for (var json in mList.items) {
       entries.add(databaseClass.fromJson(json.data));
     }
     tableContect.value = entries.first;
   }
-  
+
+  fetchCountData() async {
+    var day =
+        DateTime.now().day < 10 ? "0${DateTime.now().day}" : DateTime.now().day;
+    var month = DateTime.now().month < 10
+        ? "0${DateTime.now().month}"
+        : DateTime.now().month;
+    var todayISO = "${DateTime.now().year}-${month}-${day}";
+
+    final records = await pb
+        .collection('database')
+        .getFullList(filter: 'eDate = "${todayISO}"');
+    todayCount.value = records.length;
+    for (var data in records) {
+      if (data.data['plateNum'].length >= 7) {
+        goodPlate.value++;
+      } else {
+        badPlate.value++;
+      }
+    }
+    for (var data in records) {
+      for (var k in knowPersone) {
+        if (data.data['plateNum'] == k.plateNumber) {
+          if (k.role == "مجاز") {
+            todayallowd.add(databaseClass.fromJson(data.data));
+          } else {
+            todayunallowed.add(databaseClass.fromJson(data.data));
+          }
+        }
+      }
+    }
+  }
 
   @override
   void onReady() async {
-    await fetchFirstData(inilazedPage,30);
+    await fetchFirstData(inilazedPage, 30);
+    await fetchCountData();
     startSub();
     super.onReady();
   }
@@ -295,6 +341,7 @@ class settingController extends GetxController {
   var rfconnect = false.obs;
 
   var isAlarm = false.obs;
+  var isNotif = false.obs;
 
   var isUsers = false.obs;
   var isGeneral = false.obs;
@@ -340,6 +387,7 @@ class settingController extends GetxController {
     isrlTwo.value = settings.first.rl2!;
     rfconnect.value = settings.first.rfconnect!;
     isAlarm.value = settings.first.alarm!;
+    isNotif.value = settings.first.notif!;
   }
 
   @override

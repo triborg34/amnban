@@ -11,6 +11,7 @@ import 'package:get/get.dart';
 import 'package:pocketbase/pocketbase.dart';
 import 'package:http/http.dart' as http;
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_web_notification_platform/flutter_web_notification_platform.dart';
 
 List<GetPage> pages = [
   GetPage(name: '/', page: () => MainScreen()),
@@ -30,15 +31,16 @@ List<String> tabs = role == 'ناظر'
     ? ['خانه', "گزارشات", 'افراد'].reversed.toList()
     : ['خانه', "گزارشات", 'دوربین', 'افراد', "تنظیمات"].reversed.toList();
 
+final PlatformNotification platformNotification = PlatformNotificationWeb();
 void onRelayOne() async {
   Uri uri = Uri.parse("http://${url}:${port}/utils/iprelay");
 
   await http.post(uri,
-   headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-    },
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
       body: jsonEncode(<String, String>{
-        'ip':  Get.find<settingController>().settings.last.rfidip!,
+        'ip': Get.find<settingController>().settings.last.rfidip!,
         'port': Get.find<settingController>().settings.last.rfidport.toString(),
         'username': "admin",
         'password': "admin",
@@ -50,16 +52,46 @@ void onRelayTwo() async {
   Uri uri = Uri.parse("http://${url}:${port}/utils/iprelay");
 
   await http.post(uri,
-   headers: <String, String>{
-      'Content-Type': 'application/json; charset=UTF-8',
-    },
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
       body: jsonEncode(<String, String>{
-        'ip':  Get.find<settingController>().settings.last.rfidip!,
+        'ip': Get.find<settingController>().settings.last.rfidip!,
         'port': Get.find<settingController>().settings.last.rfidport.toString(),
         'username': "admin",
         'password': "admin",
         'relay_number': "2"
       }));
+}
+
+void notifPlay(databaseClass entry) {
+  if (Get.find<knowPersonController>()
+      .knowPerson
+      .where(
+        (element) => element.plateNumber == entry.plateNum,
+      )
+      .isNotEmpty) {
+    if (Get.find<knowPersonController>()
+            .knowPerson
+            .where(
+              (element) => element.plateNumber == entry.plateNum,
+            )
+            .first
+            .role !=
+        "مجاز") {
+      Get.find<databaseController>().todayunallowed.add(entry);
+      if (Get.find<settingController>().isNotif.value) {
+        platformNotification.sendNotification(
+            'ورود غیر مجاز', 'پلاک\n${entry.plateNum}');
+      }
+    } else {
+      Get.find<databaseController>().todayallowd.add(entry);
+      if (Get.find<settingController>().isNotif.value) {
+        platformNotification.sendNotification(
+            'ورود  مجاز', 'پلاک\n${entry.plateNum}');
+      }
+    }
+  }
 }
 
 void alarmPlay(databaseClass entry) {
@@ -90,7 +122,6 @@ void relayAutomatic(databaseClass entry) {
           (element) => element.plateNumber == entry.plateNum,
         )
         .isNotEmpty) {
-        
       if (Get.find<settingController>().isrlOne.value &&
           Get.find<settingController>().isrlTwo.value) {
         onRelayOne();

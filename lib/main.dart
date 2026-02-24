@@ -26,10 +26,12 @@ class MyApp extends StatelessWidget {
         getPages: pages,
         home: SplashScreen(),
         onInit: () async {
+
           var host = getNetworkInfo();
           url = host['hostname'];
           port=host['port'];
-          // port='8009';
+       
+          port='8000';
 
         },
       ),

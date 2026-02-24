@@ -47,6 +47,7 @@ class Detailedscreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(15),
                   child: EasyImageView(
                     imageProvider: NetworkImage(
+                      
                       "http://${url}:8090/api/files/database/${selectedModel.id}/${selectedModel.scrnPath}",
                     ),
                   ),

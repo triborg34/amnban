@@ -7,8 +7,8 @@ class MyBindings extends Bindings {
     Get.put(mainPageConroller());
     Get.put(videoFeedController());
     Get.put(cameraController());
-    Get.put(databaseController());
     Get.put(knowPersonController());
+    Get.put(databaseController());
     Get.put(reportController());
     Get.put(settingController());
     Get.put(userController());

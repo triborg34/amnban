@@ -224,12 +224,41 @@ class SettingBox extends StatelessWidget {
                                 scontroller.isAlarm.value = value;
                                 ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
-                                        content: Text("فعال شد",
+                                        content: Text(value ? " فعال شد" : "غیر فعال شد",
                                             textDirection: TextDirection.rtl)));
                               },
                             )),
+                            
                       ],
                     )),
+                    SizedBox(height: 15,),
+                            Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 100,
+                          child: Text(
+                            "فعال سازی هشدار",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                        Obx(() => Switch(
+                              value: scontroller.isNotif.value,
+                              onChanged: (value) {
+                                platformNotification.requestPermission();
+                                scontroller.isNotif.value = value;
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                        content: Text(value ? " فعال شد" : "غیر فعال شد",
+                                            textDirection: TextDirection.rtl)));
+                              },
+                            )),
+                            
+                      ],
+                    )),
+                    
+                    
               ]),
             ),
           ))
