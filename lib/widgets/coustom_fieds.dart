@@ -56,7 +56,7 @@ class CoustomTextField2 extends StatelessWidget {
           filled: true,
           fillColor: Color.fromARGB(255, 25, 32, 71),
           hintText: hint,
-          hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+          hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
           hintTextDirection: hint.toLowerCase() != 'نام'
               ? TextDirection.ltr
               : TextDirection.rtl,

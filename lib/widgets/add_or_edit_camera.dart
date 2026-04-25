@@ -118,7 +118,7 @@ class AddOrEditCamera extends StatelessWidget {
                                         borderSide: BorderSide(
                                             color: Colors.transparent))),
                                 borderRadius: BorderRadius.circular(15),
-                                value: ccontroller.gateWayc.value,
+                                initialValue: ccontroller.gateWayc.value,
                                 items: [
                                   DropdownMenuItem(
                                       value: "entre", child: Text("ورود",style: TextStyle(),)),

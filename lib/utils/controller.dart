@@ -8,6 +8,7 @@ import 'package:amnban/models/userClass.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+// ignore: deprecated_member_use
 import 'dart:html' as html;
 import 'package:http/http.dart' as http;
 

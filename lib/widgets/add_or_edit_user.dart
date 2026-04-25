@@ -105,7 +105,7 @@ class add_or_edit_user extends StatelessWidget {
                           border: OutlineInputBorder(
                               borderSide: BorderSide(color: Colors.black))),
                       borderRadius: BorderRadius.circular(15),
-                      value: ucontroller.accsesslvl.value,
+                      initialValue: ucontroller.accsesslvl.value,
                       items: [
                         DropdownMenuItem(
                             value: "مدیر",

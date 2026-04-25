@@ -151,7 +151,7 @@ class add_or_edit_person extends StatelessWidget {
                             border: OutlineInputBorder(
                                 borderSide:
                                     BorderSide(color: Colors.transparent))),
-                        value: kcontroller.role.value,
+                        initialValue: kcontroller.role.value,
                         onChanged: (value) {
                           kcontroller.role.value = value!;
                         },

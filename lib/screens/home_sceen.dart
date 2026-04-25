@@ -2,19 +2,14 @@ import 'package:amnban/screens/details_screen.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/widgets/arvandpelak.dart';
-
 import 'package:amnban/widgets/extended_table.dart';
-
 import 'package:amnban/widgets/data_base_entries.dart';
 import 'package:amnban/widgets/lisancepage.dart';
-
 import 'package:amnban/widgets/video_box.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:persian_number_utility/persian_number_utility.dart';
-
 
 class HomeSceen extends StatelessWidget {
   HomeSceen({
@@ -80,6 +75,7 @@ class HomeSceen extends StatelessWidget {
                 height: 15,
               ),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 textDirection: TextDirection.rtl,
                 children: [
                   Container(
@@ -128,7 +124,8 @@ class HomeSceen extends StatelessWidget {
                               ),
                               TextButton(
                                   onPressed: () async {
-                                    await showAmar(context,dcontroller.todayallowd);
+                                    await showAmar(
+                                        context, dcontroller.todayallowd);
                                   },
                                   child: Text(
                                     "لیست پلاک های مجاز امروز",
@@ -139,9 +136,9 @@ class HomeSceen extends StatelessWidget {
                                 height: 5,
                               ),
                               TextButton(
-                                  onPressed: () async{
-
- await showAmar(context,dcontroller.todayunallowed);
+                                  onPressed: () async {
+                                    await showAmar(
+                                        context, dcontroller.todayunallowed);
                                   },
                                   child: Text(
                                     "لیست پلاک های غیر مجاز امروز",
@@ -150,9 +147,65 @@ class HomeSceen extends StatelessWidget {
                                   )),
                             ],
                           ))),
-                  Expanded(
-                    child: Container(color: Colors.green, child: Column()),
+                  SizedBox(
+                    width: 15,
                   ),
+                  Obx(
+                    () {
+                      if (dcontroller.todayCount.value == 0) {
+                        return SizedBox.shrink();
+                      } else {
+                        return Container(
+                          color: Colors.transparent,
+                          width: 300,
+                          height: 300,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              barChartWidget(
+                                total: dcontroller.todayCount.value,
+                                portiant: dcontroller.goodPlate.value,
+                                title: "سالم",
+                                color: Colors.red,
+                              ),
+                              SizedBox(
+                                width: 5,
+                              ),
+                              barChartWidget(
+                                total: dcontroller.todayCount.value,
+                                portiant: dcontroller.badPlate.value,
+                                title: "مخدوش",
+                                color: Colors.yellow,
+                              ),
+                              SizedBox(
+                                width: 5,
+                              ),
+                              barChartWidget(
+                                total: dcontroller.todayCount.value,
+                                portiant: dcontroller.todayallowd.length,
+                                title: "مجاز",
+                                color: Colors.blue,
+                              ),
+                              SizedBox(
+                                width: 5,
+                              ),
+                              barChartWidget(
+                                total: dcontroller.todayCount.value,
+                                portiant: dcontroller.todayunallowed.length,
+                                title: "غیر مجاز",
+                                color: Colors.cyan,
+                              )
+                            ],
+                          ),
+                        );
+                      }
+                    },
+                  )
+                  // dcontroller.todayCount.value == 0
+                  //     ? SizedBox.shrink()
+                  //     :
+                  //
+                  //                 ),
                 ],
               ),
               Spacer(),
@@ -180,8 +233,7 @@ class HomeSceen extends StatelessWidget {
     );
   }
 
-  Future<dynamic> showAmar(BuildContext context,var data) {
- 
+  Future<dynamic> showAmar(BuildContext context, var data) {
     return showDialog(
       context: context,
       builder: (context) {
@@ -197,8 +249,7 @@ class HomeSceen extends StatelessWidget {
               scrollDirection: Axis.vertical,
               itemBuilder: (context, index) => GestureDetector(
                 onTap: () {
-                 
-                  Get.to(Detailedscreen(
+                  Get.to(() => Detailedscreen(
                       selectedModel: data[index],
                       index: index,
                       kcontroller: kcontroller));
@@ -213,10 +264,9 @@ class HomeSceen extends StatelessWidget {
                     children: [
                       if (data[index].isarvand == 'arvand')
                         SizedBox(
-                          width: 100,
+                          width: 150,
                           height: 50,
-                          child: ArvandPelak2(
-                              entry: data[index]),
+                          child: ArvandPelak2(entry: data[index]),
                         )
                       else
                         SizedBox(
@@ -231,8 +281,7 @@ class HomeSceen extends StatelessWidget {
                         height: 50,
                         child: Center(
                           child: Text(
-                            data[index].eDate!.toString().toPersianDate()
-                                ,
+                            data[index].eDate!.toString().toPersianDate(),
                             style: TextStyle(color: Colors.white),
                           ),
                         ),
@@ -245,7 +294,7 @@ class HomeSceen extends StatelessWidget {
                         height: 50,
                         child: Center(
                           child: Text(
-                           data[index].eTime!,
+                            data[index].eTime!,
                             style: TextStyle(color: Colors.white),
                           ),
                         ),
@@ -261,8 +310,7 @@ class HomeSceen extends StatelessWidget {
                             kcontroller
                                 .knowPerson[kcontroller.knowPerson.indexWhere(
                               (element) =>
-                                  element.plateNumber ==
-                                  data[index].plateNum,
+                                  element.plateNumber == data[index].plateNum,
                             )]
                                 .name!,
                             style: TextStyle(color: Colors.white),
@@ -272,6 +320,7 @@ class HomeSceen extends StatelessWidget {
                     ],
                   ),
                   decoration: BoxDecoration(
+                    color: selecetpurpule,
                     border: Border.all(color: Colors.black),
                   ),
                 ),
@@ -311,3 +360,95 @@ class amarWidget extends StatelessWidget {
         ));
   }
 }
+
+class barChartWidget extends StatelessWidget {
+  barChartWidget(
+      {super.key,
+      required this.total,
+      required this.portiant,
+      required this.title,
+      required this.color});
+
+  int total;
+  int portiant;
+  String title;
+  Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    int cacul=0;
+    try{
+       cacul = caculate(total, portiant);
+   
+    }catch(e){
+      cacul=0;
+    }
+    
+    
+    return Column(mainAxisAlignment: MainAxisAlignment.end, children: [
+      Container(
+        width: 50,
+        child: Center(child: Text("${cacul}%")),
+        color: color,
+        height: cacul==0 ? 0 : cacul.toDouble() + 20,
+      ),
+      SizedBox(
+        height: 15,
+      ),
+      Text(
+        title,
+        style: TextStyle(color: Colors.white),
+      )
+    ]);
+  }
+
+  int caculate(int total, int section) {
+    double res = section / total;
+    return (res * 100).toInt();
+  }
+}
+
+
+
+/*
+
+
+PieChart(PieChartData(sections: [
+                        PieChartSectionData(
+                          radius: 50,
+                            titleStyle: TextStyle(color: Colors.white),
+                            showTitle: true,
+                            title:
+                                "سالم\n %${(caculate(dcontroller.todayCount.value, dcontroller.goodPlate.value) * 100).toInt()}",
+                            value: caculate(dcontroller.todayCount.value,
+                                dcontroller.goodPlate.value),
+                            color: Colors.red),
+                        PieChartSectionData(
+                          radius: 50,
+                            titleStyle: TextStyle(color: Colors.white),
+                            showTitle: true,
+                            title:
+                                "مخدوش \n%${(caculate(dcontroller.todayCount.value, dcontroller.badPlate.value) * 100).toInt()}",
+                            value: caculate(dcontroller.todayCount.value,
+                                dcontroller.badPlate.value),
+                            color: Colors.green),
+                             PieChartSectionData(
+                              radius: 50,
+                            titleStyle: TextStyle(color: Colors.black),
+                            showTitle: true,
+                            title:
+                                "مجاز \n%${(caculate(dcontroller.todayCount.value, dcontroller.todayallowd.length) * 100).toInt()}",
+                            value: caculate(dcontroller.todayCount.value,
+                                dcontroller.todayallowd.length),
+                            color: Colors.white),
+                                    PieChartSectionData(
+                                      radius: 50,
+                            titleStyle: TextStyle(color: Colors.black),
+                            showTitle: true,
+                            title:
+                                "غیر مجاز \n%${(caculate(dcontroller.todayCount.value, dcontroller.todayunallowed.length) * 100).toInt()}",
+                            value: caculate(dcontroller.todayCount.value,
+                                dcontroller.todayunallowed.length),
+                            color: Colors.cyan),
+                      ]))
+*/

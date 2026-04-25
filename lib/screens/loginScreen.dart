@@ -137,7 +137,7 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
                                         color: Colors.purple),
                                     hintText: 'نام کاربری',
                                     filled: true,
-                                    fillColor: Colors.white.withOpacity(0.1),
+                                    fillColor: Colors.white.withValues(alpha: 0.1),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(15),
                                       borderSide: BorderSide.none,
@@ -172,7 +172,7 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
                                         Icon(Icons.lock, color: Colors.purple),
                                     hintText: 'رمز عبور',
                                     filled: true,
-                                    fillColor: Colors.white.withOpacity(0.1),
+                                    fillColor: Colors.white.withValues(alpha:0.1),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(15),
                                       borderSide: BorderSide.none,

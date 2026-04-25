@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
         initialBinding: MyBindings(),
         debugShowCheckedModeBanner: false,
         title: "AmnBan",
-        theme: ThemeData(fontFamily: 'byekan'),
+        theme: ThemeData(fontFamily: 'byekan',fontFamilyFallback: ['arial']),
         getPages: pages,
         home: SplashScreen(),
         onInit: () async {
@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
           url = host['hostname'];
           port=host['port'];
        
-          port='8000';
+
 
         },
       ),
