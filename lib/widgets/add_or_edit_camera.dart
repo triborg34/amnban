@@ -78,7 +78,7 @@ class AddOrEditCamera extends StatelessWidget {
                 Center(
                   child: Text(
                     isEditing ? "ویرایش دوربین" : "اضافه کردن دوربین",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,color: Colors.white),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,color: Colors.white,fontFamily: 'nazanin',fontFamilyFallback: ['arial']),
                   ),
                 ),
                 SizedBox(
@@ -101,7 +101,7 @@ class AddOrEditCamera extends StatelessWidget {
                           child: Directionality(
                             textDirection: TextDirection.rtl,
                             child: DropdownButtonFormField(
-                            style: TextStyle(color: Colors.white),
+                            style: TextStyle(color: Colors.white,fontFamily: 'nazanin',fontFamilyFallback: ['arial']),
                             dropdownColor:Color.fromARGB(255, 25, 32, 71) ,
                                 decoration: InputDecoration(
                                   
@@ -121,7 +121,7 @@ class AddOrEditCamera extends StatelessWidget {
                                 initialValue: ccontroller.gateWayc.value,
                                 items: [
                                   DropdownMenuItem(
-                                      value: "entre", child: Text("ورود",style: TextStyle(),)),
+                                      value: "entre", child: Text("ورود",style: TextStyle(fontFamily: 'nazanin',fontFamilyFallback: ['arial']),)),
                                   DropdownMenuItem(
                                       value: "exit", child: Text("خروج"))
                                 ],
@@ -174,7 +174,7 @@ class AddOrEditCamera extends StatelessWidget {
                   height: 50,
                   child: ElevatedButton(
                       style:
-                          TextButton.styleFrom(backgroundColor: Color.fromARGB(255, 25, 32, 71)),
+                          TextButton.styleFrom(backgroundColor: Color.fromARGB(255, 25, 32, 71),textStyle: TextStyle(fontFamily: 'nazanin',fontFamilyFallback: ['arial'])),
                       onPressed: () async {
                         if (isDiscovery) {
                           var uri =
@@ -248,7 +248,7 @@ class AddOrEditCamera extends StatelessWidget {
                       },
                       child: Text(
                         "ثبت",
-                        style: TextStyle(color: Colors.white, fontSize: 18),
+                        style: TextStyle(color: Colors.white, fontSize: 18,fontFamily: 'nazanin',fontFamilyFallback: ['arial']),
                       )),
                 ))
               ],

@@ -223,7 +223,7 @@ class Reportscreen extends StatelessWidget {
                 firstChild: rcontroller.isLoading.value
                     ? Center(
                         child: SizedBox(
-                            width:100,
+                            width: 100,
                             height: 100,
                             child: CircularProgressIndicator()),
                       )
@@ -276,8 +276,16 @@ class Reportscreen extends StatelessWidget {
                                   width: 12.w,
                                   child: Center(
                                     child: InkWell(
-                                        onTap: () {
+                                        onTap: () async {
+                                          var record = await await pb
+                                              .collection('database')
+                                              .getFullList(
+                                                filter:
+                                                    'plateNum="${rcontroller
+                                                    .selectedModel[index].plateNum}"',
+                                              );
                                           Get.to(() => Detailedscreen(
+                                            count: record.length,
                                                 kcontroller: kcontroller,
                                                 selectedModel: rcontroller
                                                     .selectedModel[index],
@@ -424,33 +432,34 @@ class Reportscreen extends StatelessWidget {
                                         ? SizedBox(
                                             child: Text("No Camera"),
                                           )
-                                        : Builder(
-                                          builder: (context) {
+                                        : Builder(builder: (context) {
                                             try {
-                                                return Text(
+                                              return Text(
                                                 Get.find<cameraController>()
-                                                            .cameras
-                                                            .firstWhere(
-                                                              (element) =>
-                                                                  element.path ==
-                                                                  rcontroller
-                                                                      .selectedModel[
-                                                                          index]
-                                                                      .rtpath,
-                                                            )
-                                                            .name.toString(),
+                                                    .cameras
+                                                    .firstWhere(
+                                                      (element) =>
+                                                          element.path ==
+                                                          rcontroller
+                                                              .selectedModel[
+                                                                  index]
+                                                              .rtpath,
+                                                    )
+                                                    .name
+                                                    .toString(),
                                                 style: TextStyle(
                                                     color: Colors.white,
                                                     fontSize: 18),
                                               );
                                             } catch (e) {
-                                              return Text("دوربین",          style: TextStyle(
+                                              return Text(
+                                                "دوربین",
+                                                style: TextStyle(
                                                     color: Colors.white,
-                                                    fontSize: 18),);
+                                                    fontSize: 18),
+                                              );
                                             }
-                                          
-                                          }
-                                        ),
+                                          }),
                                   )),
                               Container(
                                   padding: EdgeInsets.all(3.0),
@@ -649,30 +658,34 @@ class Reportscreen extends StatelessWidget {
                             ),
                       ),
                       pw.Container(
-                        height: 30,
-                        width: 75,
-                        alignment: pw.Alignment.center,
-                        decoration: pw.BoxDecoration(border: pw.Border.all()),
-                        child: Get.find<cameraController>().cameras.length == 0
-                            ? pw.Text("No Camera")
-                            :pw.Builder(builder: (context) {
-                              try {
-                                 return pw.Text(
-                                Get.find<cameraController>()
-                                            .cameras
-                                            .firstWhere(
-                                              (element) =>
-                                                  element.path == i.rtpath,
-                                            )
-                                            .name.toString(),
-                                style: pw.TextStyle(font: ttf) // Apply the font
-                                );
-                              } catch (e) {
-                                return pw.Text("دوربین",     style: pw.TextStyle(font: ttf) );
-                              }
-                             
-                            },) 
-                      ),
+                          height: 30,
+                          width: 75,
+                          alignment: pw.Alignment.center,
+                          decoration: pw.BoxDecoration(border: pw.Border.all()),
+                          child: Get.find<cameraController>().cameras.length ==
+                                  0
+                              ? pw.Text("No Camera")
+                              : pw.Builder(
+                                  builder: (context) {
+                                    try {
+                                      return pw.Text(
+                                          Get.find<cameraController>()
+                                              .cameras
+                                              .firstWhere(
+                                                (element) =>
+                                                    element.path == i.rtpath,
+                                              )
+                                              .name
+                                              .toString(),
+                                          style: pw.TextStyle(
+                                              font: ttf) // Apply the font
+                                          );
+                                    } catch (e) {
+                                      return pw.Text("دوربین",
+                                          style: pw.TextStyle(font: ttf));
+                                    }
+                                  },
+                                )),
                     ]))
                   : pw.SizedBox()
           ];
@@ -770,7 +783,7 @@ class Reportscreen extends StatelessWidget {
     for (var json in tempList) {
       rcontroller.selectedModel.add(databaseClass.fromJson(json.data));
     }
-    
+
     return true;
   }
 

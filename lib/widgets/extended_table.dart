@@ -38,9 +38,14 @@ class ExtendedTable extends StatelessWidget {
                       ? ArvandPelak(entry: dcontroller.tableContect.value)
                       : LicanceNumber(entry: dcontroller.tableContect.value)),
               InkWell(
-                onTap: () {
-                  print("?");
-                  Get.to(()=> Detailedscreen(
+                onTap: () async {
+                  var record =
+                      await await pb.collection('database').getFullList(
+                            filter: 'plateNum="${dcontroller.tableContect.value.plateNum}"',
+                          );
+                  
+                  Get.to(() => Detailedscreen(
+                    count: record.length,
                       selectedModel: dcontroller.tableContect.value,
                       index: index,
                       kcontroller: kcontroller));

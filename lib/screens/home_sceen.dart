@@ -69,6 +69,34 @@ class HomeSceen extends StatelessWidget {
                           dcontroller: dcontroller,
                           kcontroller: kcontroller),
                     )),
+              SizedBox(
+                height: 6,
+              ),
+              Get.find<settingController>().settings.last.isRfid! &&
+                      Get.find<settingController>().settings.last.rfconnect!
+                  ? Row(
+                      textDirection: TextDirection.rtl,
+                      children: [
+                        IconButton(
+                            onPressed: () => onRelayOne(),
+                            icon: Icon(
+                              Icons.door_back_door,
+                              semanticLabel: "Test",
+                              color: Colors.white,
+
+                            )),
+                        SizedBox(
+                          width: 25,
+                        ),
+                        IconButton(
+                            onPressed: () => onRelayTwo(),
+                            icon: Icon(
+                              Icons.door_front_door,
+                              color: Colors.white,
+                            ))
+                      ],
+                    )
+                  : SizedBox.shrink(),
 
               //TODO:ADD ALL NEW THINGS IN CONTROLLER
               SizedBox(
@@ -208,24 +236,6 @@ class HomeSceen extends StatelessWidget {
                   //                 ),
                 ],
               ),
-              Spacer(),
-              Get.find<settingController>().settings.last.isRfid! &&
-                      Get.find<settingController>().settings.last.rfconnect!
-                  ? Row(
-                      textDirection: TextDirection.rtl,
-                      children: [
-                        IconButton(
-                            onPressed: () => onRelayOne(),
-                            icon: Icon(Icons.door_back_door)),
-                        SizedBox(
-                          width: 25,
-                        ),
-                        IconButton(
-                            onPressed: () => onRelayTwo(),
-                            icon: Icon(Icons.door_front_door))
-                      ],
-                    )
-                  : SizedBox.shrink()
             ],
           ),
         ),
@@ -248,8 +258,14 @@ class HomeSceen extends StatelessWidget {
               ),
               scrollDirection: Axis.vertical,
               itemBuilder: (context, index) => GestureDetector(
-                onTap: () {
+                onTap: () async {
+                  var record =
+                      await await pb.collection('database').getFullList(
+                            filter:
+                                'plateNum="${data[index].plateNum}"',
+                          );
                   Get.to(() => Detailedscreen(
+                    count: record.length,
                       selectedModel: data[index],
                       index: index,
                       kcontroller: kcontroller));
@@ -376,21 +392,19 @@ class barChartWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    int cacul=0;
-    try{
-       cacul = caculate(total, portiant);
-   
-    }catch(e){
-      cacul=0;
+    int cacul = 0;
+    try {
+      cacul = caculate(total, portiant);
+    } catch (e) {
+      cacul = 0;
     }
-    
-    
+
     return Column(mainAxisAlignment: MainAxisAlignment.end, children: [
       Container(
         width: 50,
         child: Center(child: Text("${cacul}%")),
         color: color,
-        height: cacul==0 ? 0 : cacul.toDouble() + 20,
+        height: cacul == 0 ? 0 : cacul.toDouble() + 20,
       ),
       SizedBox(
         height: 15,

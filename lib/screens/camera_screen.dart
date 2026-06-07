@@ -44,7 +44,7 @@ class CameraScreen extends StatelessWidget {
                     ElevatedButton(
                         style: TextButton.styleFrom(
                             backgroundColor: purpule,
-                            textStyle: TextStyle(color: Colors.white)),
+                            textStyle: TextStyle(color: Colors.white,fontFamily: 'nazanin',fontFamilyFallback: ['arial'])),
                         onPressed: () async {
                           await showAdaptiveDialog(
                             context: context,
@@ -288,7 +288,7 @@ class CameraScreen extends StatelessWidget {
                     ElevatedButton(
                         style: TextButton.styleFrom(
                             backgroundColor: purpule,
-                            textStyle: TextStyle(color: Colors.white)),
+                            textStyle: TextStyle(color: Colors.white,fontFamily: 'nazanin',fontFamilyFallback: ['arial'])),
                         onPressed: () {
                           ccontroller.startDiscovery();
                  

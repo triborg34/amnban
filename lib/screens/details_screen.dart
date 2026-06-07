@@ -19,10 +19,14 @@ class Detailedscreen extends StatelessWidget {
   databaseClass selectedModel = databaseClass();
   knowPersonController kcontroller;
   int index;
-  Detailedscreen({required this.selectedModel, required this.index,required this.kcontroller});
+  int count;
+  Detailedscreen(
+      {required this.selectedModel,
+      required this.index,
+      required this.kcontroller,required this.count});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context)  {
     return Scaffold(
       appBar: AppBar(),
       backgroundColor: Colors.black,
@@ -35,6 +39,7 @@ class Detailedscreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+             
               Container(
                 margin: EdgeInsets.symmetric(vertical: 15),
                 alignment: Alignment.topCenter,
@@ -47,7 +52,6 @@ class Detailedscreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(15),
                   child: EasyImageView(
                     imageProvider: NetworkImage(
-                      
                       "http://${url}:8090/api/files/database/${selectedModel.id}/${selectedModel.scrnPath}",
                     ),
                   ),
@@ -66,23 +70,18 @@ class Detailedscreen extends StatelessWidget {
                 child: Row(
                   textDirection: TextDirection.rtl,
                   children: [
-
-                    
-                      Container(
-                              decoration: BoxDecoration(
-                                  border: Border(
-                                      right: BorderSide(color: purpule),
-                                      left: BorderSide(color: purpule))),
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 0, vertical: 5),
-                              width: 12.w,
-                              height: 48,
-                              child: selectedModel.isarvand == 'arvand'
-                                  ? ArvandPelak(entry: selectedModel)
-                                  : LicanceNumber(entry: selectedModel))
-                        ,
-                      
-
+                    Container(
+                        decoration: BoxDecoration(
+                            border: Border(
+                                right: BorderSide(color: purpule),
+                                left: BorderSide(color: purpule))),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 0, vertical: 5),
+                        width: 12.w,
+                        height: 48,
+                        child: selectedModel.isarvand == 'arvand'
+                            ? ArvandPelak(entry: selectedModel)
+                            : LicanceNumber(entry: selectedModel)),
                     Container(
                       decoration: BoxDecoration(
                           border: Border(left: BorderSide(color: purpule))),
@@ -107,11 +106,11 @@ class Detailedscreen extends StatelessWidget {
                             )
                             .isEmpty
                         ? "-"
-                        : kcontroller.knowPerson[kcontroller.knowPerson.indexWhere(
-                                  (element) =>
-                                      element.plateNumber ==
-                                      selectedModel.plateNum,
-                                )]
+                        : kcontroller
+                            .knowPerson[kcontroller.knowPerson.indexWhere(
+                            (element) =>
+                                element.plateNumber == selectedModel.plateNum,
+                          )]
                             .name!),
                     contactOfTable3(kcontroller.knowPerson
                             .where(
@@ -120,17 +119,18 @@ class Detailedscreen extends StatelessWidget {
                             )
                             .isEmpty
                         ? "-"
-                        : kcontroller.knowPerson[kcontroller.knowPerson.indexWhere(
-                                  (element) =>
-                                      element.plateNumber ==
-                                      selectedModel.plateNum,
-                                )]
+                        : kcontroller
+                            .knowPerson[kcontroller.knowPerson.indexWhere(
+                            (element) =>
+                                element.plateNumber == selectedModel.plateNum,
+                          )]
                             .carName!),
                     contactOfTable3(
                         selectedModel.platePercent.toString() + "%"),
-                    contactOfTable3(selectedModel.charPercent.toString() + "%"),
+                    contactOfTable3(count.toString()),
                     contactOfTable3(selectedModel.eDate!.toPersianDate()),
-                    contactOfTable3( selectedModel.eTime!)
+                    contactOfTable3(selectedModel.eTime!.toPersianDigit())
+                    
                   ],
                 ),
               ),
@@ -167,12 +167,12 @@ class Detailedscreen extends StatelessWidget {
                                             textDirection: pw.TextDirection.rtl,
                                             style: pw.TextStyle(font: ttf)),
                                         pw.Spacer(),
-                                              pw.Text(
+                                        pw.Text(
                                             ' ساعت : ${DateTime.now().hour.toString().toPersianDigit()}:${DateTime.now().minute.toString().toPersianDigit()}',
                                             style: pw.TextStyle(font: ttf),
                                             textDirection:
                                                 pw.TextDirection.rtl),
-                                                pw.Spacer(),
+                                        pw.Spacer(),
                                         pw.Text(
                                             'شماره قبض : ${Random().nextInt(200).toString().toPersianDigit()}',
                                             style: pw.TextStyle(font: ttf),
@@ -282,7 +282,7 @@ class Detailedscreen extends StatelessWidget {
                                           decoration: pw.BoxDecoration(
                                               border: pw.Border.all()),
                                           child: pw.Text(
-                                            kcontroller.knowPerson
+                                              kcontroller.knowPerson
                                                       .where(
                                                         (element) =>
                                                             element
@@ -292,14 +292,15 @@ class Detailedscreen extends StatelessWidget {
                                                       )
                                                       .isEmpty
                                                   ? "-"
-                                                  : kcontroller.knowPerson[kcontroller.knowPerson
+                                                  : kcontroller
+                                                      .knowPerson[kcontroller
+                                                          .knowPerson
                                                           .indexWhere(
-                                                            (element) =>
-                                                                element
-                                                                    .plateNumber ==
-                                                                selectedModel
-                                                                    .plateNum,
-                                                          )]
+                                                      (element) =>
+                                                          element.plateNumber ==
+                                                          selectedModel
+                                                              .plateNum,
+                                                    )]
                                                       .role!,
                                               style: pw.TextStyle(
                                                 font: ttf,
@@ -325,14 +326,15 @@ class Detailedscreen extends StatelessWidget {
                                                       )
                                                       .isEmpty
                                                   ? "-"
-                                                  : kcontroller.knowPerson[kcontroller.knowPerson
+                                                  : kcontroller
+                                                      .knowPerson[kcontroller
+                                                          .knowPerson
                                                           .indexWhere(
-                                                            (element) =>
-                                                                element
-                                                                    .plateNumber ==
-                                                                selectedModel
-                                                                    .plateNum,
-                                                          )]
+                                                      (element) =>
+                                                          element.plateNumber ==
+                                                          selectedModel
+                                                              .plateNum,
+                                                    )]
                                                       .carName!,
                                               style: pw.TextStyle(
                                                 font: ttf,
@@ -348,7 +350,7 @@ class Detailedscreen extends StatelessWidget {
                                           decoration: pw.BoxDecoration(
                                               border: pw.Border.all()),
                                           child: pw.Text(
-                                            kcontroller.knowPerson
+                                              kcontroller.knowPerson
                                                       .where(
                                                         (element) =>
                                                             element
@@ -358,14 +360,15 @@ class Detailedscreen extends StatelessWidget {
                                                       )
                                                       .isEmpty
                                                   ? "-"
-                                                  :kcontroller.knowPerson[kcontroller.knowPerson
+                                                  : kcontroller
+                                                      .knowPerson[kcontroller
+                                                          .knowPerson
                                                           .indexWhere(
-                                                            (element) =>
-                                                                element
-                                                                    .plateNumber ==
-                                                                selectedModel
-                                                                    .plateNum,
-                                                          )]
+                                                      (element) =>
+                                                          element.plateNumber ==
+                                                          selectedModel
+                                                              .plateNum,
+                                                    )]
                                                       .name!,
                                               style: pw.TextStyle(
                                                 font: ttf,
@@ -413,10 +416,12 @@ class Detailedscreen extends StatelessWidget {
                                           decoration: pw.BoxDecoration(
                                               border: pw.Border.all()),
                                           child: pw.Text(
-                                            selectedModel.isarvand=='arvand' ? selectedModel.plateNum!.toPersianDigit():
-                                              convertToPersianString(
-                                                  selectedModel.plateNum!,
-                                                  alphabetP2),
+                                              selectedModel.isarvand == 'arvand'
+                                                  ? selectedModel.plateNum!
+                                                      .toPersianDigit()
+                                                  : convertToPersianString(
+                                                      selectedModel.plateNum!,
+                                                      alphabetP2),
                                               style: pw.TextStyle(
                                                 font: ttf,
                                               ),
@@ -478,7 +483,6 @@ Container header3() {
             bottom: BorderSide(color: purpule),
             top: BorderSide(color: purpule))),
     child: Row(
-
       textDirection: TextDirection.rtl,
       children: [
         headerOftable3("شماره پلاک"),
@@ -486,7 +490,7 @@ Container header3() {
         headerOftable3(" نام و نام خانوادگی"),
         headerOftable3("نوع ماشین"),
         headerOftable3("درصد تشخیص پلاک"),
-        headerOftable3("درصد تشخیص حروف"),
+        headerOftable3("تعداد دیده شدن پلاک"),
         headerOftable3("تاریخ ورود"),
         headerOftable3("ساعت ورود")
       ],
@@ -507,7 +511,7 @@ Container headerOftable3(String title) {
       child: Center(
           child: Text(
         title,
-        style: TextStyle(color: Colors.white,fontSize: 10.sp),
+        style: TextStyle(color: Colors.white, fontSize: 10.sp),
       )));
 }
 
@@ -524,4 +528,3 @@ Container contactOfTable3(String title) {
         style: TextStyle(color: Colors.white, fontSize: 10.sp),
       )));
 }
-

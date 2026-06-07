@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
         initialBinding: MyBindings(),
         debugShowCheckedModeBanner: false,
         title: "AmnBan",
-        theme: ThemeData(fontFamily: 'byekan',fontFamilyFallback: ['arial']),
+        theme: ThemeData(fontFamily: 'byekan',fontFamilyFallback: ['arial','robot']),
         getPages: pages,
         home: SplashScreen(),
         onInit: () async {
