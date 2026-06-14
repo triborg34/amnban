@@ -77,23 +77,20 @@ class HomeSceen extends StatelessWidget {
                   ? Row(
                       textDirection: TextDirection.rtl,
                       children: [
-                        IconButton(
+                        TextButton(
                             onPressed: () => onRelayOne(),
-                            icon: Icon(
-                              Icons.door_back_door,
-                              semanticLabel: "Test",
-                              color: Colors.white,
+                            child: Text("درب یک",style: TextStyle(color: Colors.white),),
 
-                            )),
+                              
+                            
+
+                            ),
                         SizedBox(
                           width: 25,
                         ),
-                        IconButton(
+                        TextButton(
                             onPressed: () => onRelayTwo(),
-                            icon: Icon(
-                              Icons.door_front_door,
-                              color: Colors.white,
-                            ))
+                                  child: Text("درب دو",style: TextStyle(color: Colors.white)))
                       ],
                     )
                   : SizedBox.shrink(),

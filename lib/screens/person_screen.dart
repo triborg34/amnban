@@ -233,33 +233,44 @@ class PersonScreen extends StatelessWidget {
             SizedBox(
               height: 20,
             ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: ElevatedButton(
-                  onPressed: () async {
-                    await showAdaptiveDialog(
-                      context: context,
-                      builder: (context) {
-                        return add_or_edit_person(
-                          kcontroller: kcontroller,
-                          arvandDigits: '',
-                          carName: '',
-                          firstTwoDigit: '',
-                          isArvand: false,
-                          isDiscover: false,
-                          isEdit: false,
-                          lastName: '',
-                          lastTwoDigit: '',
-                          name: '',
-                          role: "مجاز",
-                          threeDigit: '',
-                          engishAlphabet: '',
-                          persianAlhpabet: '',
+            Row(textDirection: TextDirection.rtl,
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ElevatedButton(
+                      onPressed: () async {
+                        await showAdaptiveDialog(
+                          context: context,
+                          builder: (context) {
+                            return add_or_edit_person(
+                              kcontroller: kcontroller,
+                              arvandDigits: '',
+                              carName: '',
+                              firstTwoDigit: '',
+                              isArvand: false,
+                              isDiscover: false,
+                              isEdit: false,
+                              lastName: '',
+                              lastTwoDigit: '',
+                              name: '',
+                              role: "مجاز",
+                              threeDigit: '',
+                              engishAlphabet: '',
+                              persianAlhpabet: '',
+                            );
+                          },
                         );
                       },
-                    );
-                  },
-                  child: Text("اضافه کردن")),
+                      child: Text("اضافه کردن")),
+                ),
+                SizedBox(width: 15,),
+                ElevatedButton(onPressed: (){
+                  getBackup("registredDb");
+                }, child: Text("پشتیبان گیری"))  ,SizedBox(width: 15,),
+                      ElevatedButton(onPressed: (){
+                  restoreBackup("registredDb");
+                }, child: Text("بازگردانی "))             
+              ],
             )
           ],
         ),
