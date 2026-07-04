@@ -105,9 +105,9 @@ flutter:
       fonts:
         - asset: assets/fonts/arial.ttf
         
-    - family: robots
-    - fonts:
-        - asset: assets/fonts/robot.ttf
+    - family : robots
+      fonts:
+        - asset: assets/fonts/sans.ttf
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
