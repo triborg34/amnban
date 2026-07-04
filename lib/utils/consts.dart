@@ -6,7 +6,8 @@ import 'package:amnban/screens/main_screen.dart';
 import 'package:amnban/screens/splashScreen.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:flutter/material.dart';
-import 'dart:html' as html;
+import 'package:web/web.dart' as web;
+import 'dart:js_interop';
 
 import 'package:get/get.dart';
 import 'package:pocketbase/pocketbase.dart';
@@ -101,9 +102,9 @@ void alarmPlay(databaseClass entry) {
     if (Get.find<knowPersonController>()
         .knowPerson
         .where(
-          (element) => element.plateNumber != entry.plateNum,
+          (element) => element.plateNumber == entry.plateNum,
         )
-        .isNotEmpty) {
+        .isEmpty) {
       audioPlayer.play(UrlSource('assets/alarm.mp3'));
     }
 
@@ -158,51 +159,55 @@ void getBackup(String sourceCollectionName) async {
   final jsonString = jsonEncode(cleanedRecords);
 
   // Web: trigger download using HTML anchor element
-  html.AnchorElement(href: 'data:application/json;charset=utf-8,$jsonString')
+  final anchor = (web.document.createElement('a') as web.HTMLAnchorElement)
+    ..href = 'data:application/json;charset=utf-8,$jsonString'
     ..setAttribute(
-        'download', 'backup_${DateTime.now().millisecondsSinceEpoch}.json')
-    ..click();
+        'download', 'backup_${DateTime.now().millisecondsSinceEpoch}.json');
+  anchor.click();
   print('💾 Backup file downloaded.');
+}
+
+void _restoreFromJson(String jsonString, String targetCollectionName) async {
+  final List<dynamic> recordsData = jsonDecode(jsonString);
+  print('📥 Loaded ${recordsData.length} records from file.');
+
+  final targetPb = pb;
+  try {
+    int success = 0;
+    int fail = 0;
+    for (final data in recordsData) {
+      try {
+        await targetPb.collection(targetCollectionName).create(body: data);
+        success++;
+      } catch (e) {
+        fail++;
+        print('❌ Failed to create record: $e');
+      }
+    }
+    print('🎉 Restore complete: $success succeeded, $fail failed.');
+  } catch (error) {
+    print('🚨 Authentication error: $error');
+  }
 }
 
 void restoreBackup(String targetCollectionName) async {
 
-
   // Create a file input element and trigger the picker
-  final fileUploadInput = html.FileUploadInputElement()..accept = '.json';
+  final fileUploadInput = (web.document.createElement('input') as web.HTMLInputElement)
+    ..type = 'file'
+    ..accept = '.json';
   fileUploadInput.click();
 
-  fileUploadInput.onChange.listen((event) async {
-    final file = fileUploadInput.files?.first;
-    if (file == null) return;
+  fileUploadInput.addEventListener('change', ((web.Event event) {
+    final files = fileUploadInput.files;
+    if (files == null || files.length == 0) return;
+    final file = files.item(0)!;
 
-    final reader = html.FileReader();
+    final reader = web.FileReader();
     reader.readAsText(file);
-    reader.onLoadEnd.listen((_) async {
-      final jsonString = reader.result as String;
-      final List<dynamic> recordsData = jsonDecode(jsonString);
-      print('📥 Loaded ${recordsData.length} records from file.');
-
-      // Connect to target PocketBase
-      final targetPb = pb;
-      try {
-
-
-        int success = 0;
-        int fail = 0;
-        for (final data in recordsData) {
-          try {
-            await targetPb.collection(targetCollectionName).create(body: data);
-            success++;
-          } catch (e) {
-            fail++;
-            print('❌ Failed to create record: $e');
-          }
-        }
-        print('🎉 Restore complete: $success succeeded, $fail failed.');
-      } catch (error) {
-        print('🚨 Authentication error: $error');
-      }
-    });
-  });
+    reader.addEventListener('load', ((web.Event _) {
+      final jsonString = (reader.result as JSString).toDart;
+      _restoreFromJson(jsonString, targetCollectionName);
+    }) as web.EventListener);
+  }) as web.EventListener);
 }

@@ -5,6 +5,7 @@ import 'package:amnban/utils/network_info.dart';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:pocketbase/pocketbase.dart';
 
 import 'package:responsive_sizer/responsive_sizer.dart';
 
@@ -30,8 +31,7 @@ class MyApp extends StatelessWidget {
           var host = getNetworkInfo();
           url = host['hostname'];
           port=host['port'];
-       
-
+          pb = PocketBase('http://${url}:8090');
 
         },
       ),

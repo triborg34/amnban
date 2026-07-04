@@ -19,7 +19,7 @@ class SettingScreen extends StatelessWidget {
     return Container(
       padding: EdgeInsets.all(15),
       height: MediaQuery.maybeOf(context)!.size.height,
-      width: MediaQuery.maybeOf(context)!.size.height,
+      width: MediaQuery.maybeOf(context)!.size.width,
       child: SingleChildScrollView(
         child: Column(
           textDirection: TextDirection.rtl,

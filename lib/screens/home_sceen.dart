@@ -38,7 +38,7 @@ class HomeSceen extends StatelessWidget {
         child: Container(
           padding: EdgeInsets.all(15),
           height: MediaQuery.of(context).size.height,
-          width: MediaQuery.of(context).size.height,
+          width: MediaQuery.of(context).size.width,
           child: Column(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,24 +78,22 @@ class HomeSceen extends StatelessWidget {
                       textDirection: TextDirection.rtl,
                       children: [
                         TextButton(
-                            onPressed: () => onRelayOne(),
-                            child: Text("درب یک",style: TextStyle(color: Colors.white),),
-
-                              
-                            
-
-                            ),
+                          onPressed: () => onRelayOne(),
+                          child: Text(
+                            "درب یک",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
                         SizedBox(
                           width: 25,
                         ),
                         TextButton(
                             onPressed: () => onRelayTwo(),
-                                  child: Text("درب دو",style: TextStyle(color: Colors.white)))
+                            child: Text("درب دو",
+                                style: TextStyle(color: Colors.white)))
                       ],
                     )
                   : SizedBox.shrink(),
-
-              //TODO:ADD ALL NEW THINGS IN CONTROLLER
               SizedBox(
                 height: 15,
               ),
@@ -256,13 +254,12 @@ class HomeSceen extends StatelessWidget {
               scrollDirection: Axis.vertical,
               itemBuilder: (context, index) => GestureDetector(
                 onTap: () async {
-                  var record =
-                      await await pb.collection('database').getFullList(
-                            filter:
-                                'plateNum="${data[index].plateNum}"',
-                          );
+                  var record = await pb.collection('database').getFullList(
+                        filter: 'plateNum="${data[index].plateNum}"',
+                      );
                   Get.to(() => Detailedscreen(
-                    count: record.length,
+                      rec: record,
+               
                       selectedModel: data[index],
                       index: index,
                       kcontroller: kcontroller));
@@ -320,12 +317,15 @@ class HomeSceen extends StatelessWidget {
                         height: 50,
                         child: Center(
                           child: Text(
-                            kcontroller
-                                .knowPerson[kcontroller.knowPerson.indexWhere(
-                              (element) =>
-                                  element.plateNumber == data[index].plateNum,
-                            )]
-                                .name!,
+                            (() {
+                              int idx = kcontroller.knowPerson.indexWhere(
+                                (element) =>
+                                    element.plateNumber == data[index].plateNum,
+                              );
+                              return idx != -1
+                                  ? kcontroller.knowPerson[idx].name!
+                                  : "-";
+                            })(),
                             style: TextStyle(color: Colors.white),
                           ),
                         ),

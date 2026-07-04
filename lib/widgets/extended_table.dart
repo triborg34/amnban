@@ -40,12 +40,13 @@ class ExtendedTable extends StatelessWidget {
               InkWell(
                 onTap: () async {
                   var record =
-                      await await pb.collection('database').getFullList(
+                      await pb.collection('database').getFullList(
                             filter: 'plateNum="${dcontroller.tableContect.value.plateNum}"',
                           );
                   
                   Get.to(() => Detailedscreen(
-                    count: record.length,
+                    rec: record,
+  
                       selectedModel: dcontroller.tableContect.value,
                       index: index,
                       kcontroller: kcontroller));
@@ -132,7 +133,7 @@ class ExtendedTable extends StatelessWidget {
                   width: 10.w,
                   child: Center(
                       child: Text(
-                    dcontroller.tableContect.value.eDate!.toPersianDate(),
+                    dcontroller.tableContect.value.eTime!.toPersianDigit(),
                     textDirection: TextDirection.rtl,
                     style: TextStyle(color: Colors.white, fontSize: 10.sp),
                   ))),

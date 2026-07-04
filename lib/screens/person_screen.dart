@@ -105,8 +105,10 @@ class PersonScreen extends StatelessWidget {
                             width: 6.w,
                             child: Center(
                               child: Text(
-                                kcontroller.knowPerson[index].eDate!
-                                    .toPersianDate(),
+                                kcontroller.knowPerson[index].eDate != null
+                                    ? kcontroller.knowPerson[index].eDate!
+                                        .toPersianDate()
+                                    : "-",
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(color: Colors.white),
                               ),
@@ -120,8 +122,10 @@ class PersonScreen extends StatelessWidget {
                             width: 6.w,
                             child: Center(
                               child: Text(
-                                kcontroller.knowPerson[index].eTime!
-                                    .toPersianDigit(),
+                                kcontroller.knowPerson[index].eTime != null
+                                    ? kcontroller.knowPerson[index].eTime!
+                                        .toPersianDigit()
+                                    : "-",
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(color: Colors.white),
                               ),
@@ -139,12 +143,12 @@ class PersonScreen extends StatelessWidget {
                                       String plateNum = kcontroller
                                           .knowPerson[index].plateNumber!
                                           .trim();
-                                      String name = kcontroller
+                                      String nameParts = kcontroller
                                           .knowPerson[index].name!
-                                          .split(' ')[0];
-                                      String lastName = kcontroller
-                                          .knowPerson[index].name!
-                                          .split(' ')[1];
+                                          .trim();
+                                      List<String> nameSplit = nameParts.split(' ');
+                                      String name = nameSplit[0];
+                                      String lastName = nameSplit.length > 1 ? nameSplit.sublist(1).join(' ') : '';
                                       String carName =
                                           kcontroller.knowPerson[index].carName!;
                                       String role =

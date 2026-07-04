@@ -93,7 +93,7 @@ class knowPersonBox {
     data['firstTwoDigit'] = this.firstTwoDigit;
     data['threeDigit'] = this.threeDigit;
     data['lastTwoDigit'] = this.lastTwoDigit;
-    data['persianAlhpabet'] = this.persianAlhpabet;
+    data['persinalAlphabet'] = this.persianAlhpabet;
     data['englishAlphabet'] = this.engishAlphabet;
 
     return data;

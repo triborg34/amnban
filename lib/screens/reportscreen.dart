@@ -277,15 +277,17 @@ class Reportscreen extends StatelessWidget {
                                   child: Center(
                                     child: InkWell(
                                         onTap: () async {
-                                          var record = await await pb
+                                          var record = await pb
                                               .collection('database')
                                               .getFullList(
                                                 filter:
-                                                    'plateNum="${rcontroller
-                                                    .selectedModel[index].plateNum}"',
+                                                    'plateNum="${rcontroller.selectedModel[index].plateNum}"',
                                               );
+
+                                          
                                           Get.to(() => Detailedscreen(
-                                            count: record.length,
+                                            rec: record,
+                                           
                                                 kcontroller: kcontroller,
                                                 selectedModel: rcontroller
                                                     .selectedModel[index],
@@ -717,7 +719,7 @@ class Reportscreen extends StatelessWidget {
 
     // Add plate number filter (exact match)
     if (rcontroller.selectedModel.length != 0) {
-      filters.add('plateNum = "${rcontroller.selectedModel}"');
+      filters.add('plateNum = "${rcontroller.selectedModel.last.plateNum}"');
     }
     // Add plate picker filter (contains match)
     else if (rcontroller.pickerPlate.value.length != 0) {
@@ -789,7 +791,7 @@ class Reportscreen extends StatelessWidget {
 
   bool getTime(TimeOfDay ft, TimeOfDay lt, TimeOfDay it) {
     int ftMin = ft.hour * 60 + ft.minute;
-    int ltMin = lt.hour * 60 + ft.minute;
+    int ltMin = lt.hour * 60 + lt.minute;
     int itMin = it.hour * 60 + it.minute;
 
     return ftMin < itMin && itMin <= ltMin;

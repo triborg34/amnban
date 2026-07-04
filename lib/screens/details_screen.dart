@@ -9,7 +9,9 @@ import 'package:amnban/widgets/lisancepage.dart';
 import 'package:easy_image_viewer/easy_image_viewer.dart';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:persian_number_utility/persian_number_utility.dart';
+import 'package:pocketbase/pocketbase.dart';
 import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -19,14 +21,15 @@ class Detailedscreen extends StatelessWidget {
   databaseClass selectedModel = databaseClass();
   knowPersonController kcontroller;
   int index;
-  int count;
+  List rec;
   Detailedscreen(
       {required this.selectedModel,
       required this.index,
-      required this.kcontroller,required this.count});
+      required this.kcontroller,
+      required this.rec});
 
   @override
-  Widget build(BuildContext context)  {
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(),
       backgroundColor: Colors.black,
@@ -39,7 +42,6 @@ class Detailedscreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-             
               Container(
                 margin: EdgeInsets.symmetric(vertical: 15),
                 alignment: Alignment.topCenter,
@@ -127,10 +129,23 @@ class Detailedscreen extends StatelessWidget {
                             .carName!),
                     contactOfTable3(
                         selectedModel.platePercent.toString() + "%"),
-                    contactOfTable3(count.toString()),
+                    InkWell(
+                      child: contactOfTable3(rec.length.toString()),
+                      onTap: () async{
+                       
+                         var temp=<databaseClass>[];
+                          for(var data in rec){
+                            
+                            temp.add(databaseClass.fromJson(data.data));
+                          }
+                      
+                        
+
+                        await showAmar(context, temp);
+                      },
+                    ),
                     contactOfTable3(selectedModel.eDate!.toPersianDate()),
                     contactOfTable3(selectedModel.eTime!.toPersianDigit())
-                    
                   ],
                 ),
               ),
@@ -472,6 +487,119 @@ class Detailedscreen extends StatelessWidget {
       ),
     );
   }
+
+   Future<dynamic> showAmar(BuildContext context, var data) {
+    return showDialog(
+      context: context,
+      builder: (context) {
+        return Center(
+          child: Container(
+            color: purpule,
+            width: 500,
+            height: 300,
+            child: Material(
+              color: Colors.purple,
+              child: ListView.separated(
+                separatorBuilder: (context, index) => SizedBox(
+                  height: 2,
+                ),
+                scrollDirection: Axis.vertical,
+                itemBuilder: (context, index) => GestureDetector(
+                  onTap: () async {
+                    
+                  var record = await pb.collection('database').getFullList(
+                        filter: 'plateNum="${data[index].plateNum}"',
+                      );
+                 Navigator.push(context, MaterialPageRoute(builder: (context) => Detailedscreen(
+                      rec: record,
+               
+                      selectedModel: data[index],
+                      index: index,
+                      kcontroller: kcontroller),));
+                  },
+                  child: Container(
+                    width: 500,
+                    height: 50,
+                    child: Row(
+                      textDirection: TextDirection.rtl,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        if (data[index].isarvand == 'arvand')
+                          SizedBox(
+                            width: 150,
+                            height: 50,
+                            child: ArvandPelak2(entry: data[index]),
+                          )
+                        else
+                          SizedBox(
+                            width: 150,
+                            height: 50,
+                            child: LicanceNumber(
+                              entry: data[index],
+                            ),
+                          ),
+                        SizedBox(
+                          width: 100,
+                          height: 50,
+                          child: Center(
+                            child: Text(
+                              data[index].eDate!.toString().toPersianDate(),
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        VerticalDivider(
+                          color: Colors.black,
+                        ),
+                        SizedBox(
+                          width: 100,
+                          height: 50,
+                          child: Center(
+                            child: Text(
+                              data[index].eTime!,
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                        VerticalDivider(
+                          color: Colors.black,
+                        ),
+                        SizedBox(
+                          width: 100,
+                          height: 50,
+                          child: Center(
+                            child: Text(
+                              (() {
+                                int idx = kcontroller.knowPerson.indexWhere(
+                                  (element) =>
+                                      element.plateNumber == data[index].plateNum,
+                                );
+                                return idx != -1
+                                    ? kcontroller.knowPerson[idx].name!
+                                    : "-";
+                              })(),
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    decoration: BoxDecoration(
+                      color: selecetpurpule,
+                      border: Border.all(color: Colors.black),
+                    ),
+                  ),
+                ),
+                itemCount: data.length,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
 }
 
 Container header3() {

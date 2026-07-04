@@ -28,15 +28,18 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
   Future<void> _checkLoginStatus() async {
     String username = await getRememberMe();
     if (username != '') {
-      userClass user = ucontroller.users.firstWhere(
+      var matches = ucontroller.users.where(
         (element) => element.username == username,
       );
-      if (user.rememberme!) {
-        role=user.accsesslvl!;
-        email=user.email!;
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => MainScreen()),
-        );
+      if (matches.isNotEmpty) {
+        userClass user = matches.first;
+        if (user.rememberme!) {
+          role=user.accsesslvl!;
+          email=user.email!;
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => MainScreen()),
+          );
+        }
       }
     }
   }
@@ -279,9 +282,18 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
 
   _login() async {
     if (_formKey.currentState!.validate()) {
-      userClass user = ucontroller.users.firstWhere(
+      var matches = ucontroller.users.where(
         (element) => element.username == _usernameController.text,
       );
+      if (matches.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('رمز عبور یا نام کاربری اشتباه',
+                  textDirection: TextDirection.rtl)),
+        );
+        return;
+      }
+      userClass user = matches.first;
       if (_rememberMe) {
         saveRememberMe(true, user.username!);
         await pb

@@ -118,12 +118,13 @@ class UserBox extends StatelessWidget {
                               child: IconButton(
                                   onPressed: () async {
                                     userClass user = ucontroller.users[index];
+                                    List<String> nameSplit = (user.nickname ?? '').split(' ');
                                     await showAdaptiveDialog(
                                         context: context,
                                         builder: (context) => add_or_edit_user(
-                                            name: user.nickname!.split(' ')[0],
+                                            name: nameSplit[0],
                                             lastName:
-                                                user.nickname!.split(' ')[1],
+                                                nameSplit.length > 1 ? nameSplit.sublist(1).join(' ') : '',
                                             username: user.username!,
                                             password: utf8.decode(
                                                 base64.decode(user.password!)),

@@ -36,7 +36,6 @@ class add_or_edit_user extends StatelessWidget {
     ucontroller.username.text = username;
     ucontroller.password.text = password;
     ucontroller.accsesslvl.value = role;
-    isEdit = isEdit;
     return Center(
       child: Material(
         color: Colors.transparent,

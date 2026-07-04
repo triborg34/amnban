@@ -8,8 +8,7 @@ import 'package:amnban/models/userClass.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-// ignore: deprecated_member_use
-import 'dart:html' as html;
+import 'package:web/web.dart' as web;
 import 'package:http/http.dart' as http;
 
 class mainPageConroller extends GetxController {
@@ -91,10 +90,10 @@ class cameraController extends GetxController {
 }
 
 class videoFeedController extends GetxController {
-  final _cameras = <String, html.ImageElement>{}.obs;
+  final _cameras = <String, web.HTMLImageElement>{}.obs;
 
   void connect(String url, String viewId) {
-    final imgElement = html.ImageElement()
+    final imgElement = web.HTMLImageElement()
       ..src = url
       ..id = viewId
       ..style.width = '100%'
@@ -104,7 +103,7 @@ class videoFeedController extends GetxController {
     _cameras[viewId] = imgElement;
   }
 
-  html.ImageElement? getElement(String viewId) => _cameras[viewId];
+  web.HTMLImageElement? getElement(String viewId) => _cameras[viewId];
 
   void disconnect(String viewId) {
     print(viewId);
@@ -153,22 +152,25 @@ class reportController extends GetxController {
   var isArvand = false.obs;
 
   inilazed() {
-    engishalphabet = ''.obs;
-    persianalhpabet = ''.obs;
+    engishalphabet.value = '';
+    persianalhpabet.value = '';
     selectedModel.clear();
-    firstTwoDigit = TextEditingController();
-    threeDigit = TextEditingController();
-    lastTwoDigit = TextEditingController();
+    firstTwoDigit.clear();
+    threeDigit.clear();
+    lastTwoDigit.clear();
+    arvandDigit.clear();
 
-    pickerPlate = ''.obs;
+    pickerPlate.value = '';
 
-    firstDate = ''.obs;
-    lastDate = ''.obs;
-    fistTime = ''.obs;
-    lastTime = ''.obs;
-    isDate = false.obs;
-    isTime = false.obs;
-    isCompleted = false.obs;
+    firstDate.value = '';
+    lastDate.value = '';
+    fistTime.value = '';
+    lastTime.value = '';
+    isDate.value = false;
+    isTime.value = false;
+    isCompleted.value = false;
+    isLoading.value = false;
+    isArvand.value = false;
   }
 }
 
