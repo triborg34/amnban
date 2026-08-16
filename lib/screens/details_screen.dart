@@ -9,9 +9,9 @@ import 'package:amnban/widgets/lisancepage.dart';
 import 'package:easy_image_viewer/easy_image_viewer.dart';
 
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+
 import 'package:persian_number_utility/persian_number_utility.dart';
-import 'package:pocketbase/pocketbase.dart';
+
 import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
