@@ -5,7 +5,7 @@ import 'package:amnban/utils/controller.dart';
 import 'package:amnban/widgets/coustom_fieds.dart';
 import 'package:flutter/material.dart';
 
-class add_or_edit_user extends StatelessWidget {
+class add_or_edit_user extends StatefulWidget {
   add_or_edit_user({
     required this.name,
     required this.lastName,
@@ -29,13 +29,32 @@ class add_or_edit_user extends StatelessWidget {
   bool isEdit;
 
   @override
+  State<add_or_edit_user> createState() => _add_or_edit_userState();
+}
+
+class _add_or_edit_userState extends State<add_or_edit_user> {
+  late final userController ucontroller;
+  late final bool isEdit;
+  late final int? index;
+
+  @override
+  void initState() {
+    ucontroller = widget.ucontroller;
+    isEdit = widget.isEdit;
+    index = widget.index;
+    // Seed the fields once on open; doing this in build() wiped the user's
+    // edits on every rebuild.
+    ucontroller.name.text = widget.name;
+    ucontroller.lastName.text = widget.lastName;
+    ucontroller.email.text = widget.email;
+    ucontroller.username.text = widget.username;
+    ucontroller.password.text = widget.password;
+    ucontroller.accsesslvl.value = widget.role;
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    ucontroller.name.text = name;
-    ucontroller.lastName.text = lastName;
-    ucontroller.email.text = email;
-    ucontroller.username.text = username;
-    ucontroller.password.text = password;
-    ucontroller.accsesslvl.value = role;
     return Center(
       child: Material(
         color: Colors.transparent,

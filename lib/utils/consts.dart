@@ -34,6 +34,11 @@ List<String> tabs = role == 'ناظر'
     : ['خانه', "گزارشات", 'دوربین', 'افراد', "تنظیمات"].reversed.toList();
 
 final PlatformNotification platformNotification = PlatformNotificationWeb();
+
+// One shared player instead of a new AudioPlayer per alarm event (each of
+// which was never disposed and leaked a connection).
+final AudioPlayer _alarmPlayer = AudioPlayer();
+
 void onRelayOne() async {
   Uri uri = Uri.parse("http://${url}:${port}/utils/iprelay");
 
@@ -67,84 +72,52 @@ void onRelayTwo() async {
 }
 
 void notifPlay(databaseClass entry) {
-  if (Get.find<knowPersonController>()
-      .knowPerson
-      .where(
-        (element) => element.plateNumber == entry.plateNum,
-      )
-      .isNotEmpty) {
-    if (Get.find<knowPersonController>()
-            .knowPerson
-            .where(
-              (element) => element.plateNumber == entry.plateNum,
-            )
-            .first
-            .role !=
-        "مجاز") {
-      Get.find<databaseController>().todayunallowed.add(entry);
-      if (Get.find<settingController>().isNotif.value) {
-        platformNotification.sendNotification(
-            'ورود غیر مجاز', 'پلاک\n${entry.plateNum}');
-      }
-    } else {
-      Get.find<databaseController>().todayallowd.add(entry);
-      if (Get.find<settingController>().isNotif.value) {
-        platformNotification.sendNotification(
-            'ورود  مجاز', 'پلاک\n${entry.plateNum}');
-      }
+  final person = Get.find<knowPersonController>().personFor(entry.plateNum);
+  if (person == null) return;
+
+  final dcontroller = Get.find<databaseController>();
+  if (person.role != "مجاز") {
+    dcontroller.todayunallowed.add(entry);
+    if (Get.find<settingController>().isNotif.value) {
+      platformNotification.sendNotification(
+          'ورود غیر مجاز', 'پلاک\n${entry.plateNum}');
+    }
+  } else {
+    dcontroller.todayallowd.add(entry);
+    if (Get.find<settingController>().isNotif.value) {
+      platformNotification.sendNotification(
+          'ورود  مجاز', 'پلاک\n${entry.plateNum}');
     }
   }
 }
 
 void alarmPlay(databaseClass entry) {
-  if (Get.find<settingController>().isAlarm.value) {
-    AudioPlayer audioPlayer = AudioPlayer();
-    if (Get.find<knowPersonController>()
-        .knowPerson
-        .where(
-          (element) => element.plateNumber == entry.plateNum,
-        )
-        .isEmpty) {
-      audioPlayer.play(UrlSource('assets/alarm.mp3'));
-    }
+  if (!Get.find<settingController>().isAlarm.value) return;
 
-    http.post(Uri.parse('http://${url}:${port}/email?email=${email}'), body: {
-      "plateNumber": entry.plateNum,
-      "eDate": entry.eDate,
-      "eTime": entry.eTime
-    });
+  if (Get.find<knowPersonController>().personFor(entry.plateNum) == null) {
+    _alarmPlayer.play(UrlSource('assets/alarm.mp3'));
   }
+
+  http.post(Uri.parse('http://${url}:${port}/email?email=${email}'), body: {
+    "plateNumber": entry.plateNum,
+    "eDate": entry.eDate,
+    "eTime": entry.eTime
+  });
 }
 
 void relayAutomatic(databaseClass entry) {
-  if (Get.find<settingController>().isRfid.value) {
-    if (Get.find<knowPersonController>()
-        .knowPerson
-        .where(
-          (element) => element.plateNumber == entry.plateNum,
-        )
-        .isNotEmpty) {
-      if (Get.find<settingController>().isrlOne.value &&
-          Get.find<settingController>().isrlTwo.value) {
-        onRelayOne();
-        onRelayTwo();
-      } else if (Get.find<settingController>().isrlOne.value == true &&
-          Get.find<settingController>().isrlTwo.value == false) {
-        onRelayOne();
-      } else if (Get.find<settingController>().isrlOne.value == false &&
-          Get.find<settingController>().isrlTwo.value == true) {
-        onRelayTwo();
-      }
-    }
+  final scontroller = Get.find<settingController>();
+  if (!scontroller.isRfid.value) return;
+  if (Get.find<knowPersonController>().personFor(entry.plateNum) == null) {
+    return;
   }
+  if (scontroller.isrlOne.value) onRelayOne();
+  if (scontroller.isrlTwo.value) onRelayTwo();
 }
 
 void getBackup(String sourceCollectionName) async {
-
   final sourcePb = pb;
   final records = await sourcePb.collection(sourceCollectionName).getFullList();
-
-  print('✅ Fetched ${records.length} records.');
 
   final cleanedRecords = records.map((record) {
     final data = record.toJson();
@@ -164,34 +137,25 @@ void getBackup(String sourceCollectionName) async {
     ..setAttribute(
         'download', 'backup_${DateTime.now().millisecondsSinceEpoch}.json');
   anchor.click();
-  print('💾 Backup file downloaded.');
 }
 
 void _restoreFromJson(String jsonString, String targetCollectionName) async {
   final List<dynamic> recordsData = jsonDecode(jsonString);
-  print('📥 Loaded ${recordsData.length} records from file.');
 
   final targetPb = pb;
-  try {
-    int success = 0;
-    int fail = 0;
-    for (final data in recordsData) {
+  const chunkSize = 20;
+  for (var i = 0; i < recordsData.length; i += chunkSize) {
+    final chunk = recordsData.skip(i).take(chunkSize);
+    // Individual failures shouldn't abort the whole restore.
+    await Future.wait(chunk.map((data) async {
       try {
         await targetPb.collection(targetCollectionName).create(body: data);
-        success++;
-      } catch (e) {
-        fail++;
-        print('❌ Failed to create record: $e');
-      }
-    }
-    print('🎉 Restore complete: $success succeeded, $fail failed.');
-  } catch (error) {
-    print('🚨 Authentication error: $error');
+      } catch (_) {}
+    }));
   }
 }
 
 void restoreBackup(String targetCollectionName) async {
-
   // Create a file input element and trigger the picker
   final fileUploadInput = (web.document.createElement('input') as web.HTMLInputElement)
     ..type = 'file'

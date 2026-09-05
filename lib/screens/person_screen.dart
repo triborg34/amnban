@@ -21,18 +21,19 @@ class PersonScreen extends StatelessWidget {
       padding: EdgeInsets.all(15),
       height: MediaQuery.of(context).size.height,
       width: MediaQuery.of(context).size.width,
-      child: SingleChildScrollView(
-        child: Column(
-          textDirection: TextDirection.rtl,
-          children: [
-            SizedBox(
-              height: 25,
+      // Slivers let the rows recycle instead of shrinkWrap-building every
+      // person row on each rebuild.
+      child: Obx(
+        () => CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 25,
+              ),
             ),
-            Obx(() => Container(
-                  width: MediaQuery.of(context).size.width,
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    itemBuilder: (context, index) => Container(
+            SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => Container(
                       height: 50,
                       width: MediaQuery.of(context).size.width,
                       child: Row(
@@ -231,13 +232,16 @@ class PersonScreen extends StatelessWidget {
                       decoration:
                           BoxDecoration(border: Border.all(color: purpule)),
                     ),
-                    itemCount: kcontroller.knowPerson.length,
-                  ),
-                )),
-            SizedBox(
-              height: 20,
+                childCount: kcontroller.knowPerson.length,
+              ),
             ),
-            Row(textDirection: TextDirection.rtl,
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 20,
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Row(textDirection: TextDirection.rtl,
               children: [
                 Align(
                   alignment: Alignment.centerRight,
@@ -273,9 +277,10 @@ class PersonScreen extends StatelessWidget {
                 }, child: Text("پشتیبان گیری"))  ,SizedBox(width: 15,),
                       ElevatedButton(onPressed: (){
                   restoreBackup("registredDb");
-                }, child: Text("بازگردانی "))             
-              ],
-            )
+                }, child: Text("بازگردانی "))
+                ],
+              ),
+            ),
           ],
         ),
       ),

@@ -5,7 +5,7 @@ import 'package:amnban/widgets/coustom_fieds.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class add_or_edit_person extends StatelessWidget {
+class add_or_edit_person extends StatefulWidget {
   add_or_edit_person({
     super.key,
     required this.name,
@@ -44,19 +44,37 @@ class add_or_edit_person extends StatelessWidget {
   int? index;
 
   @override
-  Widget build(BuildContext context) {
-    kcontroller.name.text = name;
-    kcontroller.lastName.text = lastName;
-    kcontroller.carNmae.text = carName;
-    kcontroller.firstTwoDigit.text = firstTwoDigit;
-    kcontroller.engishAlphabet.value = engishAlphabet;
-    kcontroller.persianAlhpabet.value = persianAlhpabet;
-    kcontroller.threeDigit.text = threeDigit;
-    kcontroller.lastTwoDigit.text = lastTwoDigit;
-    kcontroller.role.value = role;
-    kcontroller.arvandDigits.text = arvandDigits;
-    kcontroller.isArvand.value = isArvand;
+  State<add_or_edit_person> createState() => _add_or_edit_personState();
+}
 
+class _add_or_edit_personState extends State<add_or_edit_person> {
+  late final knowPersonController kcontroller;
+  late final bool isEdit;
+  late final int? index;
+
+  @override
+  void initState() {
+    kcontroller = widget.kcontroller;
+    isEdit = widget.isEdit;
+    index = widget.index;
+    // Seed the fields once on open; doing this in build() wiped the user's
+    // edits on every rebuild.
+    kcontroller.name.text = widget.name;
+    kcontroller.lastName.text = widget.lastName;
+    kcontroller.carNmae.text = widget.carName;
+    kcontroller.firstTwoDigit.text = widget.firstTwoDigit;
+    kcontroller.engishAlphabet.value = widget.engishAlphabet;
+    kcontroller.persianAlhpabet.value = widget.persianAlhpabet;
+    kcontroller.threeDigit.text = widget.threeDigit;
+    kcontroller.lastTwoDigit.text = widget.lastTwoDigit;
+    kcontroller.role.value = widget.role;
+    kcontroller.arvandDigits.text = widget.arvandDigits;
+    kcontroller.isArvand.value = widget.isArvand;
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Center(
         child: Material(
       color: Colors.transparent,
@@ -186,7 +204,7 @@ class add_or_edit_person extends StatelessWidget {
                         String eDate =
                             "${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}";
                         String eTime =
-                            "${TimeOfDay.now().hour}:${TimeOfDay.now().minute}";
+                            "${TimeOfDay.now().hour.toString().padLeft(2, '0')}:${TimeOfDay.now().minute.toString().padLeft(2, '0')}";
 
                         var body = {
                           "name": name,

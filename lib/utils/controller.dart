@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:amnban/models/cameraClass.dart';
@@ -22,6 +23,10 @@ class cameraController extends GetxController {
   var cameras = <CameraClass>[].obs;
   var searchCameras = <Map<String, dynamic>>[].obs;
 
+  /// path -> camera name, kept in sync with [cameras] so table rows can do a
+  /// single O(1) lookup instead of firstWhere-per-row.
+  final cameraNames = <String, String>{}.obs;
+
   var isRtspEnabled = false.obs;
   var gateWayc = 'entre'.obs;
   TextEditingController nameController = TextEditingController();
@@ -31,6 +36,19 @@ class cameraController extends GetxController {
   TextEditingController rtspController = TextEditingController();
   TextEditingController usernameController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
+
+  String cameraNameFor(String? path) {
+    if (cameras.isEmpty) return 'No Camera';
+    if (path == null) return 'دوربین';
+    return cameraNames[path] ?? 'دوربین';
+  }
+
+  void _syncNameIndex() {
+    cameraNames.clear();
+    for (final c in cameras) {
+      if (c.path != null && c.name != null) cameraNames[c.path!] = c.name!;
+    }
+  }
 
   void startSub() {
     pb.collection('cameras').subscribe(
@@ -49,43 +67,76 @@ class cameraController extends GetxController {
             cameras[index] = CameraClass.fromJson(e.record!.toJson());
           }
         }
+        _syncNameIndex();
       },
     );
   }
 
   fetchFirstData() async {
     final mList = await pb.collection('cameras').getFullList();
-    for (var json in mList) {
-      cameras.add(CameraClass.fromJson(json.data));
-    }
+    cameras.assignAll(mList.map((json) => CameraClass.fromJson(json.data)));
+    _syncNameIndex();
   }
+
+  Future<void>? _loadFuture;
+  /// Idempotent: safe to await from other controllers no matter whether this
+  /// controller already started loading.
+  Future<void> ensureLoaded() =>
+      _loadFuture ??= () async {
+        await fetchFirstData();
+        startSub();
+      }();
 
   @override
   void onReady() async {
-    await fetchFirstData();
-    startSub();
+    ensureLoaded();
     super.onReady();
   }
 
+  http.Client? _discoveryClient;
+  StreamSubscription? _discoverySub;
+
   void startDiscovery() async {
+    // Cancel any stream still running so repeated searches don't stack up.
+    _discoverySub?.cancel();
+    _discoveryClient?.close();
     searchCameras.clear();
     final uri = Uri.parse('http://${url}:${port}/onvif/get-stream');
     final request = http.Request('GET', uri)
       ..headers['Accept'] = 'text/event-stream';
 
     final client = http.Client();
-    final response = await client.send(request);
+    _discoveryClient = client;
+    try {
+      final response = await client.send(request);
 
-    response.stream
-        .transform(utf8.decoder)
-        .transform(const LineSplitter())
-        .listen((line) {
-      if (line.startsWith('data: ')) {
-        final jsonStr = line.replaceFirst('data: ', '');
-        final data = jsonDecode(jsonStr);
-        searchCameras.add(data);
-      }
-    });
+      _discoverySub = response.stream
+          .transform(utf8.decoder)
+          .transform(const LineSplitter())
+          .listen((line) {
+        if (line.startsWith('data: ')) {
+          final jsonStr = line.replaceFirst('data: ', '');
+          final data = jsonDecode(jsonStr);
+          searchCameras.add(data);
+        }
+      }, onDone: () {
+        client.close();
+        if (_discoveryClient == client) _discoveryClient = null;
+      }, onError: (_) {
+        client.close();
+        if (_discoveryClient == client) _discoveryClient = null;
+      });
+    } catch (_) {
+      client.close();
+      if (_discoveryClient == client) _discoveryClient = null;
+    }
+  }
+
+  @override
+  void onClose() {
+    _discoverySub?.cancel();
+    _discoveryClient?.close();
+    super.onClose();
   }
 }
 
@@ -106,7 +157,6 @@ class videoFeedController extends GetxController {
   web.HTMLImageElement? getElement(String viewId) => _cameras[viewId];
 
   void disconnect(String viewId) {
-    print(viewId);
     final element = _cameras[viewId];
     if (element != null) {
       element.src = '';
@@ -177,6 +227,20 @@ class reportController extends GetxController {
 class knowPersonController extends GetxController {
   var knowPerson = <knowPersonBox>[].obs;
 
+  /// plateNumber -> person, kept in sync with [knowPerson] so every table
+  /// cell is a single O(1) lookup instead of where()+indexWhere() scans.
+  final byPlate = <String, knowPersonBox>{}.obs;
+
+  knowPersonBox? personFor(String? plateNumber) =>
+      plateNumber == null ? null : byPlate[plateNumber];
+
+  void _syncPlateIndex() {
+    byPlate.clear();
+    for (final p in knowPerson) {
+      if (p.plateNumber != null) byPlate[p.plateNumber!] = p;
+    }
+  }
+
   var engishAlphabet = ''.obs;
   var persianAlhpabet = ''.obs;
   var isArvand = false.obs;
@@ -209,21 +273,28 @@ class knowPersonController extends GetxController {
             knowPerson[index] = knowPersonBox.fromJson(e.record!.toJson());
           }
         }
+        _syncPlateIndex();
       },
     );
   }
 
   fetchFirstData() async {
     final mList = await pb.collection('registredDb').getFullList();
-    for (var json in mList) {
-      knowPerson.add(knowPersonBox.fromJson(json.data));
-    }
+    knowPerson
+        .assignAll(mList.map((json) => knowPersonBox.fromJson(json.data)));
+    _syncPlateIndex();
   }
+
+  Future<void>? _loadFuture;
+  Future<void> ensureLoaded() =>
+      _loadFuture ??= () async {
+        await fetchFirstData();
+        startSub();
+      }();
 
   @override
   void onReady() async {
-    await fetchFirstData();
-    startSub();
+    ensureLoaded();
     super.onReady();
   }
 }
@@ -234,11 +305,10 @@ class databaseController extends GetxController {
   var todayCount = 0.obs;
   var goodPlate = 0.obs;
   var badPlate = 0.obs;
-  var todayunallowed = <databaseClass>[];
-  var todayallowd = <databaseClass>[];
+  var todayunallowed = <databaseClass>[].obs;
+  var todayallowd = <databaseClass>[].obs;
   var selectedIndex = (-1).obs;
   int inilazedPage = 1;
-  var knowPersone = Get.find<knowPersonController>().knowPerson;
 
   void startSub() {
     pb.collection('database').subscribe(
@@ -277,26 +347,26 @@ class databaseController extends GetxController {
     );
   }
 
-  fetchFirstData(int inpage, int inperpage) async {
+  Future<void> fetchFirstData(int inpage, int inperpage) async {
     final mList = await pb.collection('database').getList(
           page: inpage,
           perPage: 30,
           sort: '-created',
         );
-    for (var json in mList.items) {
-      entries.add(databaseClass.fromJson(json.data));
+    // addAll (not per-item add) so a page load triggers a single rebuild.
+    entries.addAll(mList.items.map((json) => databaseClass.fromJson(json.data)));
+    if (entries.isNotEmpty && tableContect.value.id == null) {
+      tableContect.value = entries.first;
     }
-    tableContect.value = entries.first;
   }
 
-  fetchCountData() async {
-    var day =
-        DateTime.now().day < 10 ? "0${DateTime.now().day}" : DateTime.now().day;
-    var month = DateTime.now().month < 10
-        ? "0${DateTime.now().month}"
-        : DateTime.now().month;
-    var todayISO = "${DateTime.now().year}-${month}-${day}";
+  Future<void> fetchCountData() async {
+    var now = DateTime.now();
+    var day = now.day.toString().padLeft(2, '0');
+    var month = now.month.toString().padLeft(2, '0');
+    var todayISO = "${now.year}-$month-$day";
 
+    final kcontroller = Get.find<knowPersonController>();
     final records = await pb
         .collection('database')
         .getFullList(filter: 'eDate = "${todayISO}"');
@@ -307,15 +377,12 @@ class databaseController extends GetxController {
       } else {
         badPlate.value++;
       }
-    }
-    for (var data in records) {
-      for (var k in knowPersone) {
-        if (data.data['plateNum'] == k.plateNumber) {
-          if (k.role == "مجاز") {
-            todayallowd.add(databaseClass.fromJson(data.data));
-          } else {
-            todayunallowed.add(databaseClass.fromJson(data.data));
-          }
+      final person = kcontroller.personFor(data.data['plateNum']);
+      if (person != null) {
+        if (person.role == "مجاز") {
+          todayallowd.add(databaseClass.fromJson(data.data));
+        } else {
+          todayunallowed.add(databaseClass.fromJson(data.data));
         }
       }
     }
@@ -323,8 +390,13 @@ class databaseController extends GetxController {
 
   @override
   void onReady() async {
-    await fetchFirstData(inilazedPage, 30);
-    await fetchCountData();
+    // Persons must be loaded before we classify today's records, and the two
+    // database fetches are independent so they run in parallel.
+    await Get.find<knowPersonController>().ensureLoaded();
+    await Future.wait([
+      fetchFirstData(inilazedPage, 30),
+      fetchCountData(),
+    ]);
     startSub();
     super.onReady();
   }
@@ -374,12 +446,11 @@ class settingController extends GetxController {
     final mList = await pb.collection('setting').getFullList(
           sort: '-created',
         );
-    for (var json in mList) {
-      settings.add(setting_class.fromJson(json.data));
-    }
+    settings.assignAll(mList.map((json) => setting_class.fromJson(json.data)));
   }
 
   firstIniliazed() async {
+    if (settings.isEmpty) return;
     plateConf.value = settings.first.plateConf!;
     charConf.value = settings.first.charConf!;
     quality.value = settings.first.quality!.toDouble();
@@ -393,26 +464,19 @@ class settingController extends GetxController {
     isNotif.value = settings.first.notif!;
   }
 
+  Future<void>? _loadFuture;
+  Future<void> ensureLoaded() =>
+      _loadFuture ??= () async {
+        await fetchFirstData();
+        await firstIniliazed();
+        startSub();
+      }();
+
   @override
   void onReady() async {
-    await fetchFirstData();
-    await firstIniliazed();
-    // await checkForConnect();
-    startSub();
+    ensureLoaded();
     super.onReady();
   }
-
-  // checkForConnect() async {
-  //   if (isRfid.value && rfconnect.value) {
-  //     Uri uri = Uri.parse(
-  //         'http://${url}:${port}/iprelay?ip=${rfipController.text}&port=${rfportConroller.text}');
-
-  //     await http.post(
-  //       uri,
-  //       body: {"isconnect": true},
-  //     );
-  //   }
-  // }
 }
 
 class userController extends GetxController {
@@ -449,15 +513,19 @@ class userController extends GetxController {
     final mList = await pb.collection('users').getFullList(
           sort: '-created',
         );
-    for (var json in mList) {
-      users.add(userClass.fromJson(json.data));
-    }
+    users.assignAll(mList.map((json) => userClass.fromJson(json.data)));
   }
+
+  Future<void>? _loadFuture;
+  Future<void> ensureLoaded() =>
+      _loadFuture ??= () async {
+        await fetchFirstData();
+        startSub();
+      }();
 
   @override
   void onReady() async {
-    await fetchFirstData();
-    startSub();
+    ensureLoaded();
     super.onReady();
   }
 }

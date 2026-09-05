@@ -4,7 +4,6 @@ import 'package:amnban/models/userClass.dart';
 import 'package:amnban/screens/main_screen.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -20,6 +19,7 @@ class ModernLoginPage extends StatefulWidget {
 class _ModernLoginPageState extends State<ModernLoginPage> {
   final _formKey = GlobalKey<FormState>();
   bool _rememberMe = false;
+  final FocusNode _keyboardFocusNode = FocusNode();
 
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -45,6 +45,14 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
   }
 
   @override
+  void dispose() {
+    _keyboardFocusNode.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   void initState() {
     _checkLoginStatus();
     super.initState();
@@ -54,7 +62,7 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: KeyboardListener(
-        focusNode: FocusNode(),
+        focusNode: _keyboardFocusNode,
         autofocus: true,
         onKeyEvent: (event) {
           if (event is KeyDownEvent &&
@@ -84,17 +92,11 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    kIsWeb
-                        ? Image.network(
-                            'assets/images/mainlogo2.png',
-                            width: 200,
-                            height: 200,
-                          )
-                        : Image.asset(
-                            'assets/images/mainlogo2.png',
-                            width: 200,
-                            height: 200,
-                          ),
+                    Image.asset(
+                      'assets/images/mainlogo2.png',
+                      width: 200,
+                      height: 200,
+                    ),
                     Text(
                       "سامانه پایش خودکار پلاک\n Automatic Numberplate Recognition",
                       style: TextStyle(color: Colors.white, fontSize: 18),
@@ -259,15 +261,10 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
                       height: 600,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(15),
-                        child: kIsWeb
-                            ? Image.network(
-                                'assets/images/ban.jpg',
-                                fit: BoxFit.fill,
-                              )
-                            : Image.asset(
-                                'assets/images/ban.jpg',
-                                fit: BoxFit.fill,
-                              ),
+                        child: Image.asset(
+                          'assets/images/ban.jpg',
+                          fit: BoxFit.fill,
+                        ),
                       ),
                     ),
                   ],

@@ -27,7 +27,7 @@ class MainScreen extends StatelessWidget {
             color: purpule,
             child: Row(
               children: [
-                Image.network('assets/images/mainlogo2.png'),
+                Image.asset('assets/images/mainlogo2.png'),
                 Spacer(),
                 for (int i = 0; i < tabs.length; i++)
                   InkWell(

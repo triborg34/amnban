@@ -2,7 +2,7 @@ import 'package:amnban/models/databaseEntry.dart';
 import 'package:amnban/screens/details_screen.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
-import 'package:amnban/utils/converFunctions.dart';
+import 'package:amnban/utils/converFunctions.dart' show alphabetP2, convertToPersian, convertToPersianString, latinLetters;
 import 'package:amnban/widgets/arvandpelak.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -18,17 +18,30 @@ import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 
 import 'package:responsive_sizer/responsive_sizer.dart';
 
-class Reportscreen extends StatelessWidget {
+class Reportscreen extends StatefulWidget {
   Reportscreen({super.key});
 
+  @override
+  State<Reportscreen> createState() => _ReportscreenState();
+}
+
+class _ReportscreenState extends State<Reportscreen> {
   reportController rcontroller = Get.find<reportController>();
   knowPersonController kcontroller = Get.find<knowPersonController>();
+
+  @override
+  void initState() {
+    // Reset search state once per visit, not on every rebuild (a rebuild used
+    // to wipe whatever the user was typing).
+    rcontroller.inilazed();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    rcontroller.inilazed();
     return Container(
       height: MediaQuery.of(context).size.height,
-      width: MediaQuery.of(context).size.height,
+      width: MediaQuery.of(context).size.width,
       padding: EdgeInsets.all(15),
       child: Column(
         textDirection: TextDirection.rtl,
@@ -89,7 +102,6 @@ class Reportscreen extends StatelessWidget {
                       var d = picked!.toGregorian();
                       rcontroller.firstDate.value =
                           d.toDateTime().toString().split(' ')[0];
-                      print(rcontroller.firstDate.value);
                       rcontroller.isDate.value = true;
                     },
                     child: Obx(() => Text(
@@ -117,7 +129,6 @@ class Reportscreen extends StatelessWidget {
                       var d = picked!.toGregorian();
                       rcontroller.lastDate.value =
                           d.toDateTime().toString().split(' ')[0];
-                      print(rcontroller.lastDate.value);
                     },
                     child: Obx(() => Text(
                         rcontroller.lastDate.value.length == 0
@@ -150,7 +161,8 @@ class Reportscreen extends StatelessWidget {
                               child: child!);
                         },
                       );
-                      rcontroller.fistTime.value = '${t!.hour}:${t.minute}';
+                      rcontroller.fistTime.value =
+                          '${t!.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
                       rcontroller.isTime.value = true;
                     },
                     child: Obx(() => Text(
@@ -185,7 +197,8 @@ class Reportscreen extends StatelessWidget {
                               child: child!);
                         },
                       );
-                      rcontroller.lastTime.value = '${t!.hour}:${t.minute}';
+                      rcontroller.lastTime.value =
+                          '${t!.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
                     },
                     child: Obx(() => Text(
                           rcontroller.lastTime.value.length == 0
@@ -237,7 +250,7 @@ class Reportscreen extends StatelessWidget {
                         visible: rcontroller.selectedModel[index].isarvand ==
                                 'arvand'
                             ? rcontroller.selectedModel[index].plateNum!
-                                    .contains(RegExp('[a-zA-Z]'))
+                                    .contains(latinLetters)
                                 ? false
                                 : true
                             : convertToPersian(
@@ -311,25 +324,11 @@ class Reportscreen extends StatelessWidget {
                                 height: 50,
                                 child: Center(
                                   child: Text(
-                                    kcontroller.knowPerson
-                                            .where(
-                                              (element) =>
-                                                  element.plateNumber ==
-                                                  rcontroller
-                                                      .selectedModel[index]
-                                                      .plateNum,
-                                            )
-                                            .isEmpty
-                                        ? "-"
-                                        : kcontroller
-                                            .knowPerson[kcontroller.knowPerson
-                                                .indexWhere(
-                                            (element) =>
-                                                element.plateNumber ==
-                                                rcontroller.selectedModel[index]
-                                                    .plateNum,
-                                          )]
-                                            .name!,
+                                    kcontroller
+                                            .personFor(rcontroller
+                                                .selectedModel[index].plateNum)
+                                            ?.name ??
+                                        "-",
                                     textDirection: TextDirection.rtl,
                                     style: TextStyle(
                                         color: Colors.white, fontSize: 18),
@@ -344,25 +343,11 @@ class Reportscreen extends StatelessWidget {
                                 height: 50,
                                 child: Center(
                                   child: Text(
-                                    kcontroller.knowPerson
-                                            .where(
-                                              (element) =>
-                                                  element.plateNumber ==
-                                                  rcontroller
-                                                      .selectedModel[index]
-                                                      .plateNum,
-                                            )
-                                            .isEmpty
-                                        ? "-"
-                                        : kcontroller
-                                            .knowPerson[kcontroller.knowPerson
-                                                .indexWhere(
-                                            (element) =>
-                                                element.plateNumber ==
-                                                rcontroller.selectedModel[index]
-                                                    .plateNum,
-                                          )]
-                                            .carName!,
+                                    kcontroller
+                                            .personFor(rcontroller
+                                                .selectedModel[index].plateNum)
+                                            ?.carName ??
+                                        "-",
                                     textDirection: TextDirection.rtl,
                                     style: TextStyle(
                                         color: Colors.white, fontSize: 18),
@@ -378,26 +363,12 @@ class Reportscreen extends StatelessWidget {
                                   width: 5.w,
                                   child: Center(
                                     child: Text(
-                                      kcontroller.knowPerson
-                                              .where(
-                                                (element) =>
-                                                    element.plateNumber ==
-                                                    rcontroller
-                                                        .selectedModel[index]
-                                                        .plateNum,
-                                              )
-                                              .isEmpty
-                                          ? "-"
-                                          : kcontroller
-                                              .knowPerson[kcontroller.knowPerson
-                                                  .indexWhere(
-                                              (element) =>
-                                                  element.plateNumber ==
-                                                  rcontroller
-                                                      .selectedModel[index]
-                                                      .plateNum,
-                                            )]
-                                              .role!,
+                                      kcontroller
+                                              .personFor(rcontroller
+                                                  .selectedModel[index]
+                                                  .plateNum)
+                                              ?.role ??
+                                          "-",
                                       style: TextStyle(
                                           color: Colors.white, fontSize: 18),
                                     ),
@@ -427,42 +398,13 @@ class Reportscreen extends StatelessWidget {
                                           left: BorderSide(color: purpule))),
                                   width: 12.w,
                                   child: Center(
-                                    child: Get.find<cameraController>()
-                                                .cameras
-                                                .length <
-                                            1
-                                        ? SizedBox(
-                                            child: Text("No Camera"),
-                                          )
-                                        : Builder(builder: (context) {
-                                            try {
-                                              return Text(
-                                                Get.find<cameraController>()
-                                                    .cameras
-                                                    .firstWhere(
-                                                      (element) =>
-                                                          element.path ==
-                                                          rcontroller
-                                                              .selectedModel[
-                                                                  index]
-                                                              .rtpath,
-                                                    )
-                                                    .name
-                                                    .toString(),
-                                                style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 18),
-                                              );
-                                            } catch (e) {
-                                              return Text(
-                                                "دوربین",
-                                                style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 18),
-                                              );
-                                            }
-                                          }),
-                                  )),
+                                      child: Text(
+                                    Get.find<cameraController>()
+                                        .cameraNameFor(rcontroller
+                                            .selectedModel[index].rtpath),
+                                    style: TextStyle(
+                                        color: Colors.white, fontSize: 18),
+                                  ))),
                               Container(
                                   padding: EdgeInsets.all(3.0),
                                   height: 50,
@@ -623,20 +565,7 @@ class Reportscreen extends StatelessWidget {
                         alignment: pw.Alignment.center,
                         decoration: pw.BoxDecoration(border: pw.Border.all()),
                         child: pw.Text(
-                            kcontroller.knowPerson
-                                    .where(
-                                      (element) =>
-                                          element.plateNumber == i.plateNum,
-                                    )
-                                    .isEmpty
-                                ? "-"
-                                : kcontroller
-                                    .knowPerson[
-                                        kcontroller.knowPerson.indexWhere(
-                                    (element) =>
-                                        element.plateNumber == i.plateNum,
-                                  )]
-                                    .name!,
+                            kcontroller.personFor(i.plateNum)?.name ?? "-",
                             style: pw.TextStyle(font: ttf) // Apply the font
                             ),
                       ),
@@ -646,16 +575,7 @@ class Reportscreen extends StatelessWidget {
                         alignment: pw.Alignment.center,
                         decoration: pw.BoxDecoration(border: pw.Border.all()),
                         child: pw.Text(
-                            kcontroller.knowPerson
-                                    .where((element) =>
-                                        element.plateNumber == i.plateNum)
-                                    .isEmpty
-                                ? '-'
-                                : kcontroller
-                                    .knowPerson[kcontroller.knowPerson
-                                        .indexWhere((element) =>
-                                            element.plateNumber == i.plateNum)]
-                                    .carName!,
+                            kcontroller.personFor(i.plateNum)?.carName ?? '-',
                             style: pw.TextStyle(font: ttf) // Apply the font
                             ),
                       ),
@@ -664,30 +584,12 @@ class Reportscreen extends StatelessWidget {
                           width: 75,
                           alignment: pw.Alignment.center,
                           decoration: pw.BoxDecoration(border: pw.Border.all()),
-                          child: Get.find<cameraController>().cameras.length ==
-                                  0
-                              ? pw.Text("No Camera")
-                              : pw.Builder(
-                                  builder: (context) {
-                                    try {
-                                      return pw.Text(
-                                          Get.find<cameraController>()
-                                              .cameras
-                                              .firstWhere(
-                                                (element) =>
-                                                    element.path == i.rtpath,
-                                              )
-                                              .name
-                                              .toString(),
-                                          style: pw.TextStyle(
-                                              font: ttf) // Apply the font
-                                          );
-                                    } catch (e) {
-                                      return pw.Text("دوربین",
-                                          style: pw.TextStyle(font: ttf));
-                                    }
-                                  },
-                                )),
+                          child: pw.Text(
+                            Get.find<cameraController>().cameraNameFor(i.rtpath),
+                            style: pw.TextStyle(
+                                font: ttf) // Apply the font
+                            ),
+                        ),
                     ]))
                   : pw.SizedBox()
           ];
@@ -706,94 +608,53 @@ class Reportscreen extends StatelessWidget {
   }
 
   Future<bool> searchFunction(reportController rcontroller) async {
-    // Clear previous results
-    if (rcontroller.isDate.value && rcontroller.lastDate.value.length == 0) {
+    // Fill missing "to" bounds from the "from" values
+    if (rcontroller.isDate.value && rcontroller.lastDate.value.isEmpty) {
       rcontroller.lastDate.value = rcontroller.firstDate.value;
     }
-    if (rcontroller.isTime.value && rcontroller.lastTime.value.length == 0) {
+    if (rcontroller.isTime.value && rcontroller.lastTime.value.isEmpty) {
       rcontroller.lastTime.value = rcontroller.fistTime.value;
     }
 
-    // Build the filter string based on active filters
+    // Build the filter string based on active filters. Dates/times are
+    // filtered server-side so we never download the whole collection.
     List<String> filters = [];
 
-    // Add plate number filter (exact match)
-    if (rcontroller.selectedModel.length != 0) {
-      filters.add('plateNum = "${rcontroller.selectedModel.last.plateNum}"');
-    }
-    // Add plate picker filter (contains match)
-    else if (rcontroller.pickerPlate.value.length != 0) {
+    if (rcontroller.pickerPlate.value.isNotEmpty) {
       filters.add('plateNum ~ "${rcontroller.pickerPlate.value}"');
     }
 
-    // Build the complete filter string
+    if (rcontroller.isDate.value) {
+      if (rcontroller.firstDate.value == rcontroller.lastDate.value) {
+        filters.add('eDate = "${rcontroller.firstDate.value}"');
+      } else {
+        filters.add(
+            'eDate >= "${rcontroller.firstDate.value}" && eDate <= "${rcontroller.lastDate.value}"');
+      }
+    }
+
+    // eTime is stored zero-padded (HH:MM) so string comparison works.
+    if (rcontroller.isTime.value) {
+      if (rcontroller.fistTime.value == rcontroller.lastTime.value) {
+        filters.add('eTime = "${rcontroller.fistTime.value}"');
+      } else {
+        filters.add(
+            'eTime >= "${rcontroller.fistTime.value}" && eTime <= "${rcontroller.lastTime.value}"');
+      }
+    }
+
     String filterString = filters.join(' && ');
-    ;
 
     // Fetch records from PocketBase
     final records = await pb
         .collection('database')
         .getFullList(filter: filterString, sort: '-created');
 
-    // Process each record
-
-    var tempList = records.where((element) {
-      bool passesDateFilter = true;
-      bool passesTimeFilter = true;
-
-      // Apply date filter if active
-      if (rcontroller.isDate.value) {
-        DateTime fromDate = DateTime.parse(rcontroller.firstDate.value);
-        DateTime untilDate = DateTime.parse(rcontroller.lastDate.value);
-        DateTime initDate = DateTime.parse(element.data['eDate']);
-        print("${fromDate} , ${untilDate} , ${initDate}");
-
-        if (rcontroller.firstDate.value == rcontroller.lastDate.value ||
-            rcontroller.lastDate.value == '') {
-          passesDateFilter =
-              element.data['eDate'] == rcontroller.firstDate.value;
-        } else {
-          passesDateFilter =
-              initDate.isBefore(untilDate) && initDate.isAfter(fromDate);
-        }
-      }
-
-      // Apply time filter if active
-      if (rcontroller.isTime.value) {
-        TimeOfDay fromTime = TimeOfDay(
-            hour: int.parse(rcontroller.fistTime.value.split(':')[0]),
-            minute: int.parse(rcontroller.fistTime.value.split(':')[1]));
-        TimeOfDay untilTime = TimeOfDay(
-            hour: int.parse(rcontroller.lastTime.value.split(':')[0]),
-            minute: int.parse(rcontroller.lastTime.value.split(':')[1]));
-        TimeOfDay initTime = TimeOfDay(
-            hour: int.parse(element.data['eTime'].split(':')[0]),
-            minute: int.parse(element.data['eTime'].split(':')[1]));
-
-        if (rcontroller.fistTime.value == rcontroller.lastTime.value) {
-          passesTimeFilter =
-              element.data['eTime'] == rcontroller.fistTime.value;
-        } else {
-          passesTimeFilter = getTime(fromTime, untilTime, initTime);
-        }
-      }
-
-      return passesDateFilter && passesTimeFilter;
-    }).toList();
-
-    // Add results to report list
-    for (var json in tempList) {
-      rcontroller.selectedModel.add(databaseClass.fromJson(json.data));
-    }
+    // Replace previous results in one shot instead of appending (appending
+    // also made the second search filter on the first search's plate).
+    rcontroller.selectedModel
+        .assignAll(records.map((r) => databaseClass.fromJson(r.data)));
 
     return true;
-  }
-
-  bool getTime(TimeOfDay ft, TimeOfDay lt, TimeOfDay it) {
-    int ftMin = ft.hour * 60 + ft.minute;
-    int ltMin = lt.hour * 60 + lt.minute;
-    int itMin = it.hour * 60 + it.minute;
-
-    return ftMin < itMin && itMin <= ltMin;
   }
 }

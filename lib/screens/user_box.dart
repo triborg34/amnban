@@ -29,8 +29,6 @@ class UserBox extends StatelessWidget {
           Obx(() => SizedBox(
                 height: 300,
                 child: ListView.builder(
-                  primary: true,
-                  shrinkWrap: true,
                   itemBuilder: (context, index) => Container(
                     height: 50,
                     decoration: BoxDecoration(

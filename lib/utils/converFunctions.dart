@@ -1,3 +1,6 @@
+/// Hoisted so list rows don't recompile the same pattern per item.
+final RegExp latinLetters = RegExp('[a-zA-Z]');
+
 var labelmap = [
   '0',
   '1',

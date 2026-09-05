@@ -61,7 +61,7 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                                         .dcontroller.entries[index].isarvand ==
                                     'arvand'
                                 ? widget.dcontroller.entries[index].plateNum!
-                                        .contains(RegExp('[a-zA-Z]'))
+                                        .contains(latinLetters)
                                     ? false
                                     : true
                                 : convertToPersian(
@@ -118,16 +118,12 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                                               const EdgeInsets.only(left: 8),
                                           child: Container(
                                             width: 8.w,
-                                            child: widget.kcontroller.knowPerson
-                                                    .where(
-                                                      (element) =>
-                                                          element.plateNumber ==
-                                                          widget
-                                                              .dcontroller
-                                                              .entries[index]
-                                                              .plateNum,
-                                                    )
-                                                    .isNotEmpty
+                                            child: widget.kcontroller
+                                                    .personFor(widget
+                                                        .dcontroller
+                                                        .entries[index]
+                                                        .plateNum) !=
+                                                null
                                                 ? Container(
                                                     decoration: BoxDecoration(
                                                         borderRadius:
@@ -139,23 +135,14 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                                                       child: Text(
                                                         widget
                                                             .kcontroller
-                                                            .knowPerson[widget
-                                                                .kcontroller
-                                                                .knowPerson
-                                                                .indexWhere(
-                                                          (element) =>
-                                                              element
-                                                                  .plateNumber ==
-                                                              widget
-                                                                  .dcontroller
-                                                                  .entries[
-                                                                      index]
-                                                                  .plateNum,
-                                                        )]
+                                                            .personFor(widget
+                                                                .dcontroller
+                                                                .entries[index]
+                                                                .plateNum)!
                                                             .name!,
                                                         style: TextStyle(
                                                             color:
-                                                              isAllowed(index) ? Colors.green:  Colors.red),
+                                                                isAllowed(index) ? Colors.green:  Colors.red),
                                                       ),
                                                     ),
                                                   )
@@ -273,38 +260,16 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                                       color: Colors.black,
                                     ),
                                     Expanded(child: Center(child: Container(
-                                      child: Builder(builder: (context) {
-                                        try {
-                                          return Text(
-                                            Get.find<cameraController>()
-                                                    .cameras
-                                                    .isEmpty
-                                                ? '-'
-                                                : Get.find<cameraController>()
-                                                    .cameras
-                                                    .firstWhere(
-                                                      (element) =>
-                                                          element.path ==
-                                                          widget
-                                                              .dcontroller
-                                                              .entries[index]
-                                                              .rtpath,
-                                                    )
-                                                    .name
-                                                    .toString(),
-                                            style: TextStyle(
-                                                color:   Colors.white,
-                                                fontSize: 12.sp),
-                                          );
-                                        } catch (e) {
-                                          return Text(
-                                            "دوربین",
-                                            style: TextStyle(
-                                                color: Colors.white,
-                                                fontSize: 12.sp),
-                                          );
-                                        }
-                                      }),
+                                      child: Text(
+                                        Get.find<cameraController>()
+                                            .cameraNameFor(widget
+                                                .dcontroller
+                                                .entries[index]
+                                                .rtpath),
+                                        style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12.sp),
+                                      ),
                                     ))),
                                     VerticalDivider(
                                       color: Colors.black,
@@ -362,20 +327,9 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
   }
 
   bool isAllowed(index) {
-    var role=widget
-        .kcontroller
-        .knowPerson[widget.kcontroller.knowPerson.indexWhere(
-      (element) =>
-          element.plateNumber == widget.dcontroller.entries[index].plateNum,
-    )]
-        .role;
-        if (role=='مجاز'){
-          return true;
-        }
-        else{
-          return false;
-        }
-
- 
+    return widget.kcontroller
+            .personFor(widget.dcontroller.entries[index].plateNum)
+            ?.role ==
+        'مجاز';
   }
 }

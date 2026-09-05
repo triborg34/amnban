@@ -90,21 +90,11 @@ class ExtendedTable extends StatelessWidget {
                   width: 10.w,
                   child: Center(
                       child: Text(
-                    kcontroller.knowPerson
-                            .where(
-                              (element) =>
-                                  element.plateNumber ==
-                                  dcontroller.tableContect.value.plateNum,
-                            )
-                            .isEmpty
-                        ? "-"
-                        : kcontroller
-                            .knowPerson[kcontroller.knowPerson.indexWhere(
-                            (element) =>
-                                element.plateNumber ==
-                                dcontroller.tableContect.value.plateNum,
-                          )]
-                            .name!,
+                    kcontroller
+                            .personFor(
+                                dcontroller.tableContect.value.plateNum)
+                            ?.name ??
+                        "-",
                     textDirection: TextDirection.rtl,
                     style: TextStyle(color: Colors.white, fontSize: 10.sp),
                   ))),

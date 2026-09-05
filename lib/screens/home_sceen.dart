@@ -1,28 +1,39 @@
-import 'package:amnban/screens/details_screen.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
-import 'package:amnban/widgets/arvandpelak.dart';
+import 'package:amnban/widgets/amar_dialog.dart';
 import 'package:amnban/widgets/extended_table.dart';
 import 'package:amnban/widgets/data_base_entries.dart';
-import 'package:amnban/widgets/lisancepage.dart';
 import 'package:amnban/widgets/video_box.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:persian_number_utility/persian_number_utility.dart';
 
-class HomeSceen extends StatelessWidget {
+class HomeSceen extends StatefulWidget {
   HomeSceen({
     required this.mController,
     super.key,
   });
   mainPageConroller mController;
+
+  @override
+  State<HomeSceen> createState() => _HomeSceenState();
+}
+
+class _HomeSceenState extends State<HomeSceen> {
+  final FocusNode _keyboardFocusNode = FocusNode();
   databaseController dcontroller = Get.find<databaseController>();
   knowPersonController kcontroller = Get.find<knowPersonController>();
+
+  @override
+  void dispose() {
+    _keyboardFocusNode.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return KeyboardListener(
-      focusNode: FocusNode(),
+      focusNode: _keyboardFocusNode,
       autofocus: true,
       onKeyEvent: (event) {
         if (event is KeyDownEvent &&
@@ -47,13 +58,13 @@ class HomeSceen extends StatelessWidget {
               Row(
                 textDirection: TextDirection.rtl,
                 children: [
-                  VideoBox(mController: mController),
+                  VideoBox(mController: widget.mController),
                   SizedBox(
                     width: 15,
                   ),
                   dataBaseEntries(
                       dcontroller: dcontroller,
-                      mController: mController,
+                      mController: widget.mController,
                       kcontroller: kcontroller)
                 ],
               ),
@@ -63,7 +74,7 @@ class HomeSceen extends StatelessWidget {
               Obx(() => dcontroller.entries.isEmpty
                   ? SizedBox.shrink()
                   : Visibility(
-                      visible: mController.isSelected.value,
+                      visible: widget.mController.isSelected.value,
                       child: ExtendedTable(
                           index: dcontroller.selectedIndex.value,
                           dcontroller: dcontroller,
@@ -147,8 +158,8 @@ class HomeSceen extends StatelessWidget {
                               ),
                               TextButton(
                                   onPressed: () async {
-                                    await showAmar(
-                                        context, dcontroller.todayallowd);
+                                    await showAmarDialog(
+                                        context, dcontroller.todayallowd, kcontroller);
                                   },
                                   child: Text(
                                     "لیست پلاک های مجاز امروز",
@@ -160,8 +171,8 @@ class HomeSceen extends StatelessWidget {
                               ),
                               TextButton(
                                   onPressed: () async {
-                                    await showAmar(
-                                        context, dcontroller.todayunallowed);
+                                    await showAmarDialog(context,
+                                        dcontroller.todayunallowed, kcontroller);
                                   },
                                   child: Text(
                                     "لیست پلاک های غیر مجاز امروز",
@@ -238,113 +249,6 @@ class HomeSceen extends StatelessWidget {
     );
   }
 
-  Future<dynamic> showAmar(BuildContext context, var data) {
-    return showDialog(
-      context: context,
-      builder: (context) {
-        return Center(
-          child: Container(
-            color: purpule,
-            width: 500,
-            height: 300,
-            child: ListView.separated(
-              separatorBuilder: (context, index) => SizedBox(
-                height: 2,
-              ),
-              scrollDirection: Axis.vertical,
-              itemBuilder: (context, index) => GestureDetector(
-                onTap: () async {
-                  var record = await pb.collection('database').getFullList(
-                        filter: 'plateNum="${data[index].plateNum}"',
-                      );
-                  Get.to(() => Detailedscreen(
-                      rec: record,
-               
-                      selectedModel: data[index],
-                      index: index,
-                      kcontroller: kcontroller));
-                },
-                child: Container(
-                  width: 500,
-                  height: 50,
-                  child: Row(
-                    textDirection: TextDirection.rtl,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      if (data[index].isarvand == 'arvand')
-                        SizedBox(
-                          width: 150,
-                          height: 50,
-                          child: ArvandPelak2(entry: data[index]),
-                        )
-                      else
-                        SizedBox(
-                          width: 150,
-                          height: 50,
-                          child: LicanceNumber(
-                            entry: data[index],
-                          ),
-                        ),
-                      SizedBox(
-                        width: 100,
-                        height: 50,
-                        child: Center(
-                          child: Text(
-                            data[index].eDate!.toString().toPersianDate(),
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                      VerticalDivider(
-                        color: Colors.black,
-                      ),
-                      SizedBox(
-                        width: 100,
-                        height: 50,
-                        child: Center(
-                          child: Text(
-                            data[index].eTime!,
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                      VerticalDivider(
-                        color: Colors.black,
-                      ),
-                      SizedBox(
-                        width: 100,
-                        height: 50,
-                        child: Center(
-                          child: Text(
-                            (() {
-                              int idx = kcontroller.knowPerson.indexWhere(
-                                (element) =>
-                                    element.plateNumber == data[index].plateNum,
-                              );
-                              return idx != -1
-                                  ? kcontroller.knowPerson[idx].name!
-                                  : "-";
-                            })(),
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  decoration: BoxDecoration(
-                    color: selecetpurpule,
-                    border: Border.all(color: Colors.black),
-                  ),
-                ),
-              ),
-              itemCount: data.length,
-            ),
-          ),
-        );
-      },
-    );
-  }
 }
 
 class amarWidget extends StatelessWidget {

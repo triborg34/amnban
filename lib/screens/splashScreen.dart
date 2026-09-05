@@ -14,7 +14,7 @@ class SplashScreen extends StatelessWidget {
     
     return SplashView(
         backgroundColor: Colors.black,
-        logo:  Image.network('assets/images/logo.jpg') ,
+        logo:  Image.asset('assets/images/logo.jpg') ,
         subtitle: Text(
           "Automatic Licence Plate Recognition",
           style: TextStyle(color: Colors.white60),

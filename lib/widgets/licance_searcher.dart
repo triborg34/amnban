@@ -5,7 +5,7 @@ import 'package:amnban/widgets/reportTextField.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class licanceSearcher extends StatelessWidget {
+class licanceSearcher extends StatefulWidget {
   const licanceSearcher({
     super.key,
     required this.rcontroller,
@@ -14,7 +14,15 @@ class licanceSearcher extends StatelessWidget {
   final reportController rcontroller;
 
   @override
-  Widget build(BuildContext context) {
+  State<licanceSearcher> createState() => _licanceSearcherState();
+}
+
+class _licanceSearcherState extends State<licanceSearcher> {
+  late final reportController rcontroller;
+
+  @override
+  void initState() {
+    rcontroller = widget.rcontroller;
     rcontroller.firstTwoDigit.clear();
     rcontroller.lastTwoDigit.clear();
     rcontroller.threeDigit.clear();
@@ -22,7 +30,11 @@ class licanceSearcher extends StatelessWidget {
     rcontroller.engishalphabet.value = '';
     rcontroller.isArvand.value = false;
     rcontroller.arvandDigit.clear();
+    super.initState();
+  }
 
+  @override
+  Widget build(BuildContext context) {
     return Center(
         child: Container(
       padding: EdgeInsets.all(12),

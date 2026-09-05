@@ -13,6 +13,11 @@ class LicanceNumber extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Convert once per build instead of re-parsing the plate three times.
+    final parts = convertToPersian(entry.plateNum!, alphabetP2);
+    final mainPart = parts[0].contains('آ')
+        ? parts[0].replaceAll("آ", "الف")
+        : parts[0];
 
     return Container(
       width: 1.5.w,
@@ -28,8 +33,7 @@ class LicanceNumber extends StatelessWidget {
           Container(
             height: 40,
             child: Center(
-              child: Image.network(
-                  'assets/images/iranFlag.png') 
+              child: Image.asset('assets/images/iranFlag.png')
           
             ),
             width: 1.5.w,
@@ -53,14 +57,7 @@ class LicanceNumber extends StatelessWidget {
                             Colors.black))),
             child: Center(
               child: Text(
-              
-                convertToPersian(
-                    entry.plateNum!,
-                    alphabetP2)[0].contains('آ') ? convertToPersian(
-                    entry.plateNum!,
-                    alphabetP2)[0].replaceAll("آ", "الف")  :   convertToPersian(
-                    entry.plateNum!,
-                    alphabetP2)[0], 
+                mainPart,
                 textDirection:
                     TextDirection.rtl,
                 style:
@@ -69,23 +66,21 @@ class LicanceNumber extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: 1.5.w,
-            height:40,
-            child: Container(
-                padding: EdgeInsets.only(
-                    left: 0),
-                color: Colors.white,
-                child: Center(
-                  child: Text(
-                      convertToPersian(
-                          entry.plateNum!,
-                          alphabetP2)[1],
+              width: 1.5.w,
+              height:40,
+              child: Container(
+                  padding: EdgeInsets.only(
+                      left: 0),
+                  color: Colors.white,
+                  child: Center(
+                    child: Text(
+                      parts[1],
                       textDirection:
                           TextDirection.rtl,
                       style: TextStyle(
                           fontSize:11.sp
                           )),
-                )),
+                  )),
           )
         ],
       ),

@@ -11,9 +11,9 @@ import 'package:get/get.dart';
 
 
 
-class AddOrEditCamera extends StatelessWidget {
+class AddOrEditCamera extends StatefulWidget {
   const AddOrEditCamera({
-    
+
     super.key,
     required this.ccontroller,
     required this.context,
@@ -49,16 +49,39 @@ class AddOrEditCamera extends StatelessWidget {
   final String? path;
 
   @override
+  State<AddOrEditCamera> createState() => _AddOrEditCameraState();
+}
+
+class _AddOrEditCameraState extends State<AddOrEditCamera> {
+  late final cameraController ccontroller;
+  late final bool isEditing;
+  late final bool isDiscovery;
+  late final String? id;
+  late final String? path;
+
+  @override
+  void initState() {
+    ccontroller = widget.ccontroller;
+    isEditing = widget.isEditing;
+    isDiscovery = widget.isDiscovery;
+    id = widget.id;
+    path = widget.path;
+    // Seed the fields once on open; doing this in build() wiped the user's
+    // edits on every rebuild.
+    ccontroller.nameController.text = widget.name;
+    ccontroller.ipController.text = widget.ip;
+    ccontroller.portController.text = widget.cport;
+    ccontroller.rtspController.text = widget.rtsp;
+    ccontroller.rtspNameController.text = widget.rtspName;
+    ccontroller.usernameController.text = widget.username;
+    ccontroller.passwordController.text = widget.password;
+    ccontroller.isRtspEnabled.value = widget.isRtsp;
+    ccontroller.gateWayc.value = widget.gate;
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    ccontroller.nameController.text = name;
-    ccontroller.ipController.text = ip;
-    ccontroller.portController.text = cport;
-    ccontroller.rtspController.text = rtsp;
-    ccontroller.rtspNameController.text = rtspName;
-    ccontroller.usernameController.text = username;
-    ccontroller.passwordController.text = password;
-    ccontroller.isRtspEnabled.value = isRtsp;
-    ccontroller.gateWayc.value = gate;
     return Center(
       child: Material(
         color: Colors.transparent,
