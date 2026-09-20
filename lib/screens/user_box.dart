@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:amnban/models/userClass.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
+import 'package:amnban/utils/safe.dart';
 import 'package:amnban/widgets/add_or_edit_user.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -58,7 +59,7 @@ class UserBox extends StatelessWidget {
                           height: 50,
                           child: Center(
                             child: Text(
-                              ucontroller.users[index].nickname!,
+                              ucontroller.users[index].nickname ?? '-',
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(color: Colors.white),
                             ),
@@ -72,7 +73,7 @@ class UserBox extends StatelessWidget {
                           height: 50,
                           child: Center(
                             child: Text(
-                              ucontroller.users[index].email!,
+                              ucontroller.users[index].email ?? '-',
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(color: Colors.white),
                             ),
@@ -86,7 +87,7 @@ class UserBox extends StatelessWidget {
                           height: 50,
                           child: Center(
                             child: Text(
-                              ucontroller.users[index].username!,
+                              ucontroller.users[index].username ?? '-',
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(color: Colors.white),
                             ),
@@ -100,7 +101,7 @@ class UserBox extends StatelessWidget {
                           height: 50,
                           child: Center(
                             child: Text(
-                              ucontroller.users[index].accsesslvl!,
+                              ucontroller.users[index].accsesslvl ?? '-',
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(color: Colors.white),
                             ),
@@ -116,19 +117,32 @@ class UserBox extends StatelessWidget {
                               child: IconButton(
                                   onPressed: () async {
                                     userClass user = ucontroller.users[index];
-                                    List<String> nameSplit = (user.nickname ?? '').split(' ');
+                                    String passwordPlain = '';
+                                    try {
+                                      final stored = user.password;
+                                      if (stored != null &&
+                                          stored.isNotEmpty) {
+                                        passwordPlain = utf8
+                                            .decode(base64.decode(stored));
+                                      }
+                                    } catch (e) {
+                                      appLog('user password decode failed', e);
+                                    }
+                                    List<String> nameSplit =
+                                        (user.nickname ?? '').split(' ');
                                     await showAdaptiveDialog(
                                         context: context,
                                         builder: (context) => add_or_edit_user(
-                                            name: nameSplit[0],
+                                            name: nameSplit.isNotEmpty
+                                                ? nameSplit[0]
+                                                : '',
                                             lastName:
                                                 nameSplit.length > 1 ? nameSplit.sublist(1).join(' ') : '',
-                                            username: user.username!,
-                                            password: utf8.decode(
-                                                base64.decode(user.password!)),
-                                            email: user.email!,
+                                            username: user.username ?? '',
+                                            password: passwordPlain,
+                                            email: user.email ?? '',
                                             isEdit: true,
-                                            role: user.accsesslvl!,
+                                            role: user.accsesslvl ?? 'مدیر',
                                             index: index,
                                             ucontroller: ucontroller));
                                   },
@@ -144,9 +158,17 @@ class UserBox extends StatelessWidget {
                               child: IconButton(
                                   onPressed: () async {
                                     userClass user = ucontroller.users[index];
-                                    await pb
-                                        .collection('users')
-                                        .delete(user.id!);
+                                    final id = user.id;
+                                    if (id == null || id.isEmpty) return;
+                                    try {
+                                      await pb
+                                          .collection('users')
+                                          .delete(id)
+                                          .timeout(const Duration(
+                                              seconds: 15));
+                                    } catch (e) {
+                                      appLog('delete user failed', e);
+                                    }
                                   },
                                   icon: Icon(
                                     Icons.delete,

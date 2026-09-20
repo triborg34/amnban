@@ -2,8 +2,10 @@ import 'package:amnban/models/databaseEntry.dart';
 import 'package:amnban/screens/details_screen.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
+import 'package:amnban/utils/safe.dart';
 import 'package:amnban/utils/converFunctions.dart' show alphabetP2, convertToPersian, convertToPersianString, latinLetters;
 import 'package:amnban/widgets/arvandpelak.dart';
+import 'package:amnban/widgets/safe_image.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:persian_number_utility/persian_number_utility.dart';
@@ -54,7 +56,7 @@ class _ReportscreenState extends State<Reportscreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               GetBuilder<reportController>(
-                  builder: (controller) => rcontroller.isArvand.value
+                  builder: (controller) => Obx(() => rcontroller.isArvand.value
                       ? Container(
                           height: 40,
                           width: 210,
@@ -68,7 +70,7 @@ class _ReportscreenState extends State<Reportscreen> {
                             ),
                           ),
                         )
-                      : PlatePicked(rcontroller: rcontroller)),
+                      : PlatePicked(rcontroller: rcontroller))),
               TextButton(
                 onPressed: () async {
                   await showAdaptiveDialog(
@@ -99,7 +101,9 @@ class _ReportscreenState extends State<Reportscreen> {
                           firstDate: Jalali(1385),
                           lastDate: Jalali(1499));
 
-                      var d = picked!.toGregorian();
+                      if (picked == null) return;
+                      if (!context.mounted) return;
+                      var d = picked.toGregorian();
                       rcontroller.firstDate.value =
                           d.toDateTime().toString().split(' ')[0];
                       rcontroller.isDate.value = true;
@@ -126,7 +130,9 @@ class _ReportscreenState extends State<Reportscreen> {
                           firstDate: Jalali(1385),
                           lastDate: Jalali(1499));
 
-                      var d = picked!.toGregorian();
+                      if (picked == null) return;
+                      if (!context.mounted) return;
+                      var d = picked.toGregorian();
                       rcontroller.lastDate.value =
                           d.toDateTime().toString().split(' ')[0];
                     },
@@ -161,8 +167,10 @@ class _ReportscreenState extends State<Reportscreen> {
                               child: child!);
                         },
                       );
+                      if (t == null) return;
+                      if (!context.mounted) return;
                       rcontroller.fistTime.value =
-                          '${t!.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+                          '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
                       rcontroller.isTime.value = true;
                     },
                     child: Obx(() => Text(
@@ -197,8 +205,10 @@ class _ReportscreenState extends State<Reportscreen> {
                               child: child!);
                         },
                       );
+                      if (t == null) return;
+                      if (!context.mounted) return;
                       rcontroller.lastTime.value =
-                          '${t!.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+                          '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
                     },
                     child: Obx(() => Text(
                           rcontroller.lastTime.value.length == 0
@@ -212,17 +222,34 @@ class _ReportscreenState extends State<Reportscreen> {
               ),
               ElevatedButton(
                   onPressed: () async {
+                    if (rcontroller.isLoading.value) return;
                     rcontroller.isLoading.value = true;
+                    rcontroller.searchError.value = '';
 
-                    rcontroller.isCompleted.value =
-                        await searchFunction(rcontroller);
-                    rcontroller.isLoading.value = false;
+                    try {
+                      rcontroller.isCompleted.value =
+                          await searchFunction(rcontroller);
+                    } catch (e) {
+                      rcontroller.searchError.value = 'خطا در جستجو';
+                      appLog('search failed', e);
+                    } finally {
+                      rcontroller.isLoading.value = false;
+                    }
                   },
                   child: Text("جستجو")),
               SizedBox(
                 width: 10,
               ),
-              ElevatedButton(onPressed: saveToPdf, child: Text("ذخیره"))
+              ElevatedButton(onPressed: saveToPdf, child: Text("ذخیره")),
+              SizedBox(
+                width: 10,
+              ),
+              ElevatedButton(
+                  onPressed: () {
+                    rcontroller.inilazed();
+                    rcontroller.update();
+                  },
+                  child: Text("ریست"))
             ],
           ),
           SizedBox(
@@ -246,18 +273,21 @@ class _ReportscreenState extends State<Reportscreen> {
                     width: Get.width,
                     height: 700,
                     child: ListView.builder(
-                      itemBuilder: (context, index) => Visibility(
-                        visible: rcontroller.selectedModel[index].isarvand ==
-                                'arvand'
-                            ? rcontroller.selectedModel[index].plateNum!
-                                    .contains(latinLetters)
-                                ? false
-                                : true
-                            : convertToPersian(
-                                    rcontroller.selectedModel[index].plateNum!,
-                                    alphabetP2)[0] !=
-                                '-',
-                        child: Container(
+                      itemBuilder: (context, index) => Builder(builder: (context) {
+                        final item = rcontroller.selectedModel[index];
+                        final plate = item.plateNum ?? '';
+                        bool visible;
+                        try {
+                          visible = item.isarvand == 'arvand'
+                              ? (plate.isNotEmpty &&
+                                  !plate.contains(latinLetters))
+                              : (plate.isNotEmpty &&
+                                  convertToPersian(plate, alphabetP2)[0] != '-');
+                        } catch (_) {
+                          visible = false;
+                        }
+                        if (!visible) return const SizedBox.shrink();
+                        return Container(
                           child: Row(
                             textDirection: TextDirection.rtl,
                             children: [
@@ -290,27 +320,45 @@ class _ReportscreenState extends State<Reportscreen> {
                                   child: Center(
                                     child: InkWell(
                                         onTap: () async {
-                                          var record = await pb
-                                              .collection('database')
-                                              .getFullList(
-                                                filter:
-                                                    'plateNum="${rcontroller.selectedModel[index].plateNum}"',
-                                              );
+                                          final plate = rcontroller
+                                                  .selectedModel[index]
+                                                  .plateNum ??
+                                              '';
+                                          if (plate.isEmpty) return;
+                                          try {
+                                            var record = await pb
+                                                .collection('database')
+                                                .getFullList(
+                                                  filter:
+                                                      'plateNum="${pbEscape(plate)}"',
+                                                )
+                                                .timeout(const Duration(
+                                                    seconds: 15));
 
-                                          
-                                          Get.to(() => Detailedscreen(
-                                            rec: record,
-                                           
-                                                kcontroller: kcontroller,
-                                                selectedModel: rcontroller
-                                                    .selectedModel[index],
-                                                index: index,
-                                              ));
+                                            Get.to(() => Detailedscreen(
+                                                  rec: record,
+                                                  kcontroller: kcontroller,
+                                                  selectedModel: rcontroller
+                                                      .selectedModel[index],
+                                                  index: index,
+                                                ));
+                                          } catch (e) {
+                                            appLog(
+                                                'report detail fetch failed',
+                                                e);
+                                          }
                                         },
                                         child: Hero(
-                                            tag: "heroTag${index}",
-                                            child: Image.network(
-                                              "http://${url}:8090/api/files/database/${rcontroller.selectedModel[index].id}/${rcontroller.selectedModel[index].imgpath}",
+                                            tag:
+                                                "heroTag${rcontroller.selectedModel[index].id ?? index}",
+                                            child: SafeNetImage(
+                                              url: pbFileUrlOf(
+                                                  'database',
+                                                  rcontroller
+                                                      .selectedModel[index].id,
+                                                  rcontroller
+                                                      .selectedModel[index]
+                                                      .imgpath),
                                               fit: BoxFit.fill,
                                               width: 12.w,
                                               height: 48,
@@ -414,7 +462,8 @@ class _ReportscreenState extends State<Reportscreen> {
                                   width: 12.w,
                                   child: Center(
                                     child: Text(
-                                      rcontroller.selectedModel[index].eTime!,
+                                      rcontroller.selectedModel[index].eTime ??
+                                          '-',
                                       style: TextStyle(
                                           color: Colors.white, fontSize: 18),
                                     ),
@@ -428,7 +477,8 @@ class _ReportscreenState extends State<Reportscreen> {
                                   width: 12.w,
                                   child: Center(
                                     child: Text(
-                                      rcontroller.selectedModel[index].eDate!
+                                      (rcontroller.selectedModel[index].eDate ??
+                                              '')
                                           .toPersianDate(),
                                       style: TextStyle(
                                           color: Colors.white, fontSize: 18),
@@ -436,13 +486,13 @@ class _ReportscreenState extends State<Reportscreen> {
                                   )),
                             ],
                           ),
-                          margin: EdgeInsets.only(bottom: 10),
+                           margin: EdgeInsets.only(bottom: 10),
                           height: 50,
                           decoration: BoxDecoration(
                               border: Border.all(color: purpule),
                               borderRadius: BorderRadius.circular(10)),
-                        ),
-                      ),
+                        );
+                      }),
                       itemCount: rcontroller.selectedModel.length,
                     ),
                   ),
@@ -522,9 +572,14 @@ class _ReportscreenState extends State<Reportscreen> {
               ),
             ]),
             for (var i in rcontroller.selectedModel)
-              i.isarvand == 'arvand' ||
-                      convertToPersianString(i.plateNum!, alphabetP2) != '-'
-                  ? pw.Container(
+              () {
+                try {
+                  final plate = i.plateNum ?? '';
+                  if (plate.isEmpty) return pw.SizedBox();
+                  final ok = i.isarvand == 'arvand' ||
+                      convertToPersianString(plate, alphabetP2) != '-';
+                  if (!ok) return pw.SizedBox();
+                  return pw.Container(
                       child: pw.Row(children: [
                       pw.Container(
                         height: 30,
@@ -533,11 +588,11 @@ class _ReportscreenState extends State<Reportscreen> {
                         decoration: pw.BoxDecoration(border: pw.Border.all()),
                         child: pw.Text(
                             i.isarvand == 'arvand'
-                                ? i.plateNum!.contains(RegExp('[a-zA-Z]'))
+                                ? plate.contains(RegExp('[a-zA-Z]'))
                                     ? "-"
-                                    : i.plateNum.toString().toPersianDigit()
+                                    : plate.toPersianDigit()
                                 : convertToPersianString(
-                                    i.plateNum!, alphabetP2),
+                                    plate, alphabetP2),
                             style: pw.TextStyle(font: ttf) // Apply the font
                             ),
                       ),
@@ -590,8 +645,11 @@ class _ReportscreenState extends State<Reportscreen> {
                                 font: ttf) // Apply the font
                             ),
                         ),
-                    ]))
-                  : pw.SizedBox()
+                    ]));
+                } catch (_) {
+                  return pw.SizedBox();
+                }
+              }()
           ];
         },
         // Optional: Add header/footer to all pages
@@ -621,40 +679,47 @@ class _ReportscreenState extends State<Reportscreen> {
     List<String> filters = [];
 
     if (rcontroller.pickerPlate.value.isNotEmpty) {
-      filters.add('plateNum ~ "${rcontroller.pickerPlate.value}"');
+      filters.add('plateNum ~ "${pbEscape(rcontroller.pickerPlate.value)}"');
     }
 
     if (rcontroller.isDate.value) {
       if (rcontroller.firstDate.value == rcontroller.lastDate.value) {
-        filters.add('eDate = "${rcontroller.firstDate.value}"');
+        filters.add('eDate = "${pbEscape(rcontroller.firstDate.value)}"');
       } else {
         filters.add(
-            'eDate >= "${rcontroller.firstDate.value}" && eDate <= "${rcontroller.lastDate.value}"');
+            'eDate >= "${pbEscape(rcontroller.firstDate.value)}" && eDate <= "${pbEscape(rcontroller.lastDate.value)}"');
       }
     }
 
     // eTime is stored zero-padded (HH:MM) so string comparison works.
     if (rcontroller.isTime.value) {
       if (rcontroller.fistTime.value == rcontroller.lastTime.value) {
-        filters.add('eTime = "${rcontroller.fistTime.value}"');
+        filters.add('eTime = "${pbEscape(rcontroller.fistTime.value)}"');
       } else {
         filters.add(
-            'eTime >= "${rcontroller.fistTime.value}" && eTime <= "${rcontroller.lastTime.value}"');
+            'eTime >= "${pbEscape(rcontroller.fistTime.value)}" && eTime <= "${pbEscape(rcontroller.lastTime.value)}"');
       }
     }
 
     String filterString = filters.join(' && ');
 
-    // Fetch records from PocketBase
-    final records = await pb
-        .collection('database')
-        .getFullList(filter: filterString, sort: '-created');
+    try {
+      // Fetch records from PocketBase
+      final records = await pb
+          .collection('database')
+          .getFullList(filter: filterString, sort: '-created')
+          .timeout(const Duration(seconds: 30));
 
-    // Replace previous results in one shot instead of appending (appending
-    // also made the second search filter on the first search's plate).
-    rcontroller.selectedModel
-        .assignAll(records.map((r) => databaseClass.fromJson(r.data)));
+      // Replace previous results in one shot instead of appending (appending
+      // also made the second search filter on the first search's plate).
+      rcontroller.selectedModel
+          .assignAll(records.map((r) => databaseClass.fromJson(r.data)));
 
-    return true;
+      return true;
+    } catch (e) {
+      appLog('searchFunction failed', e);
+      rcontroller.searchError.value = 'خطا در جستجو — اتصال را بررسی کنید';
+      rethrow;
+    }
   }
 }

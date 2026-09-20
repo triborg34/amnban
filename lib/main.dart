@@ -26,13 +26,28 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(fontFamily: 'byekan',fontFamilyFallback: ['arial','robot']),
         getPages: pages,
         home: SplashScreen(),
-        onInit: () async {
-
-          var host = getNetworkInfo();
-          url = host['hostname'];
-          port=host['port'];
-          pb = PocketBase('http://${url}:8090');
-
+        onInit: () {
+          // GetMaterialApp.onInit is not awaited before bindings' onReady,
+          // so resolve synchronously with safe fallbacks. Controllers must
+          // never run with a 'null' host (previously produced
+          // PocketBase('http://null:8090')).
+          try {
+            final host = getNetworkInfo();
+            final hostname = host['hostname'];
+            final hostPort = host['port'];
+            if (hostname is String && hostname.isNotEmpty) {
+              url = hostname;
+            }
+            if (hostPort is String && hostPort.isNotEmpty) {
+              port = hostPort;
+            
+            }
+          } catch (_) {
+            // Keep compiled defaults (127.0.0.1:8000).
+          }
+          try {
+            pb = PocketBase('http://$url:8090');
+          } catch (_) {}
         },
       ),
     );

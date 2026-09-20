@@ -10,6 +10,17 @@ class ArvandPelak extends StatelessWidget {
   late databaseClass entry;
   ArvandPelak({required this.entry});
 
+  String _label() {
+    final plate = entry.plateNum ?? '';
+    if (plate.isEmpty) return '-';
+    if (plate.length <= 5) return plate.toPersianDigit();
+    try {
+      return "${plate.toPersianDigit().substring(0, plate.length - 2)} | ${plate.toPersianDigit().substring(plate.length - 2)}";
+    } catch (_) {
+      return plate.toPersianDigit();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -36,9 +47,7 @@ class ArvandPelak extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 0),
                 child: Center(
                   child: Text(
-                    entry.plateNum!.length <= 5
-                        ? entry.plateNum!.toPersianDigit()
-                        : "${entry.plateNum!.toPersianDigit().substring(0, entry.plateNum!.length - 2)} | ${entry.plateNum!.toPersianDigit().substring(entry.plateNum!.length - 2)}",
+                    _label(),
                     style: TextStyle(color: Colors.black, fontSize: 11.sp),
                   ),
                 ),
@@ -52,6 +61,17 @@ class ArvandPelak extends StatelessWidget {
 class ArvandPelak2 extends StatelessWidget {
   late databaseClass entry;
   ArvandPelak2({required this.entry});
+
+  String _label() {
+    final plate = entry.plateNum ?? '';
+    if (plate.isEmpty) return '-';
+    if (plate.length <= 5) return plate.toPersianDigit();
+    try {
+      return "${plate.toPersianDigit().substring(0, plate.length - 2)} | ${plate.toPersianDigit().substring(plate.length - 2)}";
+    } catch (_) {
+      return plate.toPersianDigit();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -84,9 +104,7 @@ class ArvandPelak2 extends StatelessWidget {
                     padding: EdgeInsets.symmetric(horizontal: 0),
                     child: Center(
                       child: Text(
-                        entry.plateNum!.length <= 5
-                            ? entry.plateNum!.toPersianDigit()
-                            : "${entry.plateNum!.toPersianDigit().substring(0, entry.plateNum!.length - 2)} | ${entry.plateNum!.toPersianDigit().substring(entry.plateNum!.length - 2)}",
+                        _label(),
                         style: TextStyle(color: Colors.black, fontSize: 11.sp),
                       ),
                     ),

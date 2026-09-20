@@ -8,14 +8,64 @@ import 'package:amnban/utils/controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class MainScreen extends StatelessWidget {
+class MainScreen extends StatefulWidget {
   MainScreen({super.key});
 
-  mainPageConroller mcontroller = Get.find<mainPageConroller>();
+  @override
+  State<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends State<MainScreen> {
+  final mcontroller = Get.find<mainPageConroller>();
+  late final Worker _navWorker;
+
+  int _homeIndex() => tabsFor(role).length - 1;
+
+  List<Widget> _pagesFor(String currentRole) {
+    if (currentRole == "ناظر") {
+      return [
+        PersonScreen(),
+        Reportscreen(),
+        HomeSceen(mController: mcontroller),
+      ];
+    }
+    return [
+      SettingScreen(),
+      PersonScreen(),
+      CameraScreen(),
+      Reportscreen(),
+      HomeSceen(mController: mcontroller),
+    ];
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final videoCtrl = Get.find<videoFeedController>();
+    // If the app launches on a non-Home tab (deep link / restored index),
+    // don't start every MJPEG stream in the background.
+    if (mcontroller.navitaionIndex.value != _homeIndex()) {
+      videoCtrl.pauseAll();
+    }
+    _navWorker = ever<int>(mcontroller.navitaionIndex, (idx) {
+      final home = _homeIndex();
+      if (idx == home) {
+        videoCtrl.resumeAll();
+      } else {
+        videoCtrl.pauseAll();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _navWorker.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-
+    final tabLabels = tabsFor(role);
     return Scaffold(
       backgroundColor: Colors.black,
       extendBody: false,
@@ -29,7 +79,7 @@ class MainScreen extends StatelessWidget {
               children: [
                 Image.asset('assets/images/mainlogo2.png'),
                 Spacer(),
-                for (int i = 0; i < tabs.length; i++)
+                for (int i = 0; i < tabLabels.length; i++)
                   InkWell(
                       onTap: () {
                         mcontroller.navitaionIndex.value = i;
@@ -43,7 +93,7 @@ class MainScreen extends StatelessWidget {
                           width: 100,
                           child: Center(
                             child: Text(
-                              tabs[i],
+                              tabLabels[i],
                               style: TextStyle(color: Colors.white),
                             ),
                           ),
@@ -55,48 +105,14 @@ class MainScreen extends StatelessWidget {
       body: Container(
         height: MediaQuery.of(context).size.height,
         width: MediaQuery.of(context).size.width,
-        child: GetX<mainPageConroller>(
-          builder: (controller) {
-            if (role == "ناظر") {
-              switch (controller.navitaionIndex.value) {
-          
-                case 0:
-                  return PersonScreen();
-                case 1:
-                  return Reportscreen();
-                case 2:
-                  return HomeSceen(
-                    mController: mcontroller,
-                  );
-
-                default:
-                  return HomeSceen(
-                    mController: mcontroller,
-                  );
-              }
-            } else {
-              switch (controller.navitaionIndex.value) {
-                case 0:
-                  return SettingScreen();
-                case 1:
-                  return PersonScreen();
-                case 2:
-                  return CameraScreen();
-                case 3:
-                  return Reportscreen();
-                case 4:
-                  return HomeSceen(
-                    mController: mcontroller,
-                  );
-
-                default:
-                  return HomeSceen(
-                    mController: mcontroller,
-                  );
-              }
-            }
-          },
-        ),
+        // IndexedStack keeps each tab's scroll/form state alive instead of
+        // recreating the whole screen on every tab switch.
+        child: Obx(() {
+          final pages = _pagesFor(role);
+          var idx = mcontroller.navitaionIndex.value;
+          if (idx < 0 || idx >= pages.length) idx = pages.length - 1;
+          return IndexedStack(index: idx, children: pages);
+        }),
       ),
     );
   }

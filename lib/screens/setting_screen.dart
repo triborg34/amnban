@@ -16,10 +16,11 @@ class SettingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.maybeOf(context)?.size;
     return Container(
       padding: EdgeInsets.all(15),
-      height: MediaQuery.maybeOf(context)!.size.height,
-      width: MediaQuery.maybeOf(context)!.size.width,
+      height: size?.height,
+      width: size?.width,
       child: SingleChildScrollView(
         child: Column(
           textDirection: TextDirection.rtl,

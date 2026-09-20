@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
+import 'package:amnban/utils/safe.dart';
 import 'package:amnban/widgets/coustom_fieds.dart';
 import 'package:amnban/widgets/rtspOff.dart';
 import 'package:amnban/widgets/rtspOnn.dart';
@@ -141,7 +142,10 @@ class _AddOrEditCameraState extends State<AddOrEditCamera> {
                                         borderSide: BorderSide(
                                             color: Colors.transparent))),
                                 borderRadius: BorderRadius.circular(15),
-                                initialValue: ccontroller.gateWayc.value,
+                                initialValue: (ccontroller.gateWayc.value == 'entre' ||
+                                        ccontroller.gateWayc.value == 'exit')
+                                    ? ccontroller.gateWayc.value
+                                    : 'entre',
                                 items: [
                                   DropdownMenuItem(
                                       value: "entre", child: Text("ورود",style: TextStyle(fontFamily: 'nazanin',fontFamilyFallback: ['arial']),)),
@@ -199,75 +203,116 @@ class _AddOrEditCameraState extends State<AddOrEditCamera> {
                       style:
                           TextButton.styleFrom(backgroundColor: Color.fromARGB(255, 25, 32, 71),textStyle: TextStyle(fontFamily: 'nazanin',fontFamilyFallback: ['arial'])),
                       onPressed: () async {
-                        if (isDiscovery) {
-                          var uri =
-                              Uri.parse('http://${url}:${port}/onvif/get-rtsp');
-                          final Map<String, dynamic> body = {
-                            "ip": "${ccontroller.ipController.text}",
-                            "port": "${ccontroller.portController.text}",
-                            "username":
-                                "${ccontroller.usernameController.text}",
-                            "password": "${ccontroller.passwordController.text}"
+                        if (ccontroller.nameController.text.trim().isEmpty) {
+                          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                              const SnackBar(
+                                  content: Text('نام دوربین لازم است')));
+                          return;
+                        }
+                        try {
+                          if (isDiscovery) {
+                            var uri = Uri.parse(
+                                'http://$url:$port/onvif/get-rtsp');
+                            final Map<String, dynamic> body = {
+                              "ip": ccontroller.ipController.text.trim(),
+                              "port": ccontroller.portController.text.trim(),
+                              "username":
+                                  ccontroller.usernameController.text.trim(),
+                              "password":
+                                  ccontroller.passwordController.text
+                            };
+
+                            final resp = await http
+                                .post(uri,
+                                    body: jsonEncode(body),
+                                    headers: {
+                                      'Content-Type': "application/json"
+                                    })
+                                .timeout(const Duration(seconds: 15));
+                            if (resp.statusCode >= 200 &&
+                                resp.statusCode < 300) {
+                              try {
+                                final decoded = jsonDecode(resp.body);
+                                final rtsp = decoded is Map
+                                    ? decoded['rtsp']?.toString()
+                                    : null;
+                                if (rtsp != null && rtsp.isNotEmpty) {
+                                  ccontroller.rtspController.text = rtsp;
+                                  ccontroller.isRtspEnabled.value = true;
+                                }
+                              } catch (e) {
+                                appLog('rtsp discovery parse failed', e);
+                              }
+                            }
+                          }
+
+                          if (!ccontroller.isRtspEnabled.value) {
+                            ccontroller.rtspController.text =
+                                "rtsp://${ccontroller.usernameController.text.trim()}:${ccontroller.passwordController.text}@${ccontroller.ipController.text.trim()}:${ccontroller.portController.text.trim()}/${ccontroller.rtspNameController.text.trim()}";
+                          } else {
+                            ccontroller.rtspNameController.text = 'stream';
+                            try {
+                              final rtsp = ccontroller.rtspController.text;
+                              final afterSlashes = rtsp.split('//');
+                              if (afterSlashes.length > 1) {
+                                final hostPort = afterSlashes[1].split(":");
+                                if (hostPort.length > 1) {
+                                  ccontroller.ipController.text = hostPort[0];
+                                  final portPart = hostPort[1];
+                                  ccontroller.portController.text =
+                                      portPart.length >= 3
+                                          ? portPart.substring(0, 3)
+                                          : portPart;
+                                }
+                              }
+                            } catch (e) {
+                              appLog('rtsp parse failed', e);
+                            }
+                          }
+
+                          final body = <String, dynamic>{
+                            "name": ccontroller.nameController.text.trim(),
+                            "ip": ccontroller.ipController.text.trim(),
+                            "port": ccontroller.portController.text.trim(),
+                            "rtspName":
+                                ccontroller.rtspNameController.text.trim(),
+                            "rtspUrl": ccontroller.rtspController.text.trim(),
+                            "isRtsp": ccontroller.isRtspEnabled.value,
+                            "gate": ccontroller.gateWayc.value,
+                            'username':
+                                ccontroller.usernameController.text.trim(),
+                            'password': base64.encode(utf8.encode(
+                                ccontroller.passwordController.text)),
+                            'path': path
                           };
 
-                          await http.post(uri,
-                              body: jsonEncode(body),
-                              headers: {
-                                'Content-Type': "application/json"
-                              }).then(
-                            (value) {
-                              ccontroller.rtspController.text =
-                                  jsonDecode(value.body)['rtsp'];
-                              ccontroller.isRtspEnabled.value = true;
-                            },
-                          );
+                          if (isEditing) {
+                            if (id == null || id!.isEmpty) return;
+                            final record = await pb
+                                .collection('cameras')
+                                .update(id!, body: body)
+                                .timeout(
+                                    const Duration(seconds: 15));
+                            ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                                SnackBar(
+                                    content:
+                                        Text("${record.id} Edited")));
+                          } else {
+                            final record = await pb
+                                .collection('cameras')
+                                .create(body: body)
+                                .timeout(
+                                    const Duration(seconds: 15));
+                            ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                                SnackBar(content: Text(record.id)));
+                          }
+                          if (context.mounted) Navigator.pop(context);
+                        } catch (e) {
+                          appLog('save camera failed', e);
+                          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                              const SnackBar(
+                                  content: Text('خطا در ذخیره دوربین')));
                         }
-
-                        if (!ccontroller.isRtspEnabled.value) {
-                          ccontroller.rtspController.text =
-                              "rtsp://${ccontroller.usernameController.text}:${ccontroller.passwordController.text}@${ccontroller.ipController.text}:${ccontroller.portController.text}/${ccontroller.rtspNameController.text}";
-                        } else {
-                          ccontroller.rtspNameController.text = 'stream';
-                          ccontroller.ipController.text = ccontroller
-                              .rtspController.text
-                              .split('//')[1]
-                              .split(":")[0];
-                          ccontroller.portController.text = ccontroller
-                              .rtspController.text
-                              .split('//')[1]
-                              .split(":")[1]
-                              .substring(0, 3);
-                        }
-
-                        final body = <String, dynamic>{
-                          "name": ccontroller.nameController.text,
-                          "ip": ccontroller.ipController.text,
-                          "port": ccontroller.portController.text,
-                          "rtspName": ccontroller.rtspNameController.text,
-                          "rtspUrl": ccontroller.rtspController.text,
-                          "isRtsp": ccontroller.isRtspEnabled.value,
-                          "gate": ccontroller.gateWayc.value,
-                          'username': ccontroller.usernameController.text,
-                          'password': base64.encode(
-                              utf8.encode(ccontroller.passwordController.text)),
-                          'path':path
-                        };
-
-                        if (isEditing) {
-                          final record = await pb
-                              .collection('cameras')
-                              .update(id!, body: body);
-                                ScaffoldMessenger.maybeOf(context)!
-                            .showSnackBar(SnackBar(content: Text("${record.id} Edited")));
-                        }
-                       else{
-                         final record =
-                            await pb.collection('cameras').create(body: body);
-                              ScaffoldMessenger.maybeOf(context)!
-                            .showSnackBar(SnackBar(content: Text(record.id)));
-                       }
-                        Navigator.pop(context);
-                      
                       },
                       child: Text(
                         "ثبت",

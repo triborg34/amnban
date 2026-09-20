@@ -1,3 +1,5 @@
+import 'package:amnban/utils/safe.dart';
+
 class databaseClass {
   String? collectionId;
   String? collectionName;
@@ -33,21 +35,21 @@ class databaseClass {
       this.updated});
 
   databaseClass.fromJson(Map<String, dynamic> json) {
-    collectionId = json['collectionId'];
-    collectionName = json['collectionName'];
-    id = json['id'];
-    plateNum = json['plateNum'];
-    eDate = json['eDate'];
-    eTime = json['eTime'];
-    status = json['status'];
-    isarvand = json['isarvand'];
-    rtpath = json['rtpath'];
-    charPercent = json['charPercent'];
-    platePercent = json['platePercent'];
-    imgpath = json['imgpath'];
-    scrnPath = json['scrnPath'];
-    created = json['created'];
-    updated = json['updated'];
+    collectionId = asString(json['collectionId']);
+    collectionName = asString(json['collectionName']);
+    id = asString(json['id']);
+    plateNum = asString(json['plateNum']);
+    eDate = asString(json['eDate']);
+    eTime = asString(json['eTime']);
+    status = asString(json['status']);
+    isarvand = asString(json['isarvand']);
+    rtpath = asString(json['rtpath']);
+    charPercent = asInt(json['charPercent']);
+    platePercent = asInt(json['platePercent']);
+    imgpath = asString(json['imgpath']);
+    scrnPath = asString(json['scrnPath']);
+    created = asString(json['created']);
+    updated = asString(json['updated']);
   }
 
   Map<String, dynamic> toJson() {

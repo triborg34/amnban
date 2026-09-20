@@ -1,3 +1,5 @@
+import 'package:amnban/utils/safe.dart';
+
 class setting_class {
   String? id;
   double? plateConf;
@@ -13,6 +15,7 @@ class setting_class {
   String? ip;
   bool? rfconnect;
   bool? notif;
+  bool? isBadNetwork;
   setting_class(
 
       {
@@ -28,23 +31,27 @@ class setting_class {
       this.alarm,
       this.quality,
       this.rfconnect,
+      this.isBadNetwork ,
       this.ip,this.notif});
 
   setting_class.fromJson(Map<String, dynamic> json) {
-    id=json['id'];
-    plateConf = json['plateConf'];
-    charConf = json['charConf'];
-    port = json['port'];
-    isRfid = json['isRfid'];
-    rl1 = json['rl1'];
-    rl2 = json['rl2'];
-    rfidip = json['rfidip'];
-    rfidport = json['rfidport'];
-    alarm = json['alarm'];
-    quality = json['quality'];
-    ip = json['ip'];
-    rfconnect=json['rfconnect'];
-    notif=json['notif'];
+    id=asString(json['id']);
+    // Server sometimes sends int where the app expects double (and vice
+    // versa) — coercing here prevents type-cast crashes.
+    plateConf = asDouble(json['plateConf']);
+    charConf = asDouble(json['charConf']);
+    port = asString(json['port']);
+    isRfid = asBool(json['isRfid']);
+    rl1 = asBool(json['rl1']);
+    rl2 = asBool(json['rl2']);
+    rfidip = asString(json['rfidip']);
+    rfidport = asInt(json['rfidport']);
+    alarm = asBool(json['alarm']);
+    quality = asInt(json['quality']);
+    ip = asString(json['ip']);
+    rfconnect=asBool(json['rfconnect']);
+    notif=asBool(json['notif']);
+    isBadNetwork= asBool(json['isBadNetwork']);
   }
 
   Map<String, dynamic> toJson() {
@@ -63,6 +70,7 @@ class setting_class {
     data["id"]=this.id;
     data['rfconnect']=this.rfconnect;
     data['notif']=this.notif;
+    data['isBadNetwork']=this.isBadNetwork;
     return data;
   }
 }

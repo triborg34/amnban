@@ -2,6 +2,7 @@ import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/utils/converFunctions.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class PlatePicked extends StatelessWidget {
   const PlatePicked({
@@ -13,6 +14,19 @@ class PlatePicked extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // TextEditingControllers don't trigger Obx — listen to them explicitly
+    // so the preview updates while typing (previously stale until update()).
+    return ListenableBuilder(
+      listenable: Listenable.merge([
+        rcontroller.firstTwoDigit,
+        rcontroller.threeDigit,
+        rcontroller.lastTwoDigit,
+      ]),
+      builder: (context, _) => Obx(() => _body()),
+    );
+  }
+
+  Widget _body() {
     return Container(
           height: 40,
           width: 210,

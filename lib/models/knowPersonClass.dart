@@ -1,3 +1,5 @@
+import 'package:amnban/utils/safe.dart';
+
 class knowPersonBox {
   String? collectionId;
   String? collectionName;
@@ -47,28 +49,35 @@ class knowPersonBox {
       this.updated});
 
   knowPersonBox.fromJson(Map<String, dynamic> json) {
-    collectionId = json['collectionId'];
-    collectionName = json['collectionName'];
-    id = json['id'];
-    plateImagePath = json['plateImagePath'];
-    name = json['name'];
-    carName = json['carName'];
-    eDate = json['eDate'];
-    eTime = json['eTime'];
-    status = json['status'];
-    screenImg = json['screenImg'];
-    role = json['role'];
-    socialNumber = json['socialNumber'];
-    isarvand = json['isarvand'];
-    rtpath = json['rtpath'];
-    plateNumber = json['plateNumber'];
-    created = json['created'];
-    updated = json['updated'];
-    firstTwoDigit = json['firstTwoDigit'];
-    threeDigit = json['threeDigit'];
-    lastTwoDigit = json['lastTwoDigit'];
-    persianAlhpabet = json['persinalAlphabet'];
-    engishAlphabet = json['englishAlphabet'];
+    collectionId = asString(json['collectionId']);
+    collectionName = asString(json['collectionName']);
+    id = asString(json['id']);
+    plateImagePath = asString(json['plateImagePath']);
+    name = asString(json['name']);
+    carName = asString(json['carName']);
+    eDate = asString(json['eDate']);
+    eTime = asString(json['eTime']);
+    status = asBool(json['status']);
+    screenImg = asString(json['screenImg']);
+    role = asString(json['role']);
+    socialNumber = asString(json['socialNumber']);
+    isarvand = asString(json['isarvand']);
+    rtpath = asString(json['rtpath']);
+    plateNumber = asString(json['plateNumber']);
+    created = asString(json['created']);
+    updated = asString(json['updated']);
+    firstTwoDigit = asString(json['firstTwoDigit']);
+    threeDigit = asString(json['threeDigit']);
+    lastTwoDigit = asString(json['lastTwoDigit']);
+    // NOTE: the collection historically used misspelled keys. Read the
+    // misspelled key first (current contract) but fall back to the correct
+    // spelling so either one works. Writes keep the old key to avoid
+    // breaking the backend.
+    persianAlhpabet = asString(json['persinalAlphabet']) ??
+        asString(json['persianAlphabet']) ??
+        asString(json['persianAlhpabet']);
+    engishAlphabet = asString(json['englishAlphabet']) ??
+        asString(json['engishAlphabet']);
   }
 
   Map<String, dynamic> toJson() {

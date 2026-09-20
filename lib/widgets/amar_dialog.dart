@@ -2,6 +2,7 @@ import 'package:amnban/models/databaseEntry.dart';
 import 'package:amnban/screens/details_screen.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
+import 'package:amnban/utils/safe.dart';
 import 'package:amnban/widgets/arvandpelak.dart';
 import 'package:amnban/widgets/lisancepage.dart';
 import 'package:flutter/material.dart';
@@ -32,15 +33,21 @@ Future<dynamic> showAmarDialog(
               scrollDirection: Axis.vertical,
               itemBuilder: (context, index) => GestureDetector(
                 onTap: () async {
-                  var record = await pb.collection('database').getFullList(
-                        filter: 'plateNum="${data[index].plateNum}"',
-                      );
-                  Get.to(() => Detailedscreen(
-                        rec: record,
-                        selectedModel: data[index],
-                        index: index,
-                        kcontroller: kcontroller,
-                      ));
+                  final plate = data[index].plateNum ?? '';
+                  if (plate.isEmpty) return;
+                  try {
+                    var record = await pb.collection('database').getFullList(
+                          filter: 'plateNum="${pbEscape(plate)}"',
+                        ).timeout(const Duration(seconds: 15));
+                    Get.to(() => Detailedscreen(
+                          rec: record,
+                          selectedModel: data[index],
+                          index: index,
+                          kcontroller: kcontroller,
+                        ));
+                  } catch (e) {
+                    appLog('amar detail fetch failed', e);
+                  }
                 },
                 child: Container(
                   width: 500,
@@ -66,7 +73,7 @@ Future<dynamic> showAmarDialog(
                         height: 50,
                         child: Center(
                           child: Text(
-                            data[index].eDate!.toString().toPersianDate(),
+                            (data[index].eDate ?? '').toString().toPersianDate(),
                             style: TextStyle(color: Colors.white),
                           ),
                         ),
@@ -79,7 +86,7 @@ Future<dynamic> showAmarDialog(
                         height: 50,
                         child: Center(
                           child: Text(
-                            data[index].eTime!,
+                            data[index].eTime ?? '-',
                             style: TextStyle(color: Colors.white),
                           ),
                         ),

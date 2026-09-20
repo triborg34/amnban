@@ -1,9 +1,11 @@
 import 'package:amnban/screens/details_screen.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
+import 'package:amnban/utils/safe.dart';
 import 'package:amnban/widgets/arvandpelak.dart';
 import 'package:amnban/widgets/lisancepage.dart';
 import 'package:amnban/widgets/pdf_printig.dart';
+import 'package:amnban/widgets/safe_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:persian_number_utility/persian_number_utility.dart';
@@ -39,17 +41,23 @@ class ExtendedTable extends StatelessWidget {
                       : LicanceNumber(entry: dcontroller.tableContect.value)),
               InkWell(
                 onTap: () async {
-                  var record =
-                      await pb.collection('database').getFullList(
-                            filter: 'plateNum="${dcontroller.tableContect.value.plateNum}"',
-                          );
-                  
-                  Get.to(() => Detailedscreen(
-                    rec: record,
-  
-                      selectedModel: dcontroller.tableContect.value,
-                      index: index,
-                      kcontroller: kcontroller));
+                  final plate = dcontroller.tableContect.value.plateNum ?? '';
+                  if (plate.isEmpty) return;
+                  try {
+                    var record =
+                        await pb.collection('database').getFullList(
+                              filter: 'plateNum="${pbEscape(plate)}"',
+                            ).timeout(const Duration(seconds: 15));
+
+                    Get.to(() => Detailedscreen(
+                      rec: record,
+
+                        selectedModel: dcontroller.tableContect.value,
+                        index: index,
+                        kcontroller: kcontroller));
+                  } catch (e) {
+                    appLog('extended detail fetch failed', e);
+                  }
                 },
                 child: Container(
                   height: 48,
@@ -61,9 +69,9 @@ class ExtendedTable extends StatelessWidget {
                   width: 10.w,
                   child: Center(
                     child: Hero(
-                      tag: 'heroTag${dcontroller.selectedIndex.value}',
-                      child: Image.network(
-                        "http://${url}:8090/api/files/database/${dcontroller.tableContect.value.id}/${dcontroller.tableContect.value.imgpath}",
+                      tag: 'heroTag${dcontroller.tableContect.value.id ?? dcontroller.selectedIndex.value}',
+                      child: SafeNetImage(
+                        url: pbFileUrlOf('database', dcontroller.tableContect.value.id, dcontroller.tableContect.value.imgpath),
                         fit: BoxFit.fill,
                         width: 205,
                       ),
@@ -105,11 +113,11 @@ class ExtendedTable extends StatelessWidget {
                   width: 10.w,
                   child: Center(
                       child: Text(
-                    dcontroller.tableContect.value.plateNum!.contains("x")
+                    (dcontroller.tableContect.value.plateNum ?? '').contains("x")
                         ? 'تاکسی'
-                        : dcontroller.tableContect.value.plateNum!.contains('A')
+                        : (dcontroller.tableContect.value.plateNum ?? '').contains('A')
                             ? "دولتی"
-                            : dcontroller.tableContect.value.plateNum!
+                            : (dcontroller.tableContect.value.plateNum ?? '')
                                     .contains('PuV')
                                 ? 'کامیون'
                                 : "شخصی",
@@ -123,7 +131,7 @@ class ExtendedTable extends StatelessWidget {
                   width: 10.w,
                   child: Center(
                       child: Text(
-                    dcontroller.tableContect.value.eTime!.toPersianDigit(),
+                    (dcontroller.tableContect.value.eTime ?? '-').toPersianDigit(),
                     textDirection: TextDirection.rtl,
                     style: TextStyle(color: Colors.white, fontSize: 10.sp),
                   ))),
@@ -134,7 +142,7 @@ class ExtendedTable extends StatelessWidget {
                   width: 10.w,
                   child: Center(
                       child: Text(
-                    dcontroller.tableContect.value.eDate!.toPersianDate(),
+                    (dcontroller.tableContect.value.eDate ?? '').toPersianDate(),
                     textDirection: TextDirection.rtl,
                     style: TextStyle(color: Colors.white, fontSize: 10.sp),
                   ))),
@@ -145,7 +153,7 @@ class ExtendedTable extends StatelessWidget {
                   width: 10.w,
                   child: Center(
                       child: Text(
-                    dcontroller.tableContect.value.eTime!.toPersianDigit(),
+                    (dcontroller.tableContect.value.eTime ?? '-').toPersianDigit(),
                     textDirection: TextDirection.rtl,
                     style: TextStyle(color: Colors.white, fontSize: 10.sp),
                   ))),

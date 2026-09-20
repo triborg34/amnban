@@ -22,15 +22,35 @@ class _licanceSearcherState extends State<licanceSearcher> {
 
   @override
   void initState() {
-    rcontroller = widget.rcontroller;
-    rcontroller.firstTwoDigit.clear();
-    rcontroller.lastTwoDigit.clear();
-    rcontroller.threeDigit.clear();
-    rcontroller.persianalhpabet.value = '';
-    rcontroller.engishalphabet.value = '';
-    rcontroller.isArvand.value = false;
-    rcontroller.arvandDigit.clear();
     super.initState();
+    rcontroller = widget.rcontroller;
+    // Defer the reset to post-frame: clearing the shared TextEditingControllers
+    // synchronously here notifies PlatePicked's ListenableBuilder while the
+    // framework is still building the dialog -> "markNeedsBuild during build".
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (rcontroller.firstTwoDigit.text.isNotEmpty) {
+        rcontroller.firstTwoDigit.clear();
+      }
+      if (rcontroller.lastTwoDigit.text.isNotEmpty) {
+        rcontroller.lastTwoDigit.clear();
+      }
+      if (rcontroller.threeDigit.text.isNotEmpty) {
+        rcontroller.threeDigit.clear();
+      }
+      if (rcontroller.persianalhpabet.value.isNotEmpty) {
+        rcontroller.persianalhpabet.value = '';
+      }
+      if (rcontroller.engishalphabet.value.isNotEmpty) {
+        rcontroller.engishalphabet.value = '';
+      }
+      if (rcontroller.isArvand.value) {
+        rcontroller.isArvand.value = false;
+      }
+      if (rcontroller.arvandDigit.text.isNotEmpty) {
+        rcontroller.arvandDigit.clear();
+      }
+    });
   }
 
   @override
@@ -77,18 +97,7 @@ class _licanceSearcherState extends State<licanceSearcher> {
           Container(
             width: 200,
             child: ElevatedButton(
-                onPressed: () {
-                  if (rcontroller.isArvand.value) {
-                    rcontroller.pickerPlate.value =
-                        rcontroller.arvandDigit.text;
-                  } else {
-                    rcontroller.pickerPlate.value =
-                        "${rcontroller.firstTwoDigit.text}${rcontroller.engishalphabet}${rcontroller.threeDigit.text}${rcontroller.lastTwoDigit.text}";
-                  }
-
-                  rcontroller.update();
-                  Navigator.pop(context);
-                },
+                onPressed: _submit,
                 child: Text("ثبت")),
           )
         ],
@@ -96,6 +105,21 @@ class _licanceSearcherState extends State<licanceSearcher> {
       decoration: BoxDecoration(
           color: purpule, borderRadius: BorderRadius.circular(15)),
     ));
+  }
+
+  void _submit() {
+    if (rcontroller.isArvand.value) {
+      rcontroller.pickerPlate.value =
+          rcontroller.arvandDigit.text.trim();
+    } else {
+      // NOTE: engishalphabet is RxString — must use .value (previously
+      // interpolated the Rx object itself: "Instance of RxString").
+      rcontroller.pickerPlate.value =
+          "${rcontroller.firstTwoDigit.text.trim()}${rcontroller.engishalphabet.value}${rcontroller.threeDigit.text.trim()}${rcontroller.lastTwoDigit.text.trim()}";
+    }
+
+    rcontroller.update();
+    Navigator.pop(context);
   }
 }
 

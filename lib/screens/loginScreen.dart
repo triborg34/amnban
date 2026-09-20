@@ -19,28 +19,52 @@ class ModernLoginPage extends StatefulWidget {
 class _ModernLoginPageState extends State<ModernLoginPage> {
   final _formKey = GlobalKey<FormState>();
   bool _rememberMe = false;
+  bool _isLoggingIn = false;
   final FocusNode _keyboardFocusNode = FocusNode();
 
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   userController ucontroller = Get.find<userController>();
 
+  /// Best-effort base64 decode: returns null for plain/corrupt passwords
+  /// instead of throwing FormatException.
+  String? _decodePassword(String? stored) {
+    if (stored == null || stored.isEmpty) return null;
+    try {
+      return utf8.decode(base64.decode(stored));
+    } catch (_) {
+      return null;
+    }
+  }
+
   Future<void> _checkLoginStatus() async {
-    String username = await getRememberMe();
-    if (username != '') {
+    try {
+      String username = await getRememberMe();
+      if (username.isEmpty) return;
+      if (!mounted) return;
+      // Users may not be loaded yet — wait briefly rather than failing.
+      if (ucontroller.users.isEmpty) {
+        try {
+          await ucontroller.ensureLoaded().timeout(const Duration(seconds: 10));
+        } catch (_) {}
+      }
+      if (!mounted) return;
       var matches = ucontroller.users.where(
         (element) => element.username == username,
       );
       if (matches.isNotEmpty) {
         userClass user = matches.first;
-        if (user.rememberme!) {
-          role=user.accsesslvl!;
-          email=user.email!;
+        if (user.rememberme == true) {
+          role = user.accsesslvl ?? '';
+          email = user.email ?? '';
+          if (!mounted) return;
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (_) => MainScreen()),
           );
         }
       }
+    } catch (_) {
+      // Auto-login must never crash the login screen.
     }
   }
 
@@ -278,40 +302,54 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
   }
 
   _login() async {
+    if (_isLoggingIn) return;
     if (_formKey.currentState!.validate()) {
-      var matches = ucontroller.users.where(
-        (element) => element.username == _usernameController.text,
-      );
-      if (matches.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('رمز عبور یا نام کاربری اشتباه',
-                  textDirection: TextDirection.rtl)),
-        );
-        return;
-      }
-      userClass user = matches.first;
-      if (_rememberMe) {
-        saveRememberMe(true, user.username!);
-        await pb
-            .collection('users')
-            .update(user.id!, body: {"rememberme": _rememberMe});
-      }
-      // Login logic here
-
+      _isLoggingIn = true;
       try {
-        if (utf8.decode(base64.decode(user.password!)) ==
-            _passwordController.text) {
-              role=user.accsesslvl!;
-              email=user.email!;
-          Get.to(() => MainScreen());
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('رمز عبور یا نام کاربری اشتباه',
-                  textDirection: TextDirection.rtl)),
+        var matches = ucontroller.users.where(
+          (element) => element.username == _usernameController.text,
         );
+        if (matches.isEmpty) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text('رمز عبور یا نام کاربری اشتباه',
+                    textDirection: TextDirection.rtl)),
+          );
+          return;
+        }
+        userClass user = matches.first;
+        if (_rememberMe) {
+          try {
+            saveRememberMe(true, user.username ?? _usernameController.text);
+            if (user.id != null) {
+              await pb
+                  .collection('users')
+                  .update(user.id!, body: {"rememberme": _rememberMe}).timeout(
+                      const Duration(seconds: 10));
+            }
+          } catch (_) {
+            // Remember-me persistence must not block login.
+          }
+        }
+        // Login logic here
+
+        final stored = _decodePassword(user.password);
+        if (stored != null && stored == _passwordController.text) {
+          role = user.accsesslvl ?? '';
+          email = user.email ?? '';
+          // offAll so back button can't return to the login screen.
+          Get.offAll(() => MainScreen());
+        } else {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text('رمز عبور یا نام کاربری اشتباه',
+                    textDirection: TextDirection.rtl)),
+          );
+        }
+      } finally {
+        _isLoggingIn = false;
       }
     }
   }

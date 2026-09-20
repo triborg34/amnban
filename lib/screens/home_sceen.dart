@@ -48,26 +48,38 @@ class _HomeSceenState extends State<HomeSceen> {
       child: SingleChildScrollView(
         child: Container(
           padding: EdgeInsets.all(15),
-          height: MediaQuery.of(context).size.height,
           width: MediaQuery.of(context).size.width,
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.start,
             textDirection: TextDirection.rtl,
             children: [
-              Row(
-                textDirection: TextDirection.rtl,
-                children: [
-                  VideoBox(mController: widget.mController),
-                  SizedBox(
-                    width: 15,
-                  ),
-                  dataBaseEntries(
-                      dcontroller: dcontroller,
-                      mController: widget.mController,
-                      kcontroller: kcontroller)
-                ],
-              ),
+              // Wrap on narrow windows instead of overflowing.
+              LayoutBuilder(builder: (context, constraints) {
+                final narrow = constraints.maxWidth < 900;
+                final video = VideoBox(mController: widget.mController);
+                final entries = dataBaseEntries(
+                    dcontroller: dcontroller,
+                    mController: widget.mController,
+                    kcontroller: kcontroller);
+                if (narrow) {
+                  return Column(children: [
+                    SizedBox(height: 450, child: video),
+                    SizedBox(height: 15),
+                    SizedBox(height: 450, child: entries),
+                  ]);
+                }
+                return Row(
+                  textDirection: TextDirection.rtl,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: video),
+                    SizedBox(width: 15),
+                    Expanded(child: entries),
+                  ],
+                );
+              }),
               SizedBox(
                 height: 15,
               ),
@@ -83,9 +95,14 @@ class _HomeSceenState extends State<HomeSceen> {
               SizedBox(
                 height: 6,
               ),
-              Get.find<settingController>().settings.last.isRfid! &&
-                      Get.find<settingController>().settings.last.rfconnect!
-                  ? Row(
+              // Guard empty settings: previously `settings.last!` threw a red
+              // screen before settings finished loading.
+              Obx(() {
+                final scontroller = Get.find<settingController>();
+                if (scontroller.settings.isEmpty) return SizedBox.shrink();
+                final s = scontroller.settings.last;
+                if ((s.isRfid ?? false) && (s.rfconnect ?? false)) {
+                  return Row(
                       textDirection: TextDirection.rtl,
                       children: [
                         TextButton(
@@ -103,8 +120,10 @@ class _HomeSceenState extends State<HomeSceen> {
                             child: Text("درب دو",
                                 style: TextStyle(color: Colors.white)))
                       ],
-                    )
-                  : SizedBox.shrink(),
+                    );
+                }
+                return SizedBox.shrink();
+              }),
               SizedBox(
                 height: 15,
               ),
@@ -117,42 +136,34 @@ class _HomeSceenState extends State<HomeSceen> {
                       decoration: BoxDecoration(
                           color: purpule,
                           borderRadius: BorderRadius.circular(15)),
-                      child: Obx(() => Column(
+                      child: Column(
                             mainAxisAlignment: MainAxisAlignment.start,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             textDirection: TextDirection.rtl,
                             children: [
-                              amarWidget(
+                              Obx(() => amarWidget(
                                 title: "تعداد کل پلاک های امروز",
                                 value: dcontroller.todayCount.value.toString(),
-                              ),
-                              SizedBox(
-                                height: 5,
-                              ),
-                              amarWidget(
+                              )),
+                              SizedBox(height: 5),
+                              Obx(() => amarWidget(
                                   title: "تعداد کل پلاک های مجاز امروز ",
                                   value: dcontroller.todayallowd.length
-                                      .toString()),
-                              SizedBox(
-                                height: 5,
-                              ),
-                              amarWidget(
+                                      .toString())),
+                              SizedBox(height: 5),
+                              Obx(() => amarWidget(
                                   title: "تعداد کل پلاک های غیر مجاز امروز ",
                                   value: dcontroller.todayunallowed.length
-                                      .toString()),
-                              SizedBox(
-                                height: 5,
-                              ),
-                              amarWidget(
+                                      .toString())),
+                              SizedBox(height: 5),
+                              Obx(() => amarWidget(
                                   title: "تعداد کل پلاک های سالم امروز ",
                                   value:
-                                      dcontroller.goodPlate.value.toString()),
-                              SizedBox(
-                                height: 5,
-                              ),
-                              amarWidget(
+                                      dcontroller.goodPlate.value.toString())),
+                              SizedBox(height: 5),
+                              Obx(() => amarWidget(
                                   title: "تعداد کل پلاک های مخدوش امروز ",
-                                  value: dcontroller.badPlate.value.toString()),
+                                  value: dcontroller.badPlate.value.toString())),
                               SizedBox(
                                 height: 5,
                               ),
@@ -180,7 +191,7 @@ class _HomeSceenState extends State<HomeSceen> {
                                         color: Colors.white, fontSize: 16),
                                   )),
                             ],
-                          ))),
+                          )),
                   SizedBox(
                     width: 15,
                   ),
@@ -318,8 +329,9 @@ class barChartWidget extends StatelessWidget {
   }
 
   int caculate(int total, int section) {
+    if (total <= 0 || section <= 0) return 0;
     double res = section / total;
-    return (res * 100).toInt();
+    return (res * 100).toInt().clamp(0, 100);
   }
 }
 

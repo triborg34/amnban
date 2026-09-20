@@ -1,10 +1,12 @@
 import 'package:amnban/models/databaseEntry.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
+import 'package:amnban/utils/safe.dart';
 import 'package:amnban/widgets/amar_dialog.dart';
 import 'package:amnban/widgets/arvandpelak.dart';
 import 'package:amnban/widgets/lisancepage.dart';
 import 'package:amnban/widgets/receipt_pdf.dart';
+import 'package:amnban/widgets/safe_image.dart';
 import 'package:easy_image_viewer/easy_image_viewer.dart';
 
 import 'package:flutter/material.dart';
@@ -50,8 +52,10 @@ class Detailedscreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(15),
                   child: EasyImageView(
                     imageProvider: NetworkImage(
-                      "http://${url}:8090/api/files/database/${selectedModel.id}/${selectedModel.scrnPath}",
+                      pbFileUrlOf('database', selectedModel.id,
+                          selectedModel.scrnPath),
                     ),
+                    onScaleChanged: (_) {},
                   ),
                 ),
               ),
@@ -87,9 +91,10 @@ class Detailedscreen extends StatelessWidget {
                       width: 12.w,
                       child: Center(
                         child: Hero(
-                          tag: "heroTag${index}",
-                          child: Image.network(
-                            "http://${url}:8090/api/files/database/${selectedModel.id}/${selectedModel.imgpath}",
+                          tag: "heroTag${selectedModel.id ?? index}",
+                          child: SafeNetImage(
+                            url: pbFileUrlOf('database', selectedModel.id,
+                                selectedModel.imgpath),
                             fit: BoxFit.fill,
                             width: 12.w,
                             height: 48,
@@ -110,16 +115,24 @@ class Detailedscreen extends StatelessWidget {
                     InkWell(
                       child: contactOfTable3(rec.length.toString()),
                       onTap: () async {
-                        var temp = <databaseClass>[];
-                        for (var data in rec) {
-                          temp.add(databaseClass.fromJson(data.data));
-                        }
+                        try {
+                          var temp = <databaseClass>[];
+                          for (var data in rec) {
+                            try {
+                              temp.add(databaseClass.fromJson(data.data));
+                            } catch (e) {
+                              appLog('detail rec parse failed', e);
+                            }
+                          }
 
-                        await showAmarDialog(context, temp, kcontroller);
+                          await showAmarDialog(context, temp, kcontroller);
+                        } catch (e) {
+                          appLog('showAmarDialog failed', e);
+                        }
                       },
                     ),
-                    contactOfTable3(selectedModel.eDate!.toPersianDate()),
-                    contactOfTable3(selectedModel.eTime!.toPersianDigit())
+                    contactOfTable3((selectedModel.eDate ?? '').toPersianDate()),
+                    contactOfTable3((selectedModel.eTime ?? '-').toPersianDigit())
                   ],
                 ),
               ),

@@ -1,8 +1,8 @@
 import 'dart:convert';
 
-import 'package:amnban/models/cameraClass.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
+import 'package:amnban/utils/safe.dart';
 import 'package:amnban/widgets/add_or_edit_camera.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -76,7 +76,13 @@ class CameraScreen extends StatelessWidget {
                     Obx(() => Container(
                           height: 300,
                           color: Colors.transparent,
-                          child: ListView.builder(
+                          // Horizontal scroll prevents overflow on narrow
+                          // windows — rows are ~1400px wide.
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: SizedBox(
+                              width: 1400,
+                              child: ListView.builder(
                             itemBuilder: (context, index) {
                               return Container(
                                 child: Row(
@@ -183,8 +189,8 @@ class CameraScreen extends StatelessWidget {
                                       height: 50,
                                       child: Center(
                                           child: Text(
-                                        ccontroller.cameras[index].username!
-                                            .toString(),
+                                        ccontroller.cameras[index].username ??
+                                            '-',
                                         style: TextStyle(fontFamily: 'arial',color: Colors.white),
                                       )),
                                       decoration: BoxDecoration(
@@ -198,8 +204,21 @@ class CameraScreen extends StatelessWidget {
                                       child: Center(
                                           child: IconButton(
                                               onPressed: () async {
-                                                CameraClass data =
+                                                final data =
                                                     ccontroller.cameras[index];
+                                                String passwordPlain = '';
+                                                try {
+                                                  final stored = data.password;
+                                                  if (stored != null &&
+                                                      stored.isNotEmpty) {
+                                                    passwordPlain = utf8.decode(
+                                                        base64.decode(stored));
+                                                  }
+                                                } catch (e) {
+                                                  appLog(
+                                                      'camera password decode failed',
+                                                      e);
+                                                }
                                                 await showAdaptiveDialog(
                                                   context: context,
                                                   builder: (context) =>
@@ -208,18 +227,16 @@ class CameraScreen extends StatelessWidget {
                                                           ccontroller:
                                                               ccontroller,
                                                           context: context,
-                                                          name: data.name!,
-                                                          ip: data.ip!,
-                                                          cport: data.port!,
-                                                          rtsp: data.rtspUrl!,
-                                                          rtspName: data.rtspName!,
+                                                          name: data.name ?? '',
+                                                          ip: data.ip ?? '',
+                                                          cport: data.port ?? '',
+                                                          rtsp: data.rtspUrl ?? '',
+                                                          rtspName: data.rtspName ?? '',
                                                           username:
-                                                              data.username!,
-                                                          password: utf8.decode(
-                                                              base64.decode(data
-                                                                  .password!)),
-                                                          isRtsp: data.isRtsp!,
-                                                          gate: data.gate!,
+                                                              data.username ?? '',
+                                                          password: passwordPlain,
+                                                          isRtsp: data.isRtsp ?? false,
+                                                          gate: data.gate ?? 'entre',
                                                           id: data.id,
                                                           isEditing: true,
                                                           isDiscovery: false),
@@ -241,12 +258,25 @@ class CameraScreen extends StatelessWidget {
                                           color: Colors.redAccent,
                                         ),
                                         onPressed: () async {
-                                          await pb.collection('cameras').delete(
-                                              ccontroller.cameras[index].id!);
-                                          ScaffoldMessenger.maybeOf(context)!
-                                              .showSnackBar(SnackBar(
-                                                  content: Text(
-                                                      "Camera Number ${ccontroller.cameras[index].id!} is Deleted")));
+                                          final id = ccontroller.cameras[index].id;
+                                          if (id == null || id.isEmpty) return;
+                                          try {
+                                            await pb
+                                                .collection('cameras')
+                                                .delete(id)
+                                                .timeout(const Duration(
+                                                    seconds: 15));
+                                            ScaffoldMessenger.maybeOf(context)
+                                                ?.showSnackBar(SnackBar(
+                                                    content: Text(
+                                                        "Camera Number $id is Deleted")));
+                                          } catch (e) {
+                                            appLog('delete camera failed', e);
+                                            ScaffoldMessenger.maybeOf(context)
+                                                ?.showSnackBar(const SnackBar(
+                                                    content: Text(
+                                                        "خطا در حذف دوربین")));
+                                          }
                                         },
                                       )),
                                       decoration: BoxDecoration(
@@ -263,6 +293,8 @@ class CameraScreen extends StatelessWidget {
                               );
                             },
                             itemCount: ccontroller.cameras.length,
+                          ),
+                            ),
                           ),
                         ))
                   ],

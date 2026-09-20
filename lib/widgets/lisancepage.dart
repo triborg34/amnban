@@ -13,11 +13,17 @@ class LicanceNumber extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Convert once per build instead of re-parsing the plate three times.
-    final parts = convertToPersian(entry.plateNum!, alphabetP2);
-    final mainPart = parts[0].contains('آ')
-        ? parts[0].replaceAll("آ", "الف")
-        : parts[0];
+    // Guard malformed plates: convertToPersian returns ['-','-'] on failure.
+    List parts;
+    try {
+      parts = convertToPersian(entry.plateNum ?? '', alphabetP2);
+    } catch (_) {
+      parts = const ['-', '-'];
+    }
+    if (parts.length < 2) parts = ['-', '-'];
+    final mainPart = (parts[0] as String).contains('آ')
+        ? (parts[0] as String).replaceAll("آ", "الف")
+        : parts[0] as String;
 
     return Container(
       width: 1.5.w,

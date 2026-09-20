@@ -1,3 +1,5 @@
+import 'package:amnban/utils/safe.dart';
+
 class userClass {
   String? collectionId;
   String? collectionName;
@@ -25,17 +27,17 @@ class userClass {
       this.updated});
 
   userClass.fromJson(Map<String, dynamic> json) {
-    collectionId = json['collectionId'];
-    collectionName = json['collectionName'];
-    id = json['id'];
-    username = json['username'];
-    password = json['password'];
-    accsesslvl = json['accsesslvl'];
-    email = json['email'];
-    nickname = json['nickname'];
-    created = json['created'];
-    updated = json['updated'];
-    rememberme=json['rememberme'];
+    collectionId = asString(json['collectionId']);
+    collectionName = asString(json['collectionName']);
+    id = asString(json['id']);
+    username = asString(json['username']);
+    password = asString(json['password']);
+    accsesslvl = asString(json['accsesslvl']);
+    email = asString(json['email']);
+    nickname = asString(json['nickname']);
+    created = asString(json['created']);
+    updated = asString(json['updated']);
+    rememberme=asBool(json['rememberme']);
   }
 
   Map<String, dynamic> toJson() {

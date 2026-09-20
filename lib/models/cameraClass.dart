@@ -1,3 +1,5 @@
+import 'package:amnban/utils/safe.dart';
+
 class CameraClass {
   String? collectionId;
   String? collectionName;
@@ -33,21 +35,21 @@ class CameraClass {
       this.updated});
 
   CameraClass.fromJson(Map<String, dynamic> json) {
-    collectionId = json['collectionId'];
-    collectionName = json['collectionName'];
-    id = json['id'];
-    name = json['name'];
-    ip = json['ip'];
-    gate = json['gate'];
-    username = json['username'];
-    password = json['password'];
-    path = json['path'];
-    rtspUrl = json['rtspUrl'];
-    rtspName = json['rtspName'];
-    created = json['created'];
-    updated = json['updated'];
-    port=json['port'];
-    isRtsp=json['isRtsp'];
+    collectionId = asString(json['collectionId']);
+    collectionName = asString(json['collectionName']);
+    id = asString(json['id']);
+    name = asString(json['name']);
+    ip = asString(json['ip']);
+    gate = asString(json['gate']);
+    username = asString(json['username']);
+    password = asString(json['password']);
+    path = asString(json['path']);
+    rtspUrl = asString(json['rtspUrl']);
+    rtspName = asString(json['rtspName']);
+    created = asString(json['created']);
+    updated = asString(json['updated']);
+    port=asString(json['port']);
+    isRtsp=asBool(json['isRtsp']);
   }
 
   Map<String, dynamic> toJson() {

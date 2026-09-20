@@ -154,7 +154,7 @@ class _add_or_edit_personState extends State<add_or_edit_person> {
                   ),
                   SizedBox(
                     width: 200,
-                    child: DropdownButtonFormField(
+                    child: Obx(() => DropdownButtonFormField(
                         dropdownColor: Colors.white,
                         decoration: InputDecoration(
                             focusColor: Colors.transparent,
@@ -169,15 +169,18 @@ class _add_or_edit_personState extends State<add_or_edit_person> {
                             border: OutlineInputBorder(
                                 borderSide:
                                     BorderSide(color: Colors.transparent))),
-                        initialValue: kcontroller.role.value,
+                        initialValue: (kcontroller.role.value == 'مجاز' ||
+                                kcontroller.role.value == 'غیر مجاز')
+                            ? kcontroller.role.value
+                            : 'مجاز',
                         onChanged: (value) {
-                          kcontroller.role.value = value!;
+                          if (value != null) kcontroller.role.value = value;
                         },
                         items: [
                           DropdownMenuItem(value: 'مجاز', child: Text("مجاز")),
                           DropdownMenuItem(
                               value: 'غیر مجاز', child: Text("غیر مجاز"))
-                        ]),
+                        ])),
                   )
                 ],
               ),
@@ -224,12 +227,27 @@ class _add_or_edit_personState extends State<add_or_edit_person> {
                           'persinalAlphabet': kcontroller.persianAlhpabet.value
                         };
                         if (isEdit) {
+                          final id = (index != null &&
+                                  index! >= 0 &&
+                                  index! < kcontroller.knowPerson.length)
+                              ? kcontroller.knowPerson[index!].id
+                              : null;
+                          if (id == null || id.isEmpty) {
+                            ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                                const SnackBar(
+                                    content: Directionality(
+                                        textDirection: TextDirection.rtl,
+                                        child:
+                                            Text("خطا دوباره امتحان کنید"))));
+                            return;
+                          }
                           final record = await pb
                               .collection('registredDb')
-                              .update(kcontroller.knowPerson[index!].id!,
-                                  body: body);
+                              .update(id,
+                                  body: body)
+                              .timeout(const Duration(seconds: 15));
 
-                          ScaffoldMessenger.maybeOf(context)!.showSnackBar(
+                          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
                               SnackBar(
                                   content: Directionality(
                                       textDirection: TextDirection.rtl,
@@ -238,9 +256,10 @@ class _add_or_edit_personState extends State<add_or_edit_person> {
                         } else {
                           final record = await pb
                               .collection('registredDb')
-                              .create(body: body);
+                              .create(body: body)
+                              .timeout(const Duration(seconds: 15));
 
-                          ScaffoldMessenger.maybeOf(context)!.showSnackBar(
+                          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
                               SnackBar(
                                   content: Directionality(
                                       textDirection: TextDirection.rtl,
@@ -248,14 +267,14 @@ class _add_or_edit_personState extends State<add_or_edit_person> {
                                           "موفیت آمیز بود ${record.id}"))));
                         }
                       } catch (e) {
-                        ScaffoldMessenger.maybeOf(context)!.showSnackBar(
+                        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
                             SnackBar(
                                 content: Directionality(
                                     textDirection: TextDirection.rtl,
                                     child: Text("خطا دوباره امتحان کنید"))));
                       }
 
-                      Navigator.pop(context);
+                      if (context.mounted) Navigator.pop(context);
                     },
                     child: Text("ثبت")))
           ],

@@ -57,7 +57,7 @@ class PersonScreen extends StatelessWidget {
                             width: 6.w,
                             child: Center(
                               child: Text(
-                                kcontroller.knowPerson[index].name!,
+                                kcontroller.knowPerson[index].name ?? '-',
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(color: Colors.white),
                               ),
@@ -71,13 +71,24 @@ class PersonScreen extends StatelessWidget {
                             width: 6.w,
                             child: Center(
                               child: Text(
-                                kcontroller.knowPerson[index].isarvand == 'arvand'
-                                    ? kcontroller.knowPerson[index].plateNumber!
-                                    : convertToPersianString(
-                                            kcontroller
-                                                .knowPerson[index].plateNumber!,
-                                            alphabetP2)
-                                        .toString(),
+                                () {
+                                  final plate = kcontroller
+                                      .knowPerson[index].plateNumber;
+                                  if (plate == null || plate.isEmpty) {
+                                    return '-';
+                                  }
+                                  if (kcontroller.knowPerson[index].isarvand ==
+                                      'arvand') {
+                                    return plate;
+                                  }
+                                  try {
+                                    return convertToPersianString(
+                                            plate, alphabetP2)
+                                        .toString();
+                                  } catch (_) {
+                                    return '-';
+                                  }
+                                }(),
                                 textDirection: TextDirection.rtl,
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(color: Colors.white),
@@ -92,7 +103,7 @@ class PersonScreen extends StatelessWidget {
                             width: 6.w,
                             child: Center(
                               child: Text(
-                                kcontroller.knowPerson[index].carName!,
+                                kcontroller.knowPerson[index].carName ?? '-',
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(color: Colors.white),
                               ),
@@ -141,45 +152,36 @@ class PersonScreen extends StatelessWidget {
                             child: Center(
                                 child: IconButton(
                                     onPressed: () async {
-                                      String plateNum = kcontroller
-                                          .knowPerson[index].plateNumber!
-                                          .trim();
-                                      String nameParts = kcontroller
-                                          .knowPerson[index].name!
-                                          .trim();
-                                      List<String> nameSplit = nameParts.split(' ');
+                                      final p =
+                                          kcontroller.knowPerson[index];
+                                      String plateNum =
+                                          (p.plateNumber ?? '').trim();
+                                      String nameParts =
+                                          (p.name ?? '').trim();
+                                      List<String> nameSplit = nameParts.isEmpty
+                                          ? ['']
+                                          : nameParts.split(' ');
                                       String name = nameSplit[0];
                                       String lastName = nameSplit.length > 1 ? nameSplit.sublist(1).join(' ') : '';
-                                      String carName =
-                                          kcontroller.knowPerson[index].carName!;
-                                      String role =
-                                          kcontroller.knowPerson[index].role!;
+                                      String carName = p.carName ?? '';
+                                      String role = p.role ?? 'مجاز';
                                       bool isEdit = true;
                                       bool isDiscover = false;
-                                      bool isArvand = kcontroller
-                                                  .knowPerson[index].isarvand ==
-                                              "arvand"
-                                          ? true
-                                          : false;
+                                      bool isArvand =
+                                          p.isarvand == "arvand";
                                       String arvandDigits = '';
-                                      String firstTwoDigit = '';
-                                      String threeDigit = '';
-                                      String lastTwoDigit = '';
-                                      String persianAlhpabet = '';
-                                      String engishAlphabet = '';
+                                      String firstTwoDigit =
+                                          p.firstTwoDigit ?? '';
+                                      String threeDigit =
+                                          p.threeDigit ?? '';
+                                      String lastTwoDigit =
+                                          p.lastTwoDigit ?? '';
+                                      String persianAlhpabet =
+                                          p.persianAlhpabet ?? '';
+                                      String engishAlphabet =
+                                          p.engishAlphabet ?? '';
                                       if (isArvand) {
                                         arvandDigits = plateNum;
-                                      } else {
-                                        firstTwoDigit = kcontroller
-                                            .knowPerson[index].firstTwoDigit!;
-                                        threeDigit = kcontroller
-                                            .knowPerson[index].threeDigit!;
-                                        lastTwoDigit = kcontroller
-                                            .knowPerson[index].lastTwoDigit!;
-                                        persianAlhpabet = kcontroller
-                                            .knowPerson[index].persianAlhpabet!;
-                                        engishAlphabet = kcontroller
-                                            .knowPerson[index].engishAlphabet!;
                                       }
         
                                       await showAdaptiveDialog(
@@ -216,8 +218,22 @@ class PersonScreen extends StatelessWidget {
                             child: Center(
                                 child: IconButton(
                                     onPressed: () async {
-                                      await pb.collection('registredDb').delete(
-                                          kcontroller.knowPerson[index].id!);
+                                      final id = kcontroller
+                                          .knowPerson[index].id;
+                                      if (id == null || id.isEmpty) return;
+                                      try {
+                                        await pb
+                                            .collection('registredDb')
+                                            .delete(id)
+                                            .timeout(const Duration(
+                                                seconds: 15));
+                                      } catch (_) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.maybeOf(context)
+                                              ?.showSnackBar(const SnackBar(
+                                                  content: Text('خطا در حذف')));
+                                        }
+                                      }
                                     },
                                     icon: Icon(
                                       Icons.delete,

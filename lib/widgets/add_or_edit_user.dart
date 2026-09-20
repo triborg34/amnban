@@ -4,6 +4,7 @@ import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/widgets/coustom_fieds.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class add_or_edit_user extends StatefulWidget {
   add_or_edit_user({
@@ -109,7 +110,7 @@ class _add_or_edit_userState extends State<add_or_edit_user> {
                 width: 250,
                 child: Directionality(
                   textDirection: TextDirection.rtl,
-                  child: DropdownButtonFormField(
+                  child: Obx(() => DropdownButtonFormField(
                       style: TextStyle(color: Colors.black),
                       dropdownColor: Colors.white,
                       decoration: InputDecoration(
@@ -123,7 +124,10 @@ class _add_or_edit_userState extends State<add_or_edit_user> {
                           border: OutlineInputBorder(
                               borderSide: BorderSide(color: Colors.black))),
                       borderRadius: BorderRadius.circular(15),
-                      initialValue: ucontroller.accsesslvl.value,
+                      initialValue: (ucontroller.accsesslvl.value == 'مدیر' ||
+                              ucontroller.accsesslvl.value == 'ناظر')
+                          ? ucontroller.accsesslvl.value
+                          : 'مدیر',
                       items: [
                         DropdownMenuItem(
                             value: "مدیر",
@@ -133,8 +137,11 @@ class _add_or_edit_userState extends State<add_or_edit_user> {
                             )),
                         DropdownMenuItem(value: "ناظر", child: Text("ناظر"))
                       ],
-                      onChanged: (value) =>
-                          ucontroller.accsesslvl.value = value!),
+                      onChanged: (value) {
+                        if (value != null) {
+                          ucontroller.accsesslvl.value = value;
+                        }
+                      })),
                 ),
               ),
               SizedBox(
@@ -149,47 +156,68 @@ class _add_or_edit_userState extends State<add_or_edit_user> {
                           side: BorderSide(color: Colors.black),
                           backgroundColor: Colors.white),
                       onPressed: () async {
+                        if (ucontroller.username.text.trim().isEmpty ||
+                            ucontroller.password.text.isEmpty) {
+                          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                              const SnackBar(
+                                  content: Text(
+                            "نام کاربری و رمز عبور لازم است",
+                            textDirection: TextDirection.rtl,
+                          )));
+                          return;
+                        }
                         try {
                           final body = {
-                            "username": ucontroller.username.text,
+                            "username": ucontroller.username.text.trim(),
                             "password": base64
                                 .encode(utf8.encode(ucontroller.password.text)),
                             "accsesslvl": ucontroller.accsesslvl.value,
-                            "email": ucontroller.email.text,
+                            "email": ucontroller.email.text.trim(),
                             "nickname":
                                 "${ucontroller.name.text.trim()} ${ucontroller.lastName.text.trim()}"
                           };
 
                           if (isEdit) {
-                            final record = await pb.collection('users').update(
-                                ucontroller.users[index!].id!,
-                                body: body);
-                            ScaffoldMessenger.maybeOf(context)!
-                                .showSnackBar(SnackBar(
+                            final id = (index != null &&
+                                    index! >= 0 &&
+                                    index! < ucontroller.users.length)
+                                ? ucontroller.users[index!].id
+                                : null;
+                            if (id == null || id.isEmpty) return;
+                            final record = await pb
+                                .collection('users')
+                                .update(id, body: body)
+                                .timeout(
+                                    const Duration(seconds: 15));
+                            ScaffoldMessenger.maybeOf(context)
+                                ?.showSnackBar(SnackBar(
                                     content: Text(
                               "با ویرایش  شد ${record.id}",
                               textDirection: TextDirection.rtl,
                             )));
                           } else {
-                            final record =
-                                await pb.collection('users').create(body: body);
-                            ScaffoldMessenger.maybeOf(context)!
-                                .showSnackBar(SnackBar(
+                            final record = await pb
+                                .collection('users')
+                                .create(body: body)
+                                .timeout(
+                                    const Duration(seconds: 15));
+                            ScaffoldMessenger.maybeOf(context)
+                                ?.showSnackBar(SnackBar(
                                     content: Text(
                               "با موفقیت ساخته شد ${record.id}",
                               textDirection: TextDirection.rtl,
                             )));
                           }
 
-                          Navigator.pop(context);
+                          if (context.mounted) Navigator.pop(context);
                         } catch (e) {
-                          ScaffoldMessenger.maybeOf(context)!
-                              .showSnackBar(SnackBar(
+                          ScaffoldMessenger.maybeOf(context)
+                              ?.showSnackBar(const SnackBar(
                                   content: Text(
                             "خطا دوباره امتحان کنید",
                             textDirection: TextDirection.rtl,
                           )));
-                          Navigator.pop(context);
+                          if (context.mounted) Navigator.pop(context);
                         }
                       },
                       child: Text(
