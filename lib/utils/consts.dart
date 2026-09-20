@@ -35,11 +35,11 @@ String pbFileUrlOf(String collection, String? id, String? file) {
   return 'http://$url:8090/api/files/$collection/$id/$file';
 }
 
-String videoFeedUrl(int cameraIndex, String? rtspUrl, {required bool isRfid}) {
-  final src = rtspUrl ?? '';
-  final feed = isRfid ? 'rtsp_feed' : 'video_feed';
-  return 'http://$url:$port/$feed/rt${cameraIndex + 1}?source=$src';
-}
+// String videoFeedUrl(int cameraIndex, String? rtspUrl, {required bool isRfid}) {
+//   final src = rtspUrl ?? '';
+//   final feed = isRfid ? 'rtsp_feed' : 'video_feed';
+//   return 'http://$url:$port/$feed/rt${cameraIndex + 1}?source=$src';
+// }
 
 /// Tabs depend on the logged-in role, but the old global list was computed
 /// once at import time (always the admin list). Compute per build instead.

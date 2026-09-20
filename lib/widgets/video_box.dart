@@ -75,15 +75,19 @@ class _CameraTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ccontroller = Get.find<cameraController>();
+  
     return Obx(() {
       final selected = mController.videoIndex.value == index;
       final rtspUrl = index < ccontroller.cameras.length
-          ? ccontroller.cameras[index].rtspUrl
+          ? ccontroller.cameras[index].rtspUrl!.replaceAll("&", "%26")
           : null;
+      
       final streamUrl =
           'http://$url:$port/${role == 'ناظر' ? 'rtsp_feed' : 'video_feed'}/rt${index + 1}?source=${rtspUrl ?? ''}';
+      
       return InkWell(
         onTap: () {
+       
           mController.videoIndex.value = index;
         },
         child: AnimatedContainer(
@@ -98,9 +102,19 @@ class _CameraTile extends StatelessWidget {
           // Keyed by URL so selection resizes preserve the underlying
           // platform view instead of reconnecting the stream.
           child: RepaintBoundary(
-            child: CameraFeed(
-              key: ValueKey(streamUrl),
-              streamUrl: streamUrl,
+            child: Stack(
+              children: [
+                CameraFeed(
+                  key: ValueKey(streamUrl),
+                  streamUrl: streamUrl,
+                ),
+                        GestureDetector(
+                                onTap: () => mController.videoIndex.value = index,
+                                child: Container(
+                                  color: Colors.transparent,
+                                ),
+                              ),
+              ],
             ),
           ),
         ),
