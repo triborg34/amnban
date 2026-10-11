@@ -6,7 +6,7 @@ import 'package:amnban/utils/safe.dart';
 import 'package:amnban/widgets/arvandpelak.dart';
 import 'package:amnban/widgets/lisancepage.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+
 import 'package:persian_number_utility/persian_number_utility.dart';
 
 /// Shared "today's plates" list dialog (was duplicated in
@@ -22,7 +22,7 @@ Future<dynamic> showAmarDialog(
       return Center(
         child: Container(
           color: purpule,
-          width: 500,
+          width: 600,
           height: 300,
           child: Material(
             color: Colors.purple,
@@ -33,18 +33,21 @@ Future<dynamic> showAmarDialog(
               scrollDirection: Axis.vertical,
               itemBuilder: (context, index) => GestureDetector(
                 onTap: () async {
+             
                   final plate = data[index].plateNum ?? '';
+               
                   if (plate.isEmpty) return;
                   try {
                     var record = await pb.collection('database').getFullList(
                           filter: 'plateNum="${pbEscape(plate)}"',
                         ).timeout(const Duration(seconds: 15));
-                    Get.to(() => Detailedscreen(
+                  
+                 Navigator.push(context, MaterialPageRoute(builder: (context) =>  Detailedscreen(
                           rec: record,
                           selectedModel: data[index],
                           index: index,
                           kcontroller: kcontroller,
-                        ));
+                        )));
                   } catch (e) {
                     appLog('amar detail fetch failed', e);
                   }
@@ -62,7 +65,7 @@ Future<dynamic> showAmarDialog(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       SizedBox(
-                        width: 150,
+                        width: 200,
                         height: 50,
                         child: data[index].isarvand == 'arvand'
                             ? ArvandPelak2(entry: data[index])

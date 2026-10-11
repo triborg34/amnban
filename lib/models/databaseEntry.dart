@@ -16,6 +16,8 @@ class databaseClass {
   String? scrnPath;
   String? created;
   String? updated;
+  String? provice;
+  String? city;
 
   databaseClass(
       {this.collectionId,
@@ -31,6 +33,7 @@ class databaseClass {
       this.platePercent,
       this.imgpath,
       this.scrnPath,
+      this.city,this.provice,
       this.created,
       this.updated});
 
@@ -50,6 +53,8 @@ class databaseClass {
     scrnPath = asString(json['scrnPath']);
     created = asString(json['created']);
     updated = asString(json['updated']);
+    city=asString(json['city']);
+    provice=asString(json['provice']);
   }
 
   Map<String, dynamic> toJson() {
@@ -69,6 +74,8 @@ class databaseClass {
     data['scrnPath'] = this.scrnPath;
     data['created'] = this.created;
     data['updated'] = this.updated;
+    data['provice']=this.provice;
+    data['city']=this.city;
     return data;
   }
 }

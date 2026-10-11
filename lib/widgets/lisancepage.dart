@@ -21,9 +21,11 @@ class LicanceNumber extends StatelessWidget {
       parts = const ['-', '-'];
     }
     if (parts.length < 2) parts = ['-', '-'];
+    
     final mainPart = (parts[0] as String).contains('آ')
         ? (parts[0] as String).replaceAll("آ", "الف")
         : parts[0] as String;
+    
 
     return Container(
       width: 1.5.w,

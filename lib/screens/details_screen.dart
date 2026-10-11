@@ -106,12 +106,13 @@ class Detailedscreen extends StatelessWidget {
                             .personFor(selectedModel.plateNum)
                             ?.name ??
                         "-"),
-                    contactOfTable3(kcontroller
-                            .personFor(selectedModel.plateNum)
-                            ?.carName ??
-                        "-"),
+                    // contactOfTable3(kcontroller
+                    //         .personFor(selectedModel.plateNum)
+                    //         ?.carName ??
+                    //     "-"),
+                      contactOfTable3(selectedModel.provice == "None" ? "خوزستان" :selectedModel.provice! ),
                     contactOfTable3(
-                        selectedModel.platePercent.toString() + "%"),
+                        selectedModel.city == "None" ? "اهواز" :selectedModel.city!),
                     InkWell(
                       child: contactOfTable3(rec.length.toString()),
                       onTap: () async {
@@ -162,8 +163,8 @@ Container header3() {
         headerOftable3("شماره پلاک"),
         headerOftable3("عکس پلاک"),
         headerOftable3(" نام و نام خانوادگی"),
-        headerOftable3("نوع ماشین"),
-        headerOftable3("درصد تشخیص پلاک"),
+        headerOftable3("استان"),
+        headerOftable3("شهر"),
         headerOftable3("تعداد دیده شدن پلاک"),
         headerOftable3("تاریخ ورود"),
         headerOftable3("ساعت ورود")

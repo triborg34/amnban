@@ -421,19 +421,51 @@ class _ReportscreenState extends State<Reportscreen> {
                                           color: Colors.white, fontSize: 18),
                                     ),
                                   )),
-                              Container(
+                              // Container(
+                              //     padding: EdgeInsets.all(3.0),
+                              //     height: 50,
+                              //     decoration: BoxDecoration(
+                              //         border: Border(
+                              //             left: BorderSide(color: purpule))),
+                              //     width: 12.w,
+                              //     child: Center(
+                              //       child: Text(
+                              //         rcontroller
+                              //                 .selectedModel[index].platePercent
+                              //                 .toString() +
+                              //             "%",
+                              //         style: TextStyle(
+                              //             color: Colors.white, fontSize: 18),
+                              //       ),
+                              //     )),
+                                Container(
                                   padding: EdgeInsets.all(3.0),
                                   height: 50,
                                   decoration: BoxDecoration(
                                       border: Border(
                                           left: BorderSide(color: purpule))),
-                                  width: 12.w,
+                                  width: 7.w,
+                                  child: Center(
+                                    child: Text(
+                                           rcontroller
+                                              .selectedModel[index].provice=="None" ? "خوزستان" :rcontroller
+                                              .selectedModel[index].provice!,
+                                      style: TextStyle(
+                                          color: Colors.white, fontSize: 18),
+                                    ),
+                                  )),
+                                    Container(
+                                  padding: EdgeInsets.all(3.0),
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                      border: Border(
+                                          left: BorderSide(color: purpule))),
+                                  width: 7.w,
                                   child: Center(
                                     child: Text(
                                       rcontroller
-                                              .selectedModel[index].platePercent
-                                              .toString() +
-                                          "%",
+                                              .selectedModel[index].city=="None" ? "اهواز" :rcontroller
+                                              .selectedModel[index].city!,
                                       style: TextStyle(
                                           color: Colors.white, fontSize: 18),
                                     ),
@@ -570,6 +602,7 @@ class _ReportscreenState extends State<Reportscreen> {
                     style: pw.TextStyle(font: ttf) // Apply the font
                     ),
               ),
+              
             ]),
             for (var i in rcontroller.selectedModel)
               () {

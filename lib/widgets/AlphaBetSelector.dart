@@ -59,7 +59,7 @@ class Alphabetselector extends StatelessWidget {
                         letter,
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 24,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

@@ -24,6 +24,7 @@ class ExtendedTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    
     return Obx(() => Container(
           margin: EdgeInsets.all(15),
           height: 48,
@@ -86,18 +87,6 @@ class ExtendedTable extends StatelessWidget {
                   width: 10.w,
                   child: Center(
                       child: Text(
-                    dcontroller.tableContect.value.platePercent.toString() +
-                        "%",
-                    textDirection: TextDirection.rtl,
-                    style: TextStyle(color: Colors.white, fontSize: 10.sp),
-                  ))),
-              Container(
-                  decoration: BoxDecoration(
-                      border: Border(left: BorderSide(color: purpule))),
-                  height: 98,
-                  width: 10.w,
-                  child: Center(
-                      child: Text(
                     kcontroller
                             .personFor(
                                 dcontroller.tableContect.value.plateNum)
@@ -113,14 +102,9 @@ class ExtendedTable extends StatelessWidget {
                   width: 10.w,
                   child: Center(
                       child: Text(
-                    (dcontroller.tableContect.value.plateNum ?? '').contains("x")
-                        ? 'تاکسی'
-                        : (dcontroller.tableContect.value.plateNum ?? '').contains('A')
-                            ? "دولتی"
-                            : (dcontroller.tableContect.value.plateNum ?? '')
-                                    .contains('PuV')
-                                ? 'کامیون'
-                                : "شخصی",
+                        dcontroller.tableContect.value.provice=="None" ? "خوزستان"  : dcontroller.tableContect.value.provice!,
+                    // dcontroller.tableContect.value.platePercent.toString() +
+                    //     "%",
                     textDirection: TextDirection.rtl,
                     style: TextStyle(color: Colors.white, fontSize: 10.sp),
                   ))),
@@ -131,7 +115,25 @@ class ExtendedTable extends StatelessWidget {
                   width: 10.w,
                   child: Center(
                       child: Text(
-                    (dcontroller.tableContect.value.eTime ?? '-').toPersianDigit(),
+                           dcontroller.tableContect.value.city=="None" ? "اهواز"  : dcontroller.tableContect.value.city!,
+                    textDirection: TextDirection.rtl,
+                    style: TextStyle(color: Colors.white, fontSize: 10.sp),
+                  ))),
+              Container(
+                  decoration: BoxDecoration(
+                      border: Border(left: BorderSide(color: purpule))),
+                  height: 98,
+                  width: 10.w,
+                  child: Center(
+                      child: Text(
+                    (dcontroller.tableContect.value.plateNum ?? '').contains("x")
+                        ? 'تاکسی'
+                        : (dcontroller.tableContect.value.plateNum ?? '').contains( RegExp(r'(?<![A-Za-z])A(?![A-Za-z])'))
+                            ? "دولتی"
+                            : (dcontroller.tableContect.value.plateNum ?? '')
+                                    .contains('EIN')
+                                ? 'کامیون'
+                                : "شخصی",
                     textDirection: TextDirection.rtl,
                     style: TextStyle(color: Colors.white, fontSize: 10.sp),
                   ))),
