@@ -75,25 +75,26 @@ class UserBox extends StatelessWidget {
   Widget _userRow(BuildContext context, int index) {
     final user = ucontroller.users[index];
 
-    Widget cell(String value, IconData? icon) => Expanded(
-          child: Row(
-            children: [
-              if (icon != null) ...[
-                Icon(icon, size: 13, color: AppColors.textMuted),
-                const SizedBox(width: 5),
-              ],
-              Expanded(
-                child: Text(
-                  value,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11.5,
-                    color: AppColors.textPrimary,
-                  ),
+    // NOTE: the helper must NOT return an `Expanded` — it is used inside an
+    // `Expanded`, and nesting two `Expanded` widgets makes Flutter throw
+    // "Incorrect use of ParentDataWidget".
+    Widget cell(String value, IconData? icon) => Row(
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 13, color: AppColors.textMuted),
+              const SizedBox(width: 5),
+            ],
+            Flexible(
+              child: Text(
+                value,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  color: AppColors.textPrimary,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         );
 
     return Container(

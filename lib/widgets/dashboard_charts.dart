@@ -6,6 +6,7 @@ import 'package:shamsi_date/shamsi_date.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../utils/dashboard_stats.dart';
+import '../utils/safe_math.dart';
 
 /// Seven day stacked bar chart — entries and exits split into authorized and
 /// unauthorized.
@@ -57,7 +58,7 @@ class WeeklyTrafficChart extends StatelessWidget {
                   tooltipBorderRadius: BorderRadius.circular(8),
                   getTooltipItem: (group, groupIndex, rod, rodIndex) {
                     return BarTooltipItem(
-                      '${rod.toY.toInt().toString().toPersianDigit()}\n',
+                      '${safeInt(rod.toY).toString().toPersianDigit()}\n',
                       const TextStyle(
                         color: AppColors.textPrimary,
                         fontSize: 12,
@@ -97,7 +98,7 @@ class WeeklyTrafficChart extends StatelessWidget {
                     getTitlesWidget: (value, meta) => Padding(
                       padding: const EdgeInsets.only(left: 6),
                       child: Text(
-                        value.toInt().toString().toPersianDigit(),
+                        safeInt(value).toString().toPersianDigit(),
                         textAlign: TextAlign.left,
                         style: AppTheme.numeric(
                           fontSize: 10,
@@ -113,7 +114,7 @@ class WeeklyTrafficChart extends StatelessWidget {
                     showTitles: true,
                     reservedSize: 30,
                     getTitlesWidget: (value, meta) {
-                      final index = value.toInt();
+                      final index = safeInt(value);
                       if (index < 0 || index >= days.length) {
                         return const SizedBox.shrink();
                       }
@@ -273,11 +274,14 @@ class UsageDonutChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final used =
-        usedValue.clamp(0, totalValue <= 0 ? 0 : totalValue).toDouble();
-    final free = (totalValue - used).clamp(0, double.infinity).toDouble();
-    final usedPercent = totalValue <= 0 ? 0.0 : (used / totalValue) * 100;
-    final freePercent = totalValue <= 0 ? 0.0 : (free / totalValue) * 100;
+    final used = totalValue.isFinite && usedValue.isFinite
+        ? usedValue.clamp(0, totalValue <= 0 ? 0 : totalValue).toDouble()
+        : 0.0;
+    final free = totalValue.isFinite
+        ? (totalValue - used).clamp(0, double.infinity).toDouble()
+        : 0.0;
+    final usedPercent = safePercent(used, totalValue);
+    final freePercent = safePercent(free, totalValue);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -325,7 +329,7 @@ class UsageDonutChart extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${usedPercent.toStringAsFixed(1).toPersianDigit()}٪',
+                    '${safeFixed(usedPercent, digits: 1).toPersianDigit()}٪',
                     style: AppTheme.numeric(
                       fontSize: 19,
                       fontWeight: FontWeight.w700,
@@ -352,12 +356,12 @@ class UsageDonutChart extends StatelessWidget {
           children: [
             _legendDot(
               usedColor,
-              '$usedLabel ${usedPercent.toStringAsFixed(1).toPersianDigit()}٪',
+              '$usedLabel ${safeFixed(usedPercent, digits: 1).toPersianDigit()}٪',
             ),
             const SizedBox(width: 14),
             _legendDot(
               freeColor,
-              '$freeLabel ${freePercent.toStringAsFixed(1).toPersianDigit()}٪',
+              '$freeLabel ${safeFixed(freePercent, digits: 1).toPersianDigit()}٪',
             ),
           ],
         ),

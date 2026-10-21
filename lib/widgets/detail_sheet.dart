@@ -2,8 +2,10 @@ import 'package:amnban/models/databaseEntry.dart';
 import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
+import 'package:amnban/utils/detection_meta.dart';
 import 'package:amnban/utils/download.dart';
 import 'package:amnban/utils/safe.dart';
+import 'package:amnban/utils/safe_math.dart';
 import 'package:amnban/widgets/amar_dialog.dart';
 import 'package:amnban/widgets/app_card.dart';
 import 'package:amnban/widgets/iran_plate.dart';
@@ -122,9 +124,61 @@ class _DetectionDetailState extends State<DetectionDetail> {
 
   @override
   Widget build(BuildContext context) {
+    // The detail data is built from raw ANPR records — a malformed value
+    // (Infinity / NaN / wrong type) must never crash the screen.
+    try {
+      return _build(context);
+    } catch (e) {
+      appLog('detection detail build failed', e);
+      return _errorView();
+    }
+  }
+
+  Widget _errorView() {
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline_rounded,
+                size: 34, color: AppColors.danger),
+            const SizedBox(height: 10),
+            const Text(
+              'خطا در نمایش اطلاعات پلاک',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              'اطلاعات این تردد قابل نمایش نیست',
+              style: TextStyle(fontSize: 11.5, color: AppColors.textMuted),
+            ),
+            const SizedBox(height: 14),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.of(context).maybePop(),
+              icon: const Icon(Icons.close_rounded, size: 16),
+              label: const Text('بستن'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _build(BuildContext context) {
     final entry = widget.entry;
     final person = widget.kcontroller.personFor(entry.plateNum);
-    final direction = _directionOf(entry);
+    final direction = DetectionMeta.direction(
+      entry.rtpath,
+      Get.find<cameraController>().cameras,
+    );
 
     return Material(
       color: AppColors.surface,
@@ -204,9 +258,12 @@ class _DetectionDetailState extends State<DetectionDetail> {
                 message: 'تصویری موجود نیست',
                 icon: Icons.image_not_supported_outlined,
               )
-            : EasyImageView(
-                imageProvider: NetworkImage(url),
-                onScaleChanged: (_) {},
+            : Hero(
+                tag: 'detectionThumb-${entry.id}',
+                child: EasyImageView(
+                  imageProvider: NetworkImage(url),
+                  onScaleChanged: (_) {},
+                ),
               ),
       ),
     );
@@ -292,18 +349,18 @@ class _DetectionDetailState extends State<DetectionDetail> {
       databaseClass entry, dynamic person, String direction) {
     final rows = <List<String>>[
       ['جهت خودرو', direction],
-      ['نوع خودرو', _carTypeOf(entry.plateNum ?? '')],
+      ['نوع خودرو', DetectionMeta.carType(entry.plateNum)],
       ['مدل خودرو', person?.carName ?? '-'],
       [
         'رنگ خودرو',
         _colorController.text.isEmpty ? '-' : _colorController.text
       ],
       ['وضعیت تردد', person?.role ?? 'بدون مالک'],
-      ['مدل تشخیص پلاک', '${entry.platePercent ?? 0}٪'],
+      ['مدل تشخیص پلاک', '${safeInt(entry.platePercent ?? 0)}٪'],
       ['زمان دقیق ساخت', entry.created ?? '-'],
       [
         'موقعیت دقیق جغرافیایی',
-        '${_provinceOf(entry.provice)} - ${_cityOf(entry.city)}'
+        '${DetectionMeta.province(entry.provice)} - ${DetectionMeta.city(entry.city)}'
       ],
       ['وضعیت پرداخت', 'پرداخت شده'],
       ['شماره پلاک', entry.plateNum ?? '-'],
@@ -511,27 +568,4 @@ class _DetectionDetailState extends State<DetectionDetail> {
   }
 
   // --------------------------------------------------------------- helpers
-
-  String _directionOf(databaseClass entry) {
-    final cameras = Get.find<cameraController>();
-    for (final c in cameras.cameras) {
-      if (c.path == entry.rtpath) {
-        return (c.gate ?? 'entre') == 'entre' ? 'ورود' : 'خروج';
-      }
-    }
-    return 'ورود';
-  }
-
-  static String _provinceOf(String? value) =>
-      (value == null || value.isEmpty || value == 'None') ? 'خوزستان' : value;
-
-  static String _cityOf(String? value) =>
-      (value == null || value.isEmpty || value == 'None') ? 'اهواز' : value;
-
-  static String _carTypeOf(String plate) {
-    if (plate.contains('x')) return 'تاکسی';
-    if (plate.contains(RegExp(r'(?<![A-Za-z])A(?![A-Za-z])'))) return 'دولتی';
-    if (plate.contains('EIN')) return 'کامیون';
-    return 'شخصی';
-  }
 }

@@ -44,12 +44,13 @@ class MyApp extends StatelessWidget {
             final host = getNetworkInfo();
             final hostname = host['hostname'];
             final hostPort = host['port'];
+
             if (hostname is String && hostname.isNotEmpty) {
               url = hostname;
             }
             if (hostPort is String && hostPort.isNotEmpty) {
               port = hostPort;
-              // port="8000";
+              port="8000";
 
             }
           } catch (_) {

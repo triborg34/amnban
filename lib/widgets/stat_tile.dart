@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
+import '../utils/safe_math.dart';
 
 /// Number that animates (counts up / down) whenever the value changes.
 class AnimatedCount extends StatefulWidget {
@@ -65,7 +66,7 @@ class _AnimatedCountState extends State<AnimatedCount>
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, _) {
-        final current = _animation.value.round();
+        final current = safeInt(_animation.value);
         return Text(
           '${widget.prefix}$current${widget.suffix}',
           style: widget.style,

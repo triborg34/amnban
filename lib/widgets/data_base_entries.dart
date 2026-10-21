@@ -1,9 +1,11 @@
 import 'package:amnban/models/databaseEntry.dart';
+import 'package:amnban/screens/details_screen.dart';
 import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/theme/app_theme.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/utils/converFunctions.dart';
+import 'package:amnban/utils/detection_meta.dart';
 import 'package:amnban/utils/safe.dart';
 import 'package:amnban/widgets/add_or_edit_person.dart';
 import 'package:amnban/widgets/app_card.dart';
@@ -146,7 +148,7 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
           ),
           const SizedBox(height: 8),
           Container(
-            height: 300,
+            height: 340,
             decoration: BoxDecoration(
               border: Border.all(color: AppColors.border),
               borderRadius: BorderRadius.circular(12),
@@ -162,6 +164,7 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                 final fullIndex =
                     entries.indexWhere((e) => e.id == entry.id);
                 return DetectionRow(
+                  key: ValueKey(entry.id ?? index),
                   entry: entry,
                   fullIndex: fullIndex == -1 ? index : fullIndex,
                   dcontroller: widget.dcontroller,
@@ -180,7 +183,11 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
 }
 
 /// Compact detection row: thumbnail, plate, status chip and time.
-class DetectionRow extends StatelessWidget {
+///
+/// * tapping the **plate** expands an inline mini table under the row
+/// * tapping the mini table (or its "جزئیات" button) opens [Detailedscreen]
+/// * tapping the **thumbnail** opens [Detailedscreen] directly
+class DetectionRow extends StatefulWidget {
   const DetectionRow({
     super.key,
     required this.entry,
@@ -197,143 +204,311 @@ class DetectionRow extends StatelessWidget {
   final knowPersonController kcontroller;
 
   @override
-  Widget build(BuildContext context) {
-    final person = kcontroller.personFor(entry.plateNum);
-    final status = statusForEntry(entry, kcontroller);
+  State<DetectionRow> createState() => _DetectionRowState();
+}
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(10),
-      onTap: () {
-        mController.isSelected.value = true;
-        dcontroller.tableContect.value = entry;
-        dcontroller.selectedIndex.value = fullIndex;
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(7),
-              child: SafeNetImage(
-                url: pbFileUrlOf('database', entry.id, entry.imgpath),
-                fit: BoxFit.cover,
-                width: 52,
-                height: 38,
-              ),
+class _DetectionRowState extends State<DetectionRow> {
+  bool _expanded = false;
+
+  databaseClass get entry => widget.entry;
+
+  @override
+  Widget build(BuildContext context) {
+    final person = widget.kcontroller.personFor(entry.plateNum);
+    final status = statusForEntry(entry, widget.kcontroller);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: _expanded
+                  ? AppColors.primary.withValues(alpha: 0.45)
+                  : AppColors.border,
             ),
-            const SizedBox(width: 10),
-            SizedBox(
-              width: 86,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: EntryPlate(entry: entry, height: 30),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    person?.name ?? 'ثبت نشده',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+          ),
+          child: Row(
+            children: [
+              // Thumbnail → opens the full detail page directly.
+              InkWell(
+                borderRadius: BorderRadius.circular(7),
+                onTap: () => _openDetail(),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(7),
+                  child: Hero(
+                    tag: 'detectionThumb-${entry.id}',
+                    child: SafeNetImage(
+                      url: pbFileUrlOf('database', entry.id, entry.imgpath),
+                      fit: BoxFit.cover,
+                      width: 52,
+                      height: 38,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    Get.find<cameraController>().cameraNameFor(entry.rtpath),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      color: AppColors.textMuted,
+                ),
+              ),
+              const SizedBox(width: 10),
+              // Plate → expands the inline mini table (step 1).
+              InkWell(
+                borderRadius: BorderRadius.circular(6),
+                onTap: () => setState(() => _expanded = !_expanded),
+                child: Tooltip(
+                  message: _expanded ? 'بستن جزئیات' : 'نمایش جزئیات پلاک',
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child: SizedBox(
+                      width: 86,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: EntryPlate(entry: entry, height: 30),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      person?.name ?? 'ثبت نشده',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      Get.find<cameraController>().cameraNameFor(entry.rtpath),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              StatusChip(status: status, dense: true),
+              const SizedBox(width: 10),
+              SizedBox(
+                width: 54,
+                child: Text(
+                  (entry.eTime ?? '-').toString().toPersianDigit(),
+                  textAlign: TextAlign.end,
+                  style: AppTheme.numeric(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+              if (person == null)
+                IconButton(
+                  onPressed: () => _addPerson(),
+                  hoverColor: AppColors.primarySoft,
+                  icon: const Icon(Icons.add_box_outlined),
+                  color: AppColors.primary,
+                  iconSize: 18,
+                  tooltip: 'افزودن به لیست مجاز',
+                ),
+              IconButton(
+                onPressed: () => _delete(),
+                icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+                iconSize: 18,
+                tooltip: 'حذف',
+              ),
+            ],
+          ),
+        ),
+        // Step 1 result — the inline mini table.
+        AnimatedSize(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.topCenter,
+          child: _expanded ? _miniTable() : const SizedBox.shrink(),
+        ),
+      ],
+    );
+  }
+
+  // ------------------------------------------------------------ mini table
+
+  Widget _miniTable() {
+    final person = widget.kcontroller.personFor(entry.plateNum);
+    final cameras = Get.find<cameraController>().cameras;
+    final direction = DetectionMeta.direction(entry.rtpath, cameras);
+
+    final rows = <List<String>>[
+      ['مالک', person?.name ?? 'ثبت نشده'],
+      ['استان', DetectionMeta.province(entry.provice)],
+      ['شهر', DetectionMeta.city(entry.city)],
+      ['نوع خودرو', DetectionMeta.carType(entry.plateNum)],
+      ['تاریخ', (entry.eDate ?? '-').toPersianDate()],
+      ['ساعت', (entry.eTime ?? '-').toString().toPersianDigit()],
+      ['جهت دوربین', direction],
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 5),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        // Step 2 — opens the full detail page.
+        onTap: () => _openDetail(),
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceHigh,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  SizedBox(
+                    width: 96,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: AlignmentDirectional.centerStart,
+                      child: EntryPlate(entry: entry, height: 32),
+                    ),
+                  ),
+                  const Spacer(),
+                  OutlinedButton.icon(
+                    onPressed: () => _openDetail(),
+                    icon: const Icon(Icons.open_in_new_rounded, size: 14),
+                    label: const Text('جزئیات'),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 32),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      textStyle: const TextStyle(fontSize: 11.5),
                     ),
                   ),
                 ],
               ),
-            ),
-            const SizedBox(width: 8),
-            StatusChip(status: status, dense: true),
-            const SizedBox(width: 10),
-            SizedBox(
-              width: 54,
-              child: Text(
-                (entry.eTime ?? '-').toString().toPersianDigit(),
-                textAlign: TextAlign.end,
-                style: AppTheme.numeric(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ),
-            if (person == null)
-              IconButton(
-                onPressed: () async {
-                  final plateNum = (entry.plateNum ?? '').trim();
-                  final parsed = splitPlateSafe(plateNum);
-                  await showAdaptiveDialog(
-                    context: context,
-                    builder: (context) => add_or_edit_person(
-                      name: '',
-                      lastName: '',
-                      carName: '',
-                      firstTwoDigit: parsed['first'] ?? '',
-                      threeDigit: parsed['three'] ?? '',
-                      lastTwoDigit: parsed['last'] ?? '',
-                      role: "مجاز",
-                      arvandDigits:
-                          entry.isarvand == 'arvand' ? plateNum : '',
-                      isArvand: entry.isarvand == 'arvand',
-                      isEdit: false,
-                      index: fullIndex,
-                      isDiscover: true,
-                      engishAlphabet: parsed['ch'] ?? '',
-                      persianAlhpabet: parsed['fa'] ?? '',
-                      kcontroller: kcontroller,
+              const SizedBox(height: 8),
+              const GradientDivider(height: 1),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final row in rows)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            row[0],
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            row[1],
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  );
-                },
-                hoverColor: AppColors.primarySoft,
-                icon: const Icon(Icons.add_box_outlined),
-                color: AppColors.primary,
-                iconSize: 18,
-                tooltip: 'افزودن به لیست مجاز',
+                ],
               ),
-            IconButton(
-              onPressed: () async {
-                // Capture id first: the old code read cameras[index].id AFTER
-                // delete for the snackbar, using a stale index (RangeError).
-                final id = entry.id;
-                if (id == null || id.isEmpty) return;
-                try {
-                  await pb.collection('database').delete(id);
-                } catch (e) {
-                  appLog('delete database record failed', e);
-                  if (context.mounted) {
-                    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                        const SnackBar(content: Text('خطا در حذف رکورد')));
-                  }
-                }
-              },
-              icon: const Icon(Icons.delete_outline, color: AppColors.danger),
-              iconSize: 18,
-              tooltip: 'حذف',
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  // ---------------------------------------------------------------- actions
+
+  Future<void> _openDetail() async {
+    final plate = entry.plateNum ?? '';
+    if (plate.isEmpty) return;
+    try {
+      final record = await pb
+          .collection('database')
+          .getFullList(filter: 'plateNum="${pbEscape(plate)}"')
+          .timeout(const Duration(seconds: 15));
+
+      if (!mounted) return;
+      Get.to(() => Detailedscreen(
+            rec: record,
+            kcontroller: widget.kcontroller,
+            selectedModel: entry,
+            index: widget.fullIndex,
+          ));
+    } catch (e) {
+      appLog('detection detail fetch failed', e);
+      if (!mounted) return;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(content: Text('خطا در دریافت اطلاعات تردد')),
+      );
+    }
+  }
+
+  Future<void> _addPerson() async {
+    final plateNum = (entry.plateNum ?? '').trim();
+    final parsed = splitPlateSafe(plateNum);
+    await showAdaptiveDialog(
+      context: context,
+      builder: (context) => add_or_edit_person(
+        name: '',
+        lastName: '',
+        carName: '',
+        firstTwoDigit: parsed['first'] ?? '',
+        threeDigit: parsed['three'] ?? '',
+        lastTwoDigit: parsed['last'] ?? '',
+        role: "مجاز",
+        arvandDigits: entry.isarvand == 'arvand' ? plateNum : '',
+        isArvand: entry.isarvand == 'arvand',
+        isEdit: false,
+        index: widget.fullIndex,
+        isDiscover: true,
+        engishAlphabet: parsed['ch'] ?? '',
+        persianAlhpabet: parsed['fa'] ?? '',
+        kcontroller: widget.kcontroller,
+      ),
+    );
+  }
+
+  Future<void> _delete() async {
+    // Capture id first: the old code read cameras[index].id AFTER delete for
+    // the snackbar, using a stale index (RangeError).
+    final id = entry.id;
+    if (id == null || id.isEmpty) return;
+    try {
+      await pb.collection('database').delete(id);
+    } catch (e) {
+      appLog('delete database record failed', e);
+      if (!mounted) return;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+          const SnackBar(content: Text('خطا در حذف رکورد')));
+    }
   }
 }

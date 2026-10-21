@@ -2,6 +2,7 @@ import 'package:amnban/screens/setting_box.dart';
 
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
+import 'package:amnban/utils/safe_math.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -51,7 +52,7 @@ class GeneralSetting extends StatelessWidget {
                 "rfidip": scontroller.rfipController.text.trim(),
                 "rfidport": portParsed,
                 "alarm": scontroller.isAlarm.value,
-                "quality": (scontroller.quality.value).toInt(),
+                "quality": safeInt(scontroller.quality.value),
                 'rfconnect': scontroller.rfconnect.value,
                 'notif': scontroller.isNotif.value
               };

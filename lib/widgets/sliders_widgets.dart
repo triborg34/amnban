@@ -1,5 +1,6 @@
 import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/utils/controller.dart';
+import 'package:amnban/utils/safe_math.dart';
 import 'package:amnban/widgets/futurs_of_system_row.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -69,7 +70,7 @@ class SlidersWidgets extends StatelessWidget {
           width: 46,
           child: Obx(
             () => Text(
-              '${(read() * 100).round()}٪',
+              '${safeInt(read() * 100)}٪',
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: AppColors.primary,

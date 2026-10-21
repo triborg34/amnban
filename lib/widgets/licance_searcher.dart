@@ -1,4 +1,5 @@
 import 'package:amnban/theme/app_colors.dart';
+import 'package:amnban/theme/app_theme.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/widgets/AlphaBetSelector.dart';
 import 'package:amnban/widgets/reportTextField.dart';
@@ -74,7 +75,7 @@ class _licanceSearcherState extends State<licanceSearcher> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
               Obx(() => AnimatedCrossFade(
                   firstChild: ReportTextField(
                     width: 310,
@@ -132,23 +133,33 @@ class SeccondSearchBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // NOTE: every field is wrapped in an explicit `SizedBox`. A `TextField`
+    // that is a *direct* child of a `Row` collapses to zero size on some
+    // Flutter versions, which made this whole dialog look empty.
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       textDirection: TextDirection.ltr,
       children: [
-        ReportTextField(width: 50, tcontroller: rcontroller.firstTwoDigit),
+        SizedBox(
+          width: 58,
+          child: ReportTextField(
+            width: 58,
+            tcontroller: rcontroller.firstTwoDigit,
+          ),
+        ),
         const SizedBox(
           width: 10,
         ),
         SizedBox(
-          height: 40,
+          height: 44,
           child: TextButton(
             style: TextButton.styleFrom(
-              backgroundColor: AppColors.surfaceHigh,
-              foregroundColor: AppColors.textPrimary,
+              backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+              foregroundColor: AppColors.primary,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-                side: const BorderSide(color: AppColors.border),
+                borderRadius: BorderRadius.circular(AppTheme.fieldRadius),
+                side: const BorderSide(color: AppColors.primary),
               ),
             ),
             onPressed: () async {
@@ -174,25 +185,40 @@ class SeccondSearchBox extends StatelessWidget {
                   rcontroller.persianalhpabet.value == ''
                       ? "انتخاب حرف"
                       : rcontroller.persianalhpabet.value,
-                  style: const TextStyle(color: AppColors.textPrimary),
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 )),
           ),
         ),
         const SizedBox(
           width: 10,
         ),
-        ReportTextField(width: 70, tcontroller: rcontroller.threeDigit),
+        SizedBox(
+          width: 74,
+          child: ReportTextField(
+            width: 74,
+            tcontroller: rcontroller.threeDigit,
+          ),
+        ),
         const SizedBox(
-          width: 10,
+          width: 8,
         ),
         const Text(
           '/',
-          style: TextStyle(color: AppColors.textMuted),
+          style: TextStyle(color: AppColors.textMuted, fontSize: 16),
         ),
         const SizedBox(
-          width: 10,
+          width: 8,
         ),
-        ReportTextField(width: 50, tcontroller: rcontroller.lastTwoDigit),
+        SizedBox(
+          width: 58,
+          child: ReportTextField(
+            width: 58,
+            tcontroller: rcontroller.lastTwoDigit,
+          ),
+        ),
       ],
     );
   }

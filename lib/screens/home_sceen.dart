@@ -57,12 +57,12 @@ class _HomeSceenState extends State<HomeSceen> {
       },
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 26),
-        child: Column(
+            child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _stats(),
             const SizedBox(height: 14),
-            const LiveViewSection(),
+            _liveAndDetections(),
             const SizedBox(height: 14),
             _bento(),
             const SizedBox(height: 14),
@@ -74,6 +74,59 @@ class _HomeSceenState extends State<HomeSceen> {
           ],
         ),
       ),
+    );
+  }
+
+  // ------------------------------------------------ live view + detections
+
+  /// LIVE VIEW and the detection list next to each other (60 / 40 on wide
+  /// screens, stacked on phones).
+  Widget _liveAndDetections() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 900;
+
+        final detections = BentoCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const CardHeader(
+                title: 'لیست ترددها',
+                subtitle: 'آخرین رویدادهای ثبت شده',
+                icon: Icons.list_alt_rounded,
+              ),
+              const SizedBox(height: 12),
+              dataBaseEntries(
+                dcontroller: dcontroller,
+                mController: widget.mController,
+                kcontroller: kcontroller,
+              ),
+            ],
+          ),
+        );
+
+        if (!wide) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const LiveViewSection(),
+              const SizedBox(height: 14),
+              detections,
+            ],
+          );
+        }
+
+        return Row(
+          // `start` (not `stretch`) — the row lives inside a scroll view, so
+          // the cross axis height is unbounded.
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Expanded(flex: 6, child: LiveViewSection()),
+            const SizedBox(width: 14),
+            Expanded(flex: 4, child: detections),
+          ],
+        );
+      },
     );
   }
 
@@ -184,30 +237,10 @@ class _HomeSceenState extends State<HomeSceen> {
             usedColor: AppColors.unauthorized,
           );
 
-          final detections = BentoCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const CardHeader(
-                  title: 'لیست ترددها',
-                  subtitle: 'آخرین رویدادهای ثبت شده',
-                  icon: Icons.list_alt_rounded,
-                ),
-                const SizedBox(height: 12),
-                dataBaseEntries(
-                  dcontroller: dcontroller,
-                  mController: widget.mController,
-                  kcontroller: kcontroller,
-                ),
-              ],
-            ),
-          );
-
           final items = <BentoItem>[
             BentoItem(child: chart, span: columns >= 3 ? 2 : columns),
             BentoItem(child: storage, span: columns >= 3 ? 1 : columns),
             BentoItem(child: memory, span: columns >= 3 ? 1 : columns),
-            BentoItem(child: detections, span: columns >= 3 ? 3 : columns),
           ];
 
           return BentoGrid(items: items, columns: columns);

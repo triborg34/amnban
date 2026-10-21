@@ -47,7 +47,10 @@ class SafeNetImage extends StatelessWidget {
         height: height,
         fit: fit,
         // Avoid decoding a huge original when we only show a thumbnail.
-        memCacheWidth: width == null ? null : (width! * 2).toInt(),
+        // `width` may be `double.infinity` (fill the parent) — an infinite
+        // cache width makes the decoder throw
+        // "Unsupported operation: Infinity.toInt()".
+        memCacheWidth: _memCacheWidth(width),
         placeholder: (context, _) => _PlaceholderBox(
           width: width,
           height: height,
@@ -57,6 +60,14 @@ class SafeNetImage extends StatelessWidget {
             placeholder(Icons.broken_image_outlined),
       ),
     );
+  }
+
+  /// Pixel width used for the decode cache, or `null` for "no limit".
+  static int? _memCacheWidth(double? width) {
+    if (width == null || !width.isFinite || width <= 0) return null;
+    final value = width * 2;
+    if (!value.isFinite || value <= 0) return null;
+    return value.toInt();
   }
 }
 

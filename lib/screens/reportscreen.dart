@@ -3,6 +3,7 @@ import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/theme/app_theme.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
+import 'package:amnban/utils/detection_meta.dart';
 import 'package:amnban/utils/safe.dart';
 import 'package:amnban/utils/converFunctions.dart'
     show alphabetP2, convertToPersianString;
@@ -42,6 +43,8 @@ class _ReportscreenState extends State<Reportscreen> {
   String _carType = 'همه';
   String _plateType = 'همه';
   String _carColor = 'همه';
+  String _province = 'همه';
+  String _city = 'همه';
   final TextEditingController _carModelController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
@@ -77,6 +80,10 @@ class _ReportscreenState extends State<Reportscreen> {
     'آبی',
     'قرمز',
   ];
+
+  /// Provinces / cities offered by the filter panel.
+  List<String> get _provinceOptions => ['همه', ...kIranProvinces];
+  List<String> get _cityOptions => ['همه', ...kIranCities];
 
   @override
   void initState() {
@@ -268,7 +275,19 @@ class _ReportscreenState extends State<Reportscreen> {
             label: 'رنگ خودرو',
             value: _carColor,
             items: _carColors,
-            onChanged: (v) => setSetColor(v),
+            onChanged: (v) => setState(() => _carColor = v),
+          ),
+          _dropdownField(
+            label: 'استان',
+            value: _province,
+            items: _provinceOptions,
+            onChanged: (v) => setState(() => _province = v),
+          ),
+          _dropdownField(
+            label: 'شهر',
+            value: _city,
+            items: _cityOptions,
+            onChanged: (v) => setState(() => _city = v),
           ),
           _textField(
             label: 'مدل خودرو',
@@ -295,9 +314,7 @@ class _ReportscreenState extends State<Reportscreen> {
     );
   }
 
-  void setSetColor(String value) {
-    setState(() => _carColor = value);
-  }
+
 
   Widget _dropdownField({
     required String label,
@@ -584,7 +601,7 @@ class _ReportscreenState extends State<Reportscreen> {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: SizedBox(
-                  width: 720,
+                  width: 880,
                   child: Column(
                     children: [
                       const _TableHeader(),
@@ -646,6 +663,14 @@ class _ReportscreenState extends State<Reportscreen> {
         if (_carTypeOf(plate) != _carType) return false;
       }
 
+      // --- province / city ---
+      if (_province != 'همه') {
+        if (DetectionMeta.province(entry.provice) != _province) return false;
+      }
+      if (_city != 'همه') {
+        if (DetectionMeta.city(entry.city) != _city) return false;
+      }
+
       // --- car model / colour (matched against the person's car name) ---
       final carName = person?.carName ?? '';
       if (model.isNotEmpty && !carName.contains(model)) return false;
@@ -668,10 +693,7 @@ class _ReportscreenState extends State<Reportscreen> {
   }
 
   static String _carTypeOf(String plate) {
-    if (plate.contains('x')) return 'تاکسی';
-    if (plate.contains(RegExp(r'(?<![A-Za-z])A(?![A-Za-z])'))) return 'دولتی';
-    if (plate.contains('EIN')) return 'کامیون';
-    return 'شخصی';
+    return DetectionMeta.carType(plate);
   }
 
   /// Maps the "بازه زمانی" selection onto the existing date filters.
@@ -724,6 +746,8 @@ class _ReportscreenState extends State<Reportscreen> {
       _carType = 'همه';
       _plateType = 'همه';
       _carColor = 'همه';
+      _province = 'همه';
+      _city = 'همه';
       _carModelController.clear();
       _descriptionController.clear();
     });
@@ -866,6 +890,24 @@ class _ReportscreenState extends State<Reportscreen> {
                 width: 75,
                 alignment: pw.Alignment.center,
                 decoration: pw.BoxDecoration(border: pw.Border.all()),
+                child: pw.Text('استان',
+                    style: pw.TextStyle(font: ttf) // Apply the font
+                    ),
+              ),
+              pw.Container(
+                height: 30,
+                width: 75,
+                alignment: pw.Alignment.center,
+                decoration: pw.BoxDecoration(border: pw.Border.all()),
+                child: pw.Text('شهر',
+                    style: pw.TextStyle(font: ttf) // Apply the font
+                    ),
+              ),
+              pw.Container(
+                height: 30,
+                width: 75,
+                alignment: pw.Alignment.center,
+                decoration: pw.BoxDecoration(border: pw.Border.all()),
                 child: pw.Text('نام دوربین',
                     style: pw.TextStyle(font: ttf) // Apply the font
                     ),
@@ -935,6 +977,26 @@ class _ReportscreenState extends State<Reportscreen> {
                             ),
                       ),
                       pw.Container(
+                        height: 30,
+                        width: 75,
+                        alignment: pw.Alignment.center,
+                        decoration: pw.BoxDecoration(border: pw.Border.all()),
+                        child: pw.Text(
+                            DetectionMeta.province(i.provice),
+                            style: pw.TextStyle(font: ttf) // Apply the font
+                            ),
+                      ),
+                      pw.Container(
+                        height: 30,
+                        width: 75,
+                        alignment: pw.Alignment.center,
+                        decoration: pw.BoxDecoration(border: pw.Border.all()),
+                        child: pw.Text(
+                            DetectionMeta.city(i.city),
+                            style: pw.TextStyle(font: ttf) // Apply the font
+                            ),
+                      ),
+                      pw.Container(
                           height: 30,
                           width: 75,
                           alignment: pw.Alignment.center,
@@ -996,6 +1058,8 @@ class _TableHeader extends StatelessWidget {
           head('پلاک', 130),
           head('وضعیت تردد', 120),
           head('جهت', 80),
+          head('استان', 110),
+          head('شهر', 100),
           head('تصویر', 90),
           head('زمان تردد', 130),
           head('عملیات', 120),
@@ -1016,15 +1080,10 @@ class _TableRow extends StatelessWidget {
     final kcontroller = Get.find<knowPersonController>();
     final person = kcontroller.personFor(entry.plateNum);
     final status = statusForEntry(entry, kcontroller);
-
-    String? gate;
-    for (final c in Get.find<cameraController>().cameras) {
-      if (c.path == entry.rtpath) {
-        gate = c.gate ?? 'entre';
-        break;
-      }
-    }
-    final direction = (gate == null || gate == 'entre') ? 'ورود' : 'خروج';
+    final direction = DetectionMeta.direction(
+      entry.rtpath,
+      Get.find<cameraController>().cameras,
+    );
 
     return InkWell(
       borderRadius: BorderRadius.circular(10),
@@ -1059,9 +1118,37 @@ class _TableRow extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w600,
-                    color: direction == 'ورود'
+                    color: direction == 'ورودی'
                         ? AppColors.primary
                         : AppColors.warning,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 110,
+              child: Center(
+                child: Text(
+                  DetectionMeta.province(entry.provice),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 100,
+              child: Center(
+                child: Text(
+                  DetectionMeta.city(entry.city),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ),

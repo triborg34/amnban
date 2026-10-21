@@ -354,24 +354,30 @@ class LicanceGrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // NOTE: the fields are wrapped in an explicit `SizedBox` — a `TextField`
+    // that is a *direct* child of a `Row` collapses to zero size on some
+    // Flutter versions.
     return Row(
       textDirection: TextDirection.ltr,
       children: [
-        CoustomTextField1(
-          controller: kcontroller.firstTwoDigit,
-          hint: "",
+        SizedBox(
           width: 50,
+          child: CoustomTextField1(
+            controller: kcontroller.firstTwoDigit,
+            hint: "",
+            width: 50,
+          ),
         ),
         const SizedBox(width: 15),
         SizedBox(
           height: 40,
           child: TextButton(
             style: TextButton.styleFrom(
-              backgroundColor: AppColors.surfaceHigh,
-              foregroundColor: AppColors.textPrimary,
+              backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+              foregroundColor: AppColors.primary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
-                side: const BorderSide(color: AppColors.border),
+                side: const BorderSide(color: AppColors.primary),
               ),
             ),
             onPressed: () async {
@@ -397,21 +403,30 @@ class LicanceGrapper extends StatelessWidget {
                   kcontroller.persianAlhpabet.value == ''
                       ? "انتخاب حرف"
                       : kcontroller.persianAlhpabet.value,
-                  style: const TextStyle(color: AppColors.textPrimary),
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 )),
           ),
         ),
         const SizedBox(width: 15),
-        CoustomTextField1(
-            controller: kcontroller.threeDigit, hint: '', width: 70),
+        SizedBox(
+          width: 70,
+          child: CoustomTextField1(
+              controller: kcontroller.threeDigit, hint: '', width: 70),
+        ),
         const SizedBox(width: 15),
         const Text(
           "/",
           style: TextStyle(color: AppColors.textMuted),
         ),
         const SizedBox(width: 15),
-        CoustomTextField1(
-            hint: '', controller: kcontroller.lastTwoDigit, width: 50),
+        SizedBox(
+          width: 50,
+          child: CoustomTextField1(
+              hint: '', controller: kcontroller.lastTwoDigit, width: 50),
+        ),
       ],
     );
   }

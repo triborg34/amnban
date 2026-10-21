@@ -10,16 +10,17 @@ String? asString(dynamic v) => v == null ? null : v.toString();
 int? asInt(dynamic v) {
   if (v == null) return null;
   if (v is int) return v;
-  if (v is double) return v.toInt();
-  if (v is num) return v.toInt();
+  // A non finite double (Infinity / NaN) would throw on `toInt()`.
+  if (v is double) return v.isFinite ? v.toInt() : null;
+  if (v is num) return v.isFinite ? v.toInt() : null;
   return int.tryParse(v.toString());
 }
 
 double? asDouble(dynamic v) {
   if (v == null) return null;
-  if (v is double) return v;
+  if (v is double) return v.isFinite ? v : null;
   if (v is int) return v.toDouble();
-  if (v is num) return v.toDouble();
+  if (v is num) return v.isFinite ? v.toDouble() : null;
   return double.tryParse(v.toString());
 }
 
