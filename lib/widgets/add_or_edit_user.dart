@@ -106,9 +106,9 @@ class _add_or_edit_userState extends State<add_or_edit_user> {
                           color: AppColors.textPrimary, fontSize: 12.5),
                       dropdownColor: AppColors.surface,
                       isExpanded: true,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                           focusColor: Colors.transparent,
-                          fillColor: AppColors.surfaceMuted,
+                          fillColor: AppColors.surfaceHigh,
                           filled: true),
                       borderRadius: BorderRadius.circular(8),
                       initialValue: (ucontroller.accsesslvl.value == 'مدیر' ||

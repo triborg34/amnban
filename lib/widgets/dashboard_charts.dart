@@ -4,17 +4,16 @@ import 'package:persian_number_utility/persian_number_utility.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
 import '../utils/dashboard_stats.dart';
 
-/// Stacked bar chart of the traffic of the last 7 days.
-///
-/// Every day has two rods — ورود (entry) and خروج (exit) — and each rod is
-/// stacked into مجاز / غیر مجاز / بدون مالک segments with value labels.
+/// Seven day stacked bar chart — entries and exits split into authorized and
+/// unauthorized.
 class WeeklyTrafficChart extends StatelessWidget {
   const WeeklyTrafficChart({
     super.key,
     required this.days,
-    this.height = 300,
+    this.height = 280,
   });
 
   final List<DayTraffic> days;
@@ -34,11 +33,13 @@ class WeeklyTrafficChart extends StatelessWidget {
       );
     }
 
-    final maxValue = days.fold<double>(0, (acc, d) {
-      final value = d.entries > d.exits ? d.entries : d.exits;
-      return value > acc ? value.toDouble() : acc;
-    });
-    final maxY = (maxValue * 1.25).clamp(10.0, 100000.0);
+    var maxValue = 0.0;
+    for (final d in days) {
+      if (d.entries > maxValue) maxValue = d.entries.toDouble();
+      if (d.exits > maxValue) maxValue = d.exits.toDouble();
+    }
+    final maxY = (maxValue * 1.3).clamp(10.0, 100000.0);
+    final interval = (maxY / 4).ceilToDouble().clamp(1, 100000).toDouble();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -52,13 +53,13 @@ class WeeklyTrafficChart extends StatelessWidget {
               alignment: BarChartAlignment.spaceAround,
               barTouchData: BarTouchData(
                 touchTooltipData: BarTouchTooltipData(
-                  getTooltipColor: (_) => AppColors.sidebar,
-                  tooltipBorderRadius: BorderRadius.circular(6),
+                  getTooltipColor: (_) => AppColors.surfaceHigh,
+                  tooltipBorderRadius: BorderRadius.circular(8),
                   getTooltipItem: (group, groupIndex, rod, rodIndex) {
                     return BarTooltipItem(
                       '${rod.toY.toInt().toString().toPersianDigit()}\n',
                       const TextStyle(
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                       ),
@@ -66,7 +67,7 @@ class WeeklyTrafficChart extends StatelessWidget {
                         TextSpan(
                           text: rodIndex == 0 ? 'ورود' : 'خروج',
                           style: const TextStyle(
-                            color: Colors.white70,
+                            color: AppColors.textSecondary,
                             fontSize: 11,
                           ),
                         ),
@@ -78,9 +79,9 @@ class WeeklyTrafficChart extends StatelessWidget {
               gridData: FlGridData(
                 show: true,
                 drawVerticalLine: false,
-                horizontalInterval: (maxY / 4).ceilToDouble().clamp(1, 100000),
+                horizontalInterval: interval,
                 getDrawingHorizontalLine: (_) => const FlLine(
-                  color: AppColors.divider,
+                  color: AppColors.border,
                   strokeWidth: 1,
                 ),
               ),
@@ -91,15 +92,16 @@ class WeeklyTrafficChart extends StatelessWidget {
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
-                    reservedSize: 42,
-                    interval: (maxY / 4).ceilToDouble().clamp(1, 100000),
+                    reservedSize: 40,
+                    interval: interval,
                     getTitlesWidget: (value, meta) => Padding(
                       padding: const EdgeInsets.only(left: 6),
                       child: Text(
                         value.toInt().toString().toPersianDigit(),
                         textAlign: TextAlign.left,
-                        style: const TextStyle(
+                        style: AppTheme.numeric(
                           fontSize: 10,
+                          fontWeight: FontWeight.w500,
                           color: AppColors.textMuted,
                         ),
                       ),
@@ -109,7 +111,7 @@ class WeeklyTrafficChart extends StatelessWidget {
                 bottomTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
-                    reservedSize: 34,
+                    reservedSize: 30,
                     getTitlesWidget: (value, meta) {
                       final index = value.toInt();
                       if (index < 0 || index >= days.length) {
@@ -120,8 +122,9 @@ class WeeklyTrafficChart extends StatelessWidget {
                         padding: const EdgeInsets.only(top: 8),
                         child: Text(
                           '${jalali.month}/${jalali.day}'.toPersianDigit(),
-                          style: const TextStyle(
+                          style: AppTheme.numeric(
                             fontSize: 10,
+                            fontWeight: FontWeight.w500,
                             color: AppColors.textMuted,
                           ),
                         ),
@@ -134,21 +137,17 @@ class WeeklyTrafficChart extends StatelessWidget {
                 for (int i = 0; i < days.length; i++)
                   BarChartGroupData(
                     x: i,
-                    barsSpace: 4,
+                    barsSpace: 3,
                     barRods: [
                       _rod(
-                        total: days[i].entries,
                         allowed: days[i].entriesAllowed,
-                        denied: days[i].entriesDenied,
-                        unknown: days[i].entriesUnknown,
-                        color: AppColors.chartTeal,
+                        denied: days[i].entriesDenied + days[i].entriesUnknown,
+                        base: AppColors.primary,
                       ),
                       _rod(
-                        total: days[i].exits,
                         allowed: days[i].exitsAllowed,
-                        denied: days[i].exitsDenied,
-                        unknown: days[i].exitsUnknown,
-                        color: AppColors.chartGreen,
+                        denied: days[i].exitsDenied + days[i].exitsUnknown,
+                        base: AppColors.warning,
                       ),
                     ],
                   ),
@@ -156,18 +155,16 @@ class WeeklyTrafficChart extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         const _ChartLegend(),
       ],
     );
   }
 
   BarChartRodData _rod({
-    required int total,
     required int allowed,
     required int denied,
-    required int unknown,
-    required Color color,
+    required Color base,
   }) {
     final items = <BarChartRodStackItem>[];
     var cursor = 0.0;
@@ -183,21 +180,21 @@ class WeeklyTrafficChart extends StatelessWidget {
         label: value.toString().toPersianDigit(),
         labelStyle: const TextStyle(
           fontSize: 9.5,
-          color: Colors.white,
-          fontWeight: FontWeight.w600,
+          color: Color(0xFF04211F),
+          fontWeight: FontWeight.w700,
         ),
       ));
     }
 
-    push(allowed, AppColors.chartGreen);
-    push(denied, AppColors.chartPurple);
-    push(unknown, AppColors.chartOrange);
+    push(allowed, base);
+    push(denied, AppColors.unauthorized);
 
     return BarChartRodData(
-      toY: total.toDouble(),
-      width: 12,
-      borderRadius: BorderRadius.circular(3),
-      color: color.withValues(alpha: 0.25),
+      toY: cursor,
+      width: 11,
+      // Rounded bar tops.
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+      color: base.withValues(alpha: 0.22),
       rodStackItems: items,
     );
   }
@@ -209,10 +206,9 @@ class _ChartLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const entries = [
-      (label: 'ورود مجاز', color: AppColors.chartTeal),
-      (label: 'خروج مجاز', color: AppColors.chartGreen),
-      (label: 'غیر مجاز', color: AppColors.chartPurple),
-      (label: 'بدون مالک', color: AppColors.chartOrange),
+      (label: 'ورود مجاز', color: AppColors.primary),
+      (label: 'خروج مجاز', color: AppColors.warning),
+      (label: 'غیر مجاز', color: AppColors.unauthorized),
     ];
 
     return Wrap(
@@ -232,7 +228,7 @@ class _ChartLegend extends StatelessWidget {
                   shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(width: 5),
+              const SizedBox(width: 6),
               Text(
                 e.label,
                 style: const TextStyle(
@@ -248,6 +244,9 @@ class _ChartLegend extends StatelessWidget {
 }
 
 /// Donut chart used for the storage / RAM usage panels.
+///
+/// The used percentage is rendered in the centre and a Persian caption sits
+/// below the chart.
 class UsageDonutChart extends StatelessWidget {
   const UsageDonutChart({
     super.key,
@@ -259,7 +258,7 @@ class UsageDonutChart extends StatelessWidget {
     required this.freeLabel,
     required this.usedColor,
     required this.freeColor,
-    this.height = 240,
+    this.height = 210,
   });
 
   final String title;
@@ -284,7 +283,7 @@ class UsageDonutChart extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          '$title  (کل فضا: $totalLabel)',
+          title,
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 12.5,
@@ -292,103 +291,107 @@ class UsageDonutChart extends StatelessWidget {
             color: AppColors.textPrimary,
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         SizedBox(
           height: height,
           child: Stack(
             alignment: Alignment.center,
             children: [
-              PieChart(
-                PieChartData(
-                  centerSpaceRadius: 52,
-                  sectionsSpace: 2,
-                  sections: [
-                    if (used > 0)
-                      PieChartSectionData(
-                        value: used,
-                        color: usedColor,
-                        radius: 42,
-                        title: '${usedPercent.toStringAsFixed(1)}٪',
-                        titleStyle: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+              if (totalValue > 0)
+                PieChart(
+                  PieChartData(
+                    centerSpaceRadius: 44,
+                    sectionsSpace: 3,
+                    sections: [
+                      if (used > 0)
+                        PieChartSectionData(
+                          value: used,
+                          color: usedColor,
+                          radius: 34,
+                          // The percentage is rendered in the centre.
+                          showTitle: false,
                         ),
-                      ),
-                    if (free > 0)
-                      PieChartSectionData(
-                        value: free,
-                        color: freeColor,
-                        radius: 42,
-                        title: '${freePercent.toStringAsFixed(1)}٪',
-                        titleStyle: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                      if (free > 0)
+                        PieChartSectionData(
+                          value: free,
+                          color: freeColor,
+                          radius: 34,
+                          showTitle: false,
                         ),
-                      ),
-                  ],
-                ),
-              ),
-              Container(
-                width: 96,
-                alignment: Alignment.center,
-                child: Text(
-                  '${totalLabel}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
+                    ],
                   ),
                 ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${usedPercent.toStringAsFixed(1).toPersianDigit()}٪',
+                    style: AppTheme.numeric(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w700,
+                      color: usedColor,
+                      height: 1.1,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    totalValue > 0 ? 'استفاده شده' : 'نامشخص',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
         ),
-        const SizedBox(height: 10),
-        _legend(
-          usedLabel: usedLabel,
-          freeLabel: freeLabel,
-          usedColor: usedColor,
-          freeColor: freeColor,
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _legendDot(
+              usedColor,
+              '$usedLabel ${usedPercent.toStringAsFixed(1).toPersianDigit()}٪',
+            ),
+            const SizedBox(width: 14),
+            _legendDot(
+              freeColor,
+              '$freeLabel ${freePercent.toStringAsFixed(1).toPersianDigit()}٪',
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'کل فضا: $totalLabel',
+          textAlign: TextAlign.center,
+          style: AppTheme.numeric(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textMuted,
+          ),
         ),
       ],
     );
   }
 
-  Widget _legend({
-    required String usedLabel,
-    required String freeLabel,
-    required Color usedColor,
-    required Color freeColor,
-  }) {
-    Widget item(String label, Color color) => Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 9,
-              height: 9,
-              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 10.5,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ],
-        );
-
-    return Wrap(
-      alignment: WrapAlignment.center,
-      spacing: 16,
-      runSpacing: 6,
+  Widget _legendDot(Color color, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        item(usedLabel, usedColor),
-        item(freeLabel, freeColor),
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10,
+            color: AppColors.textSecondary,
+          ),
+        ),
       ],
     );
   }

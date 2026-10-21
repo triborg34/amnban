@@ -2,60 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:persian_number_utility/persian_number_utility.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
 import '../utils/system_info.dart';
 import 'app_card.dart';
 import 'dashboard_charts.dart';
 
-/// Small footer card with uptime, CPU core count and CPU model.
-class SystemInfoCard extends StatelessWidget {
-  const SystemInfoCard({super.key});
+/// Small monospaced strip with uptime, CPU core count and CPU model.
+class SystemInfoStrip extends StatelessWidget {
+  const SystemInfoStrip({super.key});
 
   @override
   Widget build(BuildContext context) {
     final uptime = SystemInfo.uptime;
 
-    return AppCard(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+    return BentoCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Wrap(
+        spacing: 22,
+        runSpacing: 10,
+        alignment: WrapAlignment.center,
         children: [
-          const Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: Text(
-              'اطلاعات سیستم',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textSecondary,
-              ),
-            ),
+          _item('مدت زمان روشن بودن سیستم', _formatUptime(uptime)),
+          _item(
+            'تعداد هسته',
+            SystemInfo.cpuCoreCount.toString().toPersianDigit(),
           ),
-          const SizedBox(height: 10),
-          const Divider(height: 1, color: AppColors.divider),
-          const SizedBox(height: 10),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _InfoColumn(
-                  label: 'مدت زمان روشن بودن سیستم',
-                  value: _formatUptime(uptime),
-                ),
-              ),
-              Expanded(
-                child: _InfoColumn(
-                  label: 'تعداد هسته',
-                  value: SystemInfo.cpuCoreCount.toString().toPersianDigit(),
-                ),
-              ),
-              Expanded(
-                child: _InfoColumn(
-                  label: 'مدل',
-                  value: SystemInfo.cpuModel,
-                ),
-              ),
-            ],
-          ),
+          _item('مدل', SystemInfo.cpuModel),
         ],
       ),
     );
@@ -72,32 +44,22 @@ class SystemInfoCard extends StatelessWidget {
     ];
     return parts.join(' و ');
   }
-}
 
-class _InfoColumn extends StatelessWidget {
-  const _InfoColumn({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
+  Widget _item(String label, String value) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           value,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 12,
+          style: AppTheme.numeric(
+            fontSize: 11.5,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: AppColors.textSecondary,
           ),
         ),
-        const SizedBox(height: 3),
+        const SizedBox(width: 6),
         Text(
           label,
-          textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 10.5,
             color: AppColors.textMuted,
@@ -108,17 +70,25 @@ class _InfoColumn extends StatelessWidget {
   }
 }
 
-/// Two donut charts (storage + memory) mirroring the reference dashboard.
-class SystemUsagePanel extends StatefulWidget {
-  const SystemUsagePanel({super.key});
+/// A single usage donut (storage or RAM) as a bento cell.
+class UsageDonutCard extends StatefulWidget {
+  const UsageDonutCard({
+    super.key,
+    required this.title,
+    required this.loader,
+    required this.usedColor,
+  });
+
+  final String title;
+  final Future<SystemUsage?> Function() loader;
+  final Color usedColor;
 
   @override
-  State<SystemUsagePanel> createState() => _SystemUsagePanelState();
+  State<UsageDonutCard> createState() => _UsageDonutCardState();
 }
 
-class _SystemUsagePanelState extends State<SystemUsagePanel> {
-  SystemUsage? _storage;
-  SystemUsage? _memory;
+class _UsageDonutCardState extends State<UsageDonutCard> {
+  SystemUsage? _usage;
   bool _loading = true;
 
   @override
@@ -128,12 +98,10 @@ class _SystemUsagePanelState extends State<SystemUsagePanel> {
   }
 
   Future<void> _load() async {
-    final storage = await SystemInfo.storageUsage();
-    final memory = SystemInfo.memoryUsage();
+    final usage = await widget.loader();
     if (!mounted) return;
     setState(() {
-      _storage = storage;
-      _memory = memory;
+      _usage = usage;
       _loading = false;
     });
   }
@@ -141,9 +109,9 @@ class _SystemUsagePanelState extends State<SystemUsagePanel> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const AppCard(
+      return const BentoCard(
         child: SizedBox(
-          height: 180,
+          height: 200,
           child: Center(
             child: SizedBox(
               width: 22,
@@ -155,63 +123,65 @@ class _SystemUsagePanelState extends State<SystemUsagePanel> {
       );
     }
 
+    final usage = _usage;
+
+    return BentoCard(
+      child: UsageDonutChart(
+        title: widget.title,
+        totalLabel: usage == null
+            ? 'نامشخص'
+            : formatBytes(usage.total, convertDigits: _digits),
+        usedValue: usage?.used ?? 0,
+        totalValue: usage?.total ?? 0,
+        usedLabel: 'استفاده شده',
+        freeLabel: 'آزاد',
+        usedColor: widget.usedColor,
+        freeColor: AppColors.primary,
+      ),
+    );
+  }
+
+  static String _digits(String value) => value.toPersianDigit();
+}
+
+/// Storage + RAM usage side by side.
+class SystemUsagePanel extends StatelessWidget {
+  const SystemUsagePanel({super.key});
+
+  @override
+  Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 760;
-        final storage = _storage;
-        final memory = _memory;
-
-        final storageChart = AppCard(
-          child: UsageDonutChart(
-            title: 'گزارش فضای ذخیره سازی',
-            totalLabel: storage == null
-                ? 'نامشخص'
-                : formatBytes(storage.total, convertDigits: _digits),
-            usedValue: storage?.used ?? 0,
-            totalValue: storage?.total ?? 0,
-            usedLabel: 'فضای استفاده شده',
-            freeLabel: 'فضای آزاد',
-            usedColor: AppColors.chartOrange,
-            freeColor: AppColors.chartGreen,
-          ),
+        final storage = UsageDonutCard(
+          title: 'گزارش فضای ذخیره سازی',
+          loader: SystemInfo.storageUsage,
+          usedColor: AppColors.warning,
         );
-
-        final memoryChart = AppCard(
-          child: UsageDonutChart(
-            title: 'گزارش فضای RAM',
-            totalLabel: memory == null
-                ? 'نامشخص'
-                : formatBytes(memory.total, convertDigits: _digits),
-            usedValue: memory?.used ?? 0,
-            totalValue: memory?.total ?? 0,
-            usedLabel: 'فضای استفاده شده',
-            freeLabel: 'فضای آزاد',
-            usedColor: AppColors.chartTeal,
-            freeColor: AppColors.chartPurple,
-          ),
+        final memory = UsageDonutCard(
+          title: 'گزارش فضای RAM',
+          loader: () async => SystemInfo.memoryUsage(),
+          usedColor: AppColors.unauthorized,
         );
 
         if (!wide) {
           return Column(
             children: [
-              storageChart,
+              storage,
               const SizedBox(height: 14),
-              memoryChart,
+              memory,
             ],
           );
         }
-
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: storageChart),
+            Expanded(child: storage),
             const SizedBox(width: 14),
-            Expanded(child: memoryChart),
+            Expanded(child: memory),
           ],
         );
       },
     );
   }
-
-  static String _digits(String value) => value.toPersianDigit();
 }

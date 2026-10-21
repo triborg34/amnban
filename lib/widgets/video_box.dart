@@ -1,14 +1,15 @@
-import 'package:amnban/screens/details_screen.dart';
-import 'package:amnban/utils/consts.dart';
-import 'package:amnban/utils/controller.dart';
-import 'package:amnban/utils/dashboard_stats.dart';
-import 'package:amnban/utils/safe.dart';
-import 'package:amnban/widgets/app_card.dart';
-import 'package:amnban/widgets/camera_grid.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Live camera grid shown on the dashboard.
+import '../screens/details_screen.dart';
+import '../utils/controller.dart';
+import '../utils/dashboard_stats.dart';
+import '../utils/safe.dart';
+import '../widgets/app_card.dart';
+import '../widgets/camera_grid.dart';
+import 'package:amnban/utils/consts.dart';
+
+/// Live camera grid.
 ///
 /// The widget keeps its original name / constructor so the existing call
 /// sites keep working — only the presentation changed (responsive grid of
@@ -29,7 +30,7 @@ class VideoBox extends StatelessWidget {
 
     return Obx(() {
       if (ccontroller.cameras.isEmpty) {
-        return const AppCard(
+        return const BentoCard(
           child: AppEmptyState(
             message: 'دوربینی ثبت نشده است',
             icon: Icons.videocam_off_outlined,
@@ -40,7 +41,12 @@ class VideoBox extends StatelessWidget {
       return CameraGrid(
         cameras: ccontroller.cameras,
         kcontroller: kcontroller,
-        onExpand: (camera) => _openLatest(context, camera, dcontroller, kcontroller),
+        onExpand: (camera) => _openLatest(
+          context,
+          camera,
+          dcontroller,
+          kcontroller,
+        ),
       );
     });
   }

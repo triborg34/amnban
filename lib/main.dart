@@ -24,7 +24,10 @@ class MyApp extends StatelessWidget {
         initialBinding: MyBindings(),
         debugShowCheckedModeBanner: false,
         title: "AmnBan",
-        theme: AppTheme.light,
+        theme: AppTheme.dark,
+        darkTheme: AppTheme.dark,
+        // The application is permanently dark.
+        themeMode: ThemeMode.dark,
         getPages: pages,
         home: SplashScreen(),
         // The whole application is right-to-left.

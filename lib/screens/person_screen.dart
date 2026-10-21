@@ -1,4 +1,5 @@
 import 'package:amnban/theme/app_colors.dart';
+import 'package:amnban/theme/app_theme.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/utils/converFunctions.dart';
@@ -21,18 +22,22 @@ class PersonScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(16),
-      child: AppCard(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 26),
+      child: BentoCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            AppSectionTitle(
+            CardHeader(
               title: 'لیست پلاک ها',
-              icon: Icons.confirmation_number_outlined,
+              subtitle: 'پلاک های مجاز و غیر مجاز سامانه',
+              icon: Icons.confirmation_number_rounded,
               trailing: Obx(() => Text(
                     '${kcontroller.knowPerson.length.toString().toPersianDigit()} پلاک',
-                    style: const TextStyle(
-                        fontSize: 11, color: AppColors.textMuted),
+                    style: AppTheme.numeric(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textMuted,
+                    ),
                   )),
             ),
             const SizedBox(height: 14),
@@ -64,7 +69,7 @@ class PersonScreen extends StatelessWidget {
                       },
                     );
                   },
-                  icon: const Icon(Icons.add, size: 16),
+                  icon: const Icon(Icons.add_rounded, size: 16),
                   label: const Text('اضافه کردن'),
                 ),
                 OutlinedButton.icon(
@@ -74,7 +79,7 @@ class PersonScreen extends StatelessWidget {
                 ),
                 OutlinedButton.icon(
                   onPressed: () => restoreBackup("registredDb"),
-                  icon: const Icon(Icons.restore_outlined, size: 16),
+                  icon: const Icon(Icons.restore_rounded, size: 16),
                   label: const Text('بازگردانی'),
                 ),
               ],
@@ -98,7 +103,7 @@ class PersonScreen extends StatelessWidget {
                       child: ListView.separated(
                         itemCount: people.length,
                         separatorBuilder: (context, index) =>
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 5),
                         itemBuilder: (context, index) => _personRow(
                           context,
                           index,
@@ -132,8 +137,8 @@ class PersonScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(8),
+        color: AppColors.surfaceHigh,
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppColors.border),
       ),
       child: SingleChildScrollView(
@@ -160,7 +165,7 @@ class PersonScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppColors.border),
       ),
       child: SingleChildScrollView(
@@ -172,8 +177,11 @@ class PersonScreen extends StatelessWidget {
               child: Text(
                 '${index + 1}'.toPersianDigit(),
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                    fontSize: 11.5, color: AppColors.textMuted),
+                style: AppTheme.numeric(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textMuted,
+                ),
               ),
             ),
             SizedBox(
@@ -183,7 +191,7 @@ class PersonScreen extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 12,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                   color: AppColors.textPrimary,
                 ),
               ),
@@ -214,8 +222,11 @@ class PersonScreen extends StatelessWidget {
               child: Text(
                 person.eDate != null ? person.eDate!.toPersianDate() : "-",
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                    fontSize: 11.5, color: AppColors.textSecondary),
+                style: AppTheme.numeric(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                ),
               ),
             ),
             SizedBox(
@@ -223,8 +234,11 @@ class PersonScreen extends StatelessWidget {
               child: Text(
                 person.eTime != null ? person.eTime!.toPersianDigit() : "-",
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                    fontSize: 11.5, color: AppColors.textSecondary),
+                style: AppTheme.numeric(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textSecondary,
+                ),
               ),
             ),
             SizedBox(
@@ -236,12 +250,14 @@ class PersonScreen extends StatelessWidget {
                     onPressed: () => _edit(context, index),
                     icon: const Icon(Icons.edit_outlined, size: 18),
                     tooltip: 'ویرایش',
+                    visualDensity: VisualDensity.compact,
                   ),
                   IconButton(
                     onPressed: () => _delete(context, index),
                     icon: const Icon(Icons.delete_outline,
                         size: 18, color: AppColors.danger),
                     tooltip: 'حذف',
+                    visualDensity: VisualDensity.compact,
                   ),
                 ],
               ),
@@ -351,10 +367,10 @@ class LicanceGrapper extends StatelessWidget {
           height: 40,
           child: TextButton(
             style: TextButton.styleFrom(
-              backgroundColor: AppColors.surfaceMuted,
+              backgroundColor: AppColors.surfaceHigh,
               foregroundColor: AppColors.textPrimary,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(10),
                 side: const BorderSide(color: AppColors.border),
               ),
             ),

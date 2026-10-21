@@ -19,7 +19,7 @@ class ReportTextField extends StatelessWidget {
         decoration: InputDecoration(
           isDense: true,
           filled: true,
-          fillColor: AppColors.surfaceMuted,
+          fillColor: AppColors.surfaceHigh,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
           focusedBorder: OutlineInputBorder(

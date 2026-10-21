@@ -1,23 +1,23 @@
 import 'package:amnban/theme/app_colors.dart';
+import 'package:amnban/theme/app_theme.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/utils/dashboard_stats.dart';
+import 'package:amnban/utils/system_info.dart';
 import 'package:amnban/widgets/app_card.dart';
 import 'package:amnban/widgets/dashboard_charts.dart';
 import 'package:amnban/widgets/data_base_entries.dart';
-import 'package:amnban/widgets/extended_table.dart';
 import 'package:amnban/widgets/amar_dialog.dart';
-import 'package:amnban/widgets/stat_card.dart';
+import 'package:amnban/widgets/live_view.dart';
+import 'package:amnban/widgets/stat_tile.dart';
 import 'package:amnban/widgets/system_info_card.dart';
-import 'package:amnban/widgets/video_box.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:persian_number_utility/persian_number_utility.dart';
 
-/// Dashboard — mirrors the DIESPI reference layout:
-/// stat strip → live camera grid → traffic chart → usage donuts → system
-/// information.
+/// Main page — dashboard with live view, statistics, charts and the
+/// detection list, laid out as a bento grid.
 class HomeSceen extends StatefulWidget {
   HomeSceen({
     required this.mController,
@@ -56,39 +56,21 @@ class _HomeSceenState extends State<HomeSceen> {
         }
       },
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 26),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _statStrip(),
-            const SizedBox(height: 16),
-            _sectionCard(
-              title: 'آخرین تردد ها',
-              icon: Icons.videocam_outlined,
-              child: VideoBox(mController: widget.mController),
-            ),
-            const SizedBox(height: 16),
-            _sectionCard(
-              title: 'لیست ترددها',
-              icon: Icons.list_alt_outlined,
-              child: dataBaseEntries(
-                dcontroller: dcontroller,
-                mController: widget.mController,
-                kcontroller: kcontroller,
-              ),
-            ),
-            const SizedBox(height: 16),
-            _liveEntries(),
-            const SizedBox(height: 16),
-            _trafficChart(),
-            const SizedBox(height: 16),
-            const SystemUsagePanel(),
-            const SizedBox(height: 16),
+            _stats(),
+            const SizedBox(height: 14),
+            const LiveViewSection(),
+            const SizedBox(height: 14),
+            _bento(),
+            const SizedBox(height: 14),
             _todaySummary(),
-            const SizedBox(height: 16),
-            const SystemInfoCard(),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             _relayButtons(),
+            const SizedBox(height: 14),
+            const SystemInfoStrip(),
           ],
         ),
       ),
@@ -97,7 +79,7 @@ class _HomeSceenState extends State<HomeSceen> {
 
   // ------------------------------------------------------------------ stats
 
-  Widget _statStrip() {
+  Widget _stats() {
     return Obx(() {
       final cameras = Get.find<cameraController>();
       final today = DashboardStats.today(
@@ -106,48 +88,48 @@ class _HomeSceenState extends State<HomeSceen> {
         persons: kcontroller,
       );
 
+      final tiles = [
+        StatTile(
+          label: 'موجود در پارکینگ',
+          caption: 'در حال حاضر',
+          value: DashboardStats.presentInParking(today),
+          icon: Icons.directions_car_filled_outlined,
+          accent: AppColors.primary,
+        ),
+        StatTile(
+          label: 'ورود امروز',
+          caption: 'ترددهای ورودی',
+          value: today.entries,
+          icon: Icons.login_rounded,
+          accent: AppColors.unauthorized,
+        ),
+        StatTile(
+          label: 'خروج امروز',
+          caption: 'ترددهای خروجی',
+          value: today.exits,
+          icon: Icons.logout_rounded,
+          accent: AppColors.warning,
+        ),
+      ];
+
       return LayoutBuilder(
         builder: (context, constraints) {
-          final wide = constraints.maxWidth >= 640;
-          final cards = [
-            StatCard(
-              label: 'موجود در پارکینگ',
-              value: DashboardStats.presentInParking(today)
-                  .toString()
-                  .toPersianDigit(),
-              icon: Icons.directions_car_filled_outlined,
-              accent: AppColors.primary,
-            ),
-            StatCard(
-              label: 'خروج روزانه',
-              value: today.exits.toString().toPersianDigit(),
-              icon: Icons.logout,
-              accent: AppColors.warning,
-            ),
-            StatCard(
-              label: 'ورود روزانه',
-              value: today.entries.toString().toPersianDigit(),
-              icon: Icons.login,
-              accent: AppColors.chartTeal,
-            ),
-          ];
-
+          final wide = constraints.maxWidth >= 760;
           if (!wide) {
             return Column(
               children: [
-                for (var i = 0; i < cards.length; i++) ...[
+                for (var i = 0; i < tiles.length; i++) ...[
                   if (i > 0) const SizedBox(height: 12),
-                  cards[i],
+                  tiles[i],
                 ],
               ],
             );
           }
-
           return Row(
             children: [
-              for (var i = 0; i < cards.length; i++) ...[
+              for (var i = 0; i < tiles.length; i++) ...[
                 if (i > 0) const SizedBox(width: 12),
-                Expanded(child: cards[i]),
+                Expanded(child: tiles[i]),
               ],
             ],
           );
@@ -156,52 +138,9 @@ class _HomeSceenState extends State<HomeSceen> {
     });
   }
 
-  // ----------------------------------------------------------- camera grid
+  // ------------------------------------------------------------------ bento
 
-  Widget _sectionCard({
-    required String title,
-    required IconData icon,
-    required Widget child,
-  }) {
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          AppSectionTitle(title: title, icon: icon),
-          const SizedBox(height: 14),
-          child,
-        ],
-      ),
-    );
-  }
-
-  // --------------------------------------------------------- live entries
-
-  Widget _liveEntries() {
-    return Obx(() {
-      if (dcontroller.entries.isEmpty) {
-        return const SizedBox.shrink();
-      }
-      return Visibility(
-        visible: widget.mController.isSelected.value,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ExtendedTable(
-              index: dcontroller.selectedIndex.value,
-              dcontroller: dcontroller,
-              kcontroller: kcontroller,
-            ),
-            const SizedBox(height: 16),
-          ],
-        ),
-      );
-    });
-  }
-
-  // ---------------------------------------------------------------- charts
-
-  Widget _trafficChart() {
+  Widget _bento() {
     return Obx(() {
       final cameras = Get.find<cameraController>();
       final days = DashboardStats.lastDays(
@@ -210,10 +149,69 @@ class _HomeSceenState extends State<HomeSceen> {
         persons: kcontroller,
       );
 
-      return _sectionCard(
-        title: 'گزارش ورود و خروج ۷ روز گذشته',
-        icon: Icons.bar_chart_outlined,
-        child: WeeklyTrafficChart(days: days),
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final columns = constraints.maxWidth >= 1180
+              ? 3
+              : constraints.maxWidth >= 720
+                  ? 2
+                  : 1;
+
+          final chart = BentoCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const CardHeader(
+                  title: 'گزارش ورود و خروج ۷ روز گذشته',
+                  subtitle: 'تفکیک مجاز و غیر مجاز',
+                  icon: Icons.stacked_bar_chart_rounded,
+                ),
+                const SizedBox(height: 14),
+                WeeklyTrafficChart(days: days),
+              ],
+            ),
+          );
+
+          final storage = UsageDonutCard(
+            title: 'گزارش فضای ذخیره سازی',
+            loader: SystemInfo.storageUsage,
+            usedColor: AppColors.warning,
+          );
+
+          final memory = UsageDonutCard(
+            title: 'گزارش فضای RAM',
+            loader: () async => SystemInfo.memoryUsage(),
+            usedColor: AppColors.unauthorized,
+          );
+
+          final detections = BentoCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const CardHeader(
+                  title: 'لیست ترددها',
+                  subtitle: 'آخرین رویدادهای ثبت شده',
+                  icon: Icons.list_alt_rounded,
+                ),
+                const SizedBox(height: 12),
+                dataBaseEntries(
+                  dcontroller: dcontroller,
+                  mController: widget.mController,
+                  kcontroller: kcontroller,
+                ),
+              ],
+            ),
+          );
+
+          final items = <BentoItem>[
+            BentoItem(child: chart, span: columns >= 3 ? 2 : columns),
+            BentoItem(child: storage, span: columns >= 3 ? 1 : columns),
+            BentoItem(child: memory, span: columns >= 3 ? 1 : columns),
+            BentoItem(child: detections, span: columns >= 3 ? 3 : columns),
+          ];
+
+          return BentoGrid(items: items, columns: columns);
+        },
       );
     });
   }
@@ -222,45 +220,46 @@ class _HomeSceenState extends State<HomeSceen> {
 
   Widget _todaySummary() {
     return Obx(() {
-      return AppCard(
+      return BentoCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const AppSectionTitle(
+            const CardHeader(
               title: 'آمار امروز',
-              icon: Icons.insights_outlined,
+              subtitle: 'خلاصه پلاک های ثبت شده',
+              icon: Icons.insights_rounded,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Wrap(
-              spacing: 12,
-              runSpacing: 12,
+              spacing: 10,
+              runSpacing: 10,
               children: [
                 _summaryTile(
                   'تعداد کل پلاک های امروز',
                   dcontroller.todayCount.value.toString(),
                 ),
                 _summaryTile(
-                  'تعداد کل پلاک های مجاز امروز',
+                  'پلاک های مجاز امروز',
                   dcontroller.todayallowd.length.toString(),
-                  color: AppColors.success,
+                  color: AppColors.primary,
                 ),
                 _summaryTile(
-                  'تعداد کل پلاک های غیر مجاز امروز',
+                  'پلاک های غیر مجاز امروز',
                   dcontroller.todayunallowed.length.toString(),
                   color: AppColors.unauthorized,
                 ),
                 _summaryTile(
-                  'تعداد کل پلاک های سالم امروز',
+                  'پلاک های سالم امروز',
                   dcontroller.goodPlate.value.toString(),
                 ),
                 _summaryTile(
-                  'تعداد کل پلاک های مخدوش امروز',
+                  'پلاک های مخدوش امروز',
                   dcontroller.badPlate.value.toString(),
                   color: AppColors.warning,
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             Wrap(
               spacing: 10,
               runSpacing: 8,
@@ -291,11 +290,11 @@ class _HomeSceenState extends State<HomeSceen> {
 
   Widget _summaryTile(String title, String value, {Color? color}) {
     return Container(
-      width: 210,
+      width: 220,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(10),
+        color: AppColors.surfaceHigh,
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
@@ -308,8 +307,8 @@ class _HomeSceenState extends State<HomeSceen> {
           const SizedBox(height: 4),
           Text(
             value.toString().toPersianDigit(),
-            style: TextStyle(
-              fontSize: 17,
+            style: AppTheme.numeric(
+              fontSize: 18,
               fontWeight: FontWeight.w700,
               color: color ?? AppColors.textPrimary,
             ),

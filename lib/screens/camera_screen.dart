@@ -1,22 +1,20 @@
 import 'dart:convert';
 
 import 'package:amnban/theme/app_colors.dart';
-import 'package:amnban/utils/consts.dart';
+import 'package:amnban/theme/app_theme.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/utils/safe.dart';
 import 'package:amnban/widgets/add_or_edit_camera.dart';
 import 'package:amnban/widgets/app_card.dart';
-import 'package:amnban/widgets/iran_plate.dart';
-import 'package:amnban/widgets/safe_image.dart';
-import 'package:amnban/widgets/status_chip.dart';
+import 'package:persian_number_utility/persian_number_utility.dart';
+import 'package:amnban/widgets/camera_grid.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:persian_number_utility/persian_number_utility.dart';
 
 /// Cameras management screen.
 ///
 /// Cameras are grouped by direction (ورود / خروج) and each card shows the
-/// latest detection of that camera.
+/// live frame and the latest detection of that camera.
 class CameraScreen extends StatelessWidget {
   CameraScreen({
     super.key,
@@ -27,15 +25,51 @@ class CameraScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 26),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _header(context),
-          const SizedBox(height: 16),
+          BentoCard(
+            child: Row(
+              children: [
+                const Expanded(
+                  child: CardHeader(
+                    title: 'مدیریت دوربین ها',
+                    subtitle: 'ثبت، ویرایش و پیکربندی دوربین ها',
+                    icon: Icons.videocam_rounded,
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    await showAdaptiveDialog(
+                      context: context,
+                      builder: (context) => AddOrEditCamera(
+                        path: '/rt${ccontroller.cameras.length + 1}',
+                        ccontroller: ccontroller,
+                        context: context,
+                        name: '',
+                        ip: '',
+                        cport: '',
+                        isRtsp: false,
+                        gate: 'entre',
+                        password: '',
+                        rtsp: '',
+                        rtspName: '',
+                        username: '',
+                        isDiscovery: false,
+                        isEditing: false,
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.add_rounded, size: 16),
+                  label: const Text('افزودن دوربین جدید'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
           Obx(() {
             final kcontroller = Get.find<knowPersonController>();
-            final dcontroller = Get.find<databaseController>();
 
             final entryCameras = ccontroller.cameras
                 .where((c) => (c.gate ?? 'entre') == 'entre')
@@ -48,21 +82,23 @@ class CameraScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _group(
+                  context,
                   title: 'دوربین های ورود',
-                  icon: Icons.login,
+                  icon: Icons.login_rounded,
+                  accent: AppColors.primary,
                   cameras: entryCameras,
-                  entries: dcontroller.entries,
                   kcontroller: kcontroller,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
                 _group(
+                  context,
                   title: 'دوربین های خروج',
-                  icon: Icons.logout,
+                  icon: Icons.logout_rounded,
+                  accent: AppColors.warning,
                   cameras: exitCameras,
-                  entries: dcontroller.entries,
                   kcontroller: kcontroller,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 14),
                 _discovery(context),
               ],
             );
@@ -72,63 +108,29 @@ class CameraScreen extends StatelessWidget {
     );
   }
 
-  Widget _header(BuildContext context) {
-    return AppCard(
-      child: Row(
-        children: [
-          const Expanded(
-            child: AppSectionTitle(
-              title: 'مدیریت دوربین ها',
-              icon: Icons.videocam_outlined,
-            ),
-          ),
-          ElevatedButton.icon(
-            onPressed: () async {
-              await showAdaptiveDialog(
-                context: context,
-                builder: (context) => AddOrEditCamera(
-                  path: '/rt${ccontroller.cameras.length + 1}',
-                  ccontroller: ccontroller,
-                  context: context,
-                  name: '',
-                  ip: '',
-                  cport: '',
-                  isRtsp: false,
-                  gate: 'entre',
-                  password: '',
-                  rtsp: '',
-                  rtspName: '',
-                  username: '',
-                  isDiscovery: false,
-                  isEditing: false,
-                ),
-              );
-            },
-            icon: const Icon(Icons.add, size: 16),
-            label: const Text('افزودن دوربین جدید'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _group({
+  Widget _group(
+    BuildContext context, {
     required String title,
     required IconData icon,
+    required Color accent,
     required List<dynamic> cameras,
-    required List<dynamic> entries,
     required knowPersonController kcontroller,
   }) {
-    return AppCard(
+    return BentoCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppSectionTitle(
+          CardHeader(
             title: title,
             icon: icon,
+            accent: accent,
             trailing: Text(
               '${cameras.length.toString().toPersianDigit()} دوربین',
-              style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+              style: AppTheme.numeric(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textMuted,
+              ),
             ),
           ),
           const SizedBox(height: 14),
@@ -138,32 +140,10 @@ class CameraScreen extends StatelessWidget {
               icon: Icons.videocam_off_outlined,
             )
           else
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final columns = constraints.maxWidth >= 1000
-                    ? 3
-                    : constraints.maxWidth >= 640
-                        ? 2
-                        : 1;
-                final cardWidth = (constraints.maxWidth - (columns - 1) * 14) / columns;
-                return Wrap(
-                  spacing: 14,
-                  runSpacing: 14,
-                  children: [
-                    for (int index = 0; index < cameras.length; index++)
-                      SizedBox(
-                        width: cardWidth,
-                        child: _CameraCard(
-                          camera: cameras[index],
-                          index: index,
-                          ccontroller: ccontroller,
-                          entries: entries,
-                          kcontroller: kcontroller,
-                        ),
-                      ),
-                  ],
-                );
-              },
+            CameraGrid(
+              cameras: cameras.cast(),
+              kcontroller: kcontroller,
+              onExpand: (camera) => _edit(context, camera),
             ),
         ],
       ),
@@ -171,16 +151,16 @@ class CameraScreen extends StatelessWidget {
   }
 
   Widget _discovery(BuildContext context) {
-    return AppCard(
+    return BentoCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          AppSectionTitle(
+          CardHeader(
             title: 'جستجوی دوربین در شبکه',
-            icon: Icons.wifi_find_outlined,
+            icon: Icons.wifi_find_rounded,
             trailing: OutlinedButton.icon(
               onPressed: () => ccontroller.startDiscovery(),
-              icon: const Icon(Icons.search, size: 15),
+              icon: const Icon(Icons.search_rounded, size: 15),
               label: const Text('جستجو'),
             ),
           ),
@@ -190,7 +170,7 @@ class CameraScreen extends StatelessWidget {
             if (found.isEmpty) {
               return const AppEmptyState(
                 message: 'برای جستجو دکمه جستجو را بزنید',
-                icon: Icons.radar,
+                icon: Icons.radar_rounded,
                 compact: true,
               );
             }
@@ -202,8 +182,8 @@ class CameraScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceMuted,
-                      borderRadius: BorderRadius.circular(8),
+                      color: AppColors.surfaceHigh,
+                      borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: AppColors.border),
                     ),
                     child: Row(
@@ -213,8 +193,7 @@ class CameraScreen extends StatelessWidget {
                         const SizedBox(width: 8),
                         Text(
                           '${item['ip']}:${item['port']}',
-                          style: const TextStyle(
-                            fontFamily: 'arial',
+                          style: AppTheme.numeric(
                             fontSize: 12,
                             color: AppColors.textPrimary,
                           ),
@@ -242,7 +221,7 @@ class CameraScreen extends StatelessWidget {
                               ),
                             );
                           },
-                          icon: const Icon(Icons.add, size: 14),
+                          icon: const Icon(Icons.add_rounded, size: 14),
                           label: const Text('افزودن'),
                         ),
                       ],
@@ -255,157 +234,11 @@ class CameraScreen extends StatelessWidget {
       ),
     );
   }
-}
 
-class _CameraCard extends StatelessWidget {
-  const _CameraCard({
-    required this.camera,
-    required this.index,
-    required this.ccontroller,
-    required this.entries,
-    required this.kcontroller,
-  });
-
-  final dynamic camera;
-  final int index;
-  final cameraController ccontroller;
-  final List<dynamic> entries;
-  final knowPersonController kcontroller;
-
-  @override
-  Widget build(BuildContext context) {
-    final latest = _latestFor(entries, camera.path);
-    final status = latest == null
-        ? DetectionStatus.unrecognized
-        : statusForEntry(latest, kcontroller);
-    final imageUrl = latest == null
-        ? ''
-        : pbFileUrlOf('database', latest.id, latest.scrnPath);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.border),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(10),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: InfoChip(
-                      label: '${camera.name ?? 'دوربین'}  •  ${camera.ip ?? '-'}',
-                      icon: Icons.videocam_outlined,
-                      dense: true,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => _edit(context),
-                  icon: const Icon(Icons.edit_outlined, size: 18),
-                  tooltip: 'ویرایش',
-                ),
-                IconButton(
-                  onPressed: () => _delete(context),
-                  icon: const Icon(Icons.delete_outline,
-                      size: 18, color: AppColors.danger),
-                  tooltip: 'حذف',
-                ),
-              ],
-            ),
-          ),
-          Container(
-            color: const Color(0xFF10201F),
-            alignment: Alignment.center,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final previewHeight = (constraints.maxWidth * 9 / 16)
-                    .clamp(120.0, 240.0)
-                    .toDouble();
-                return Container(
-                  height: previewHeight,
-                  alignment: Alignment.center,
-                  child: imageUrl.isEmpty
-                      ? const Icon(Icons.videocam_off_outlined,
-                          color: Colors.white38, size: 28)
-                      : SafeNetImage(
-                          url: imageUrl,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity,
-                        ),
-                );
-              },
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: const BoxDecoration(
-              color: AppColors.surfaceMuted,
-              border: Border(top: BorderSide(color: AppColors.border)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    latest?.eTime ?? '-',
-                    style: const TextStyle(
-                        fontSize: 11, color: AppColors.textSecondary),
-                  ),
-                ),
-                Expanded(
-                  child: Center(
-                    child: StatusChip(
-                      status: status,
-                      dense: true,
-                      label: latest == null ? 'بدون تردد' : null,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Center(
-                    child: latest == null
-                        ? const Text('-',
-                            style: TextStyle(
-                                fontSize: 11, color: AppColors.textMuted))
-                        : FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: EntryPlate(
-                              entry: latest,
-                              height: 30,
-                              showIranLabel: false,
-                            ),
-                          ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  dynamic _latestFor(List<dynamic> source, String? path) {
-    if (path == null || path.isEmpty) return null;
-    for (final e in source) {
-      if (e.rtpath == path) return e;
-    }
-    return null;
-  }
-
-  Future<void> _edit(BuildContext context) async {
-    final data = camera;
+  Future<void> _edit(BuildContext context, dynamic camera) async {
     String passwordPlain = '';
     try {
-      final stored = data.password;
+      final stored = camera.password;
       if (stored != null && stored.isNotEmpty) {
         passwordPlain = utf8.decode(base64.decode(stored));
       }
@@ -416,43 +249,22 @@ class _CameraCard extends StatelessWidget {
     await showAdaptiveDialog(
       context: context,
       builder: (context) => AddOrEditCamera(
-        path: data.path,
+        path: camera.path,
         ccontroller: ccontroller,
         context: context,
-        name: data.name ?? '',
-        ip: data.ip ?? '',
-        cport: data.port ?? '',
-        rtsp: data.rtspUrl ?? '',
-        rtspName: data.rtspName ?? '',
-        username: data.username ?? '',
+        name: camera.name ?? '',
+        ip: camera.ip ?? '',
+        cport: camera.port ?? '',
+        rtsp: camera.rtspUrl ?? '',
+        rtspName: camera.rtspName ?? '',
+        username: camera.username ?? '',
         password: passwordPlain,
-        isRtsp: data.isRtsp ?? false,
-        gate: data.gate ?? 'entre',
-        id: data.id,
+        isRtsp: camera.isRtsp ?? false,
+        gate: camera.gate ?? 'entre',
+        id: camera.id,
         isEditing: true,
         isDiscovery: false,
       ),
     );
-  }
-
-  Future<void> _delete(BuildContext context) async {
-    final id = camera.id;
-    if (id == null || id.isEmpty) return;
-    try {
-      await pb
-          .collection('cameras')
-          .delete(id)
-          .timeout(const Duration(seconds: 15));
-      if (!context.mounted) return;
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        SnackBar(content: Text('Camera Number $id is Deleted')),
-      );
-    } catch (e) {
-      appLog('delete camera failed', e);
-      if (!context.mounted) return;
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        const SnackBar(content: Text('خطا در حذف دوربین')),
-      );
-    }
   }
 }

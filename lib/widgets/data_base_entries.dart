@@ -1,5 +1,6 @@
 import 'package:amnban/models/databaseEntry.dart';
 import 'package:amnban/theme/app_colors.dart';
+import 'package:amnban/theme/app_theme.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/utils/converFunctions.dart';
@@ -58,7 +59,7 @@ bool isEntryVisible(databaseClass e) {
   }
 }
 
-/// Rolling list of the latest detections.
+/// Rolling list of the latest detections — compact rows.
 class dataBaseEntries extends StatefulWidget {
   const dataBaseEntries({
     super.key,
@@ -94,18 +95,14 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
 
       if (entries.isEmpty) {
         return SizedBox(
-          height: 220,
-          child: AppCard(
-            padding: EdgeInsets.zero,
-            child: Center(
-              child: widget.dcontroller.isLoadingMore.value
-                  ? const CircularProgressIndicator()
-                  : AppEmptyState(
-                      message: widget.dcontroller.loadError.value.isNotEmpty
-                          ? widget.dcontroller.loadError.value
-                          : 'رکوردی وجود ندارد',
-                    ),
-            ),
+          height: 190,
+          child: Center(
+            child: widget.dcontroller.isLoadingMore.value
+                ? const CircularProgressIndicator()
+                : const AppEmptyState(
+                    message: 'رکوردی وجود ندارد',
+                    icon: Icons.inbox_outlined,
+                  ),
           ),
         );
       }
@@ -115,24 +112,45 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
         children: [
           Row(
             children: [
-              const Icon(Icons.filter_list,
-                  size: 15, color: AppColors.textMuted),
+              const Icon(Icons.filter_list_rounded,
+                  size: 14, color: AppColors.textMuted),
               const SizedBox(width: 6),
               Text(
                 '${visible.length.toString().toPersianDigit()} تردد ثبت شده',
-                style: const TextStyle(
-                  fontSize: 11.5,
+                style: AppTheme.numeric(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
                   color: AppColors.textMuted,
                 ),
               ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: widget.dcontroller.isLoadingMore.value
+                    ? null
+                    : () {
+                        widget.dcontroller.inilazedPage =
+                            widget.dcontroller.inilazedPage + 1;
+                        widget.dcontroller.fetchFirstData(
+                            widget.dcontroller.inilazedPage, 30);
+                      },
+                icon: widget.dcontroller.isLoadingMore.value
+                    ? const SizedBox(
+                        width: 13,
+                        height: 13,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.expand_more_rounded, size: 16),
+                label: const Text('بار گزاری بیشتر'),
+              ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           Container(
-            height: 420,
+            height: 300,
             decoration: BoxDecoration(
               border: Border.all(color: AppColors.border),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(12),
+              color: AppColors.surfaceHigh.withValues(alpha: 0.35),
             ),
             clipBehavior: Clip.antiAlias,
             child: ListView.separated(
@@ -143,7 +161,7 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                 // Map back to the full-list index for selection.
                 final fullIndex =
                     entries.indexWhere((e) => e.id == entry.id);
-                return _EntryRow(
+                return DetectionRow(
                   entry: entry,
                   fullIndex: fullIndex == -1 ? index : fullIndex,
                   dcontroller: widget.dcontroller,
@@ -151,30 +169,8 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
                   kcontroller: widget.kcontroller,
                 );
               },
-              separatorBuilder: (context, index) => const SizedBox(height: 6),
+              separatorBuilder: (context, index) => const SizedBox(height: 5),
               itemCount: visible.length,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: OutlinedButton.icon(
-              onPressed: widget.dcontroller.isLoadingMore.value
-                  ? null
-                  : () {
-                      widget.dcontroller.inilazedPage =
-                          widget.dcontroller.inilazedPage + 1;
-                      widget.dcontroller.fetchFirstData(
-                          widget.dcontroller.inilazedPage, 30);
-                    },
-              icon: widget.dcontroller.isLoadingMore.value
-                  ? const SizedBox(
-                      width: 14,
-                      height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.expand_more, size: 16),
-              label: const Text('بار گزاری بیشتر'),
             ),
           ),
         ],
@@ -183,8 +179,10 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
   }
 }
 
-class _EntryRow extends StatelessWidget {
-  const _EntryRow({
+/// Compact detection row: thumbnail, plate, status chip and time.
+class DetectionRow extends StatelessWidget {
+  const DetectionRow({
+    super.key,
     required this.entry,
     required this.fullIndex,
     required this.dcontroller,
@@ -204,36 +202,36 @@ class _EntryRow extends StatelessWidget {
     final status = statusForEntry(entry, kcontroller);
 
     return InkWell(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(10),
       onTap: () {
         mController.isSelected.value = true;
         dcontroller.tableContect.value = entry;
         dcontroller.selectedIndex.value = fullIndex;
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: AppColors.border),
         ),
         child: Row(
           children: [
-            SizedBox(
-              width: 92,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: EntryPlate(entry: entry, height: 34),
-              ),
-            ),
-            const SizedBox(width: 8),
             ClipRRect(
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(7),
               child: SafeNetImage(
                 url: pbFileUrlOf('database', entry.id, entry.imgpath),
                 fit: BoxFit.cover,
-                width: 56,
-                height: 40,
+                width: 52,
+                height: 38,
+              ),
+            ),
+            const SizedBox(width: 10),
+            SizedBox(
+              width: 86,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: EntryPlate(entry: entry, height: 30),
               ),
             ),
             const SizedBox(width: 10),
@@ -242,54 +240,42 @@ class _EntryRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          person?.name ?? 'ثبت نشده',
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      StatusChip(status: status, dense: true),
-                    ],
+                  Text(
+                    person?.name ?? 'ثبت نشده',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
-                  const SizedBox(height: 3),
-                  Row(
-                    children: [
-                      const Icon(Icons.videocam_outlined,
-                          size: 12, color: AppColors.textMuted),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          Get.find<cameraController>()
-                              .cameraNameFor(entry.rtpath),
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 10.5,
-                            color: AppColors.textMuted,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      const Icon(Icons.schedule,
-                          size: 12, color: AppColors.textMuted),
-                      const SizedBox(width: 4),
-                      Text(
-                        (entry.eTime ?? '-').toString().toPersianDigit(),
-                        style: const TextStyle(
-                          fontSize: 10.5,
-                          color: AppColors.textMuted,
-                        ),
-                      ),
-                    ],
+                  const SizedBox(height: 2),
+                  Text(
+                    Get.find<cameraController>().cameraNameFor(entry.rtpath),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: AppColors.textMuted,
+                    ),
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            StatusChip(status: status, dense: true),
+            const SizedBox(width: 10),
+            SizedBox(
+              width: 54,
+              child: Text(
+                (entry.eTime ?? '-').toString().toPersianDigit(),
+                textAlign: TextAlign.end,
+                style: AppTheme.numeric(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary,
+                ),
               ),
             ),
             if (person == null)
@@ -319,10 +305,10 @@ class _EntryRow extends StatelessWidget {
                     ),
                   );
                 },
-                hoverColor: AppColors.primaryLight,
+                hoverColor: AppColors.primarySoft,
                 icon: const Icon(Icons.add_box_outlined),
                 color: AppColors.primary,
-                iconSize: 20,
+                iconSize: 18,
                 tooltip: 'افزودن به لیست مجاز',
               ),
             IconButton(
@@ -342,7 +328,7 @@ class _EntryRow extends StatelessWidget {
                 }
               },
               icon: const Icon(Icons.delete_outline, color: AppColors.danger),
-              iconSize: 20,
+              iconSize: 18,
               tooltip: 'حذف',
             ),
           ],

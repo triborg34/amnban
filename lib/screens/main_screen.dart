@@ -1,20 +1,26 @@
+import 'dart:async';
+
 import 'package:amnban/screens/camera_screen.dart';
 import 'package:amnban/screens/home_sceen.dart';
 import 'package:amnban/screens/person_screen.dart';
 import 'package:amnban/screens/reportscreen.dart';
 import 'package:amnban/screens/setting_screen.dart';
 import 'package:amnban/theme/app_colors.dart';
+import 'package:amnban/theme/app_theme.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
+import 'package:amnban/widgets/app_card.dart';
 import 'package:amnban/widgets/app_logo.dart';
-import 'package:amnban/widgets/app_sidebar.dart';
+import 'package:amnban/widgets/nav_rail.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:persian_number_utility/persian_number_utility.dart';
+import 'package:shamsi_date/shamsi_date.dart';
 
 /// Application shell.
 ///
-/// Wide screens show the dark-teal sidebar as a fixed panel on the right,
-/// phones use the very same widget inside the navigation drawer.
+/// Wide screens show a floating navigation rail, phones a bottom navigation
+/// bar. Both drive the very same GetX tab index as before.
 class MainScreen extends StatefulWidget {
   MainScreen({super.key});
 
@@ -25,9 +31,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   final mcontroller = Get.find<mainPageConroller>();
   late final Worker _navWorker;
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  static const double _sidebarWidth = 248;
   static const double _wideBreakpoint = 1000;
 
   int _homeIndex() => tabsFor(role).length - 1;
@@ -77,25 +81,14 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      key: _scaffoldKey,
       backgroundColor: AppColors.background,
-      drawer: Drawer(
-        backgroundColor: AppColors.sidebar,
-        child: AppSidebar(
-          showCloseButton: true,
-          onNavigate: () {
-            final navigator = Navigator.of(context);
-            if (navigator.canPop()) navigator.pop();
-          },
-        ),
-      ),
       body: LayoutBuilder(
         builder: (context, constraints) {
           final wide = constraints.maxWidth >= _wideBreakpoint;
 
           final content = Column(
             children: [
-              _topBar(wide),
+              _header(),
               Expanded(
                 child: Obx(() {
                   final pages = _pagesFor(role);
@@ -109,16 +102,21 @@ class _MainScreenState extends State<MainScreen> {
             ],
           );
 
+          if (!wide) {
+            return Column(
+              children: [
+                Expanded(child: content),
+                const AppBottomNav(),
+              ],
+            );
+          }
+
           return Row(
             textDirection: TextDirection.rtl,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // First child of an RTL row is rendered on the right.
-              if (wide)
-                SizedBox(
-                  width: _sidebarWidth,
-                  child: AppSidebar(),
-                ),
+              const AppNavRail(),
               Expanded(child: content),
             ],
           );
@@ -127,89 +125,124 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  Widget _topBar(bool wide) {
-    final labels = tabsFor(role);
+  // ------------------------------------------------------------------ header
 
+  Widget _header() {
     return Container(
-      height: 58,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+      padding: const EdgeInsets.fromLTRB(18, 12, 18, 12),
       decoration: const BoxDecoration(
-        color: AppColors.surface,
-        border: Border(bottom: BorderSide(color: AppColors.border)),
+        color: AppColors.background,
       ),
-      child: Row(
+      child: Column(
         children: [
-          if (!wide) ...[
-            IconButton(
-              onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-              icon: const Icon(Icons.menu, size: 20),
-              tooltip: 'منو',
-            ),
-            const SizedBox(width: 4),
-          ],
-          Expanded(
-            child: Obx(() {
-              final index = mcontroller.navitaionIndex.value;
-              final title = (index >= 0 && index < labels.length)
-                  ? labels[index]
-                  : '';
-              return Row(
-                children: [
-                  const DiespiEmblem(size: 26),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      title,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
+          Row(
+            children: [
+              const Flexible(child: CompanyLogo()),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Obx(() {
+                  final labels = tabsFor(role);
+                  final index = mcontroller.navitaionIndex.value;
+                  final title = (index >= 0 && index < labels.length)
+                      ? labels[index]
+                      : '';
+                  return Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textMuted,
                     ),
-                  ),
-                ],
-              );
-            }),
+                  );
+                }),
+              ),
+              const SizedBox(width: 8),
+              const Flexible(child: _JalaliClock()),
+            ],
           ),
-          _userChip(),
+          const SizedBox(height: 10),
+          const GradientDivider(height: 1.2),
         ],
       ),
     );
   }
+}
 
-  Widget _userChip() {
-    final label = role == 'ناظر' ? 'ناظر سیستم' : 'مدیر سیستم';
+/// Current Jalali date + time shown on the opposite side of the header.
+class _JalaliClock extends StatefulWidget {
+  const _JalaliClock();
+
+  @override
+  State<_JalaliClock> createState() => _JalaliClockState();
+}
+
+class _JalaliClockState extends State<_JalaliClock> {
+  Timer? _timer;
+  late DateTime _now;
+
+  @override
+  void initState() {
+    super.initState();
+    _now = DateTime.now();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) setState(() => _now = DateTime.now());
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final jalali = Jalali.fromDateTime(_now);
+    final hh = _now.hour.toString().padLeft(2, '0');
+    final mm = _now.minute.toString().padLeft(2, '0');
+    final ss = _now.second.toString().padLeft(2, '0');
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
       decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(20),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppColors.border),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 26,
-            height: 26,
-            decoration: const BoxDecoration(
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: AlignmentDirectional.centerEnd,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.schedule_outlined,
+              size: 14,
               color: AppColors.primary,
-              shape: BoxShape.circle,
             ),
-            alignment: Alignment.center,
-            child: const Icon(Icons.person, size: 15, color: Colors.white),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
+            const SizedBox(width: 8),
+            Text(
+              '${jalali.year}/${jalali.month}/${jalali.day}'.toPersianDigit(),
+              textDirection: TextDirection.ltr,
+              style: AppTheme.numeric(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 10),
+            Text(
+              '$hh:$mm:$ss'.toPersianDigit(),
+              textDirection: TextDirection.ltr,
+              style: AppTheme.numeric(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

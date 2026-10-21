@@ -1,6 +1,6 @@
 import 'package:amnban/models/databaseEntry.dart';
-import 'package:amnban/screens/details_screen.dart';
 import 'package:amnban/theme/app_colors.dart';
+import 'package:amnban/theme/app_theme.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/utils/safe.dart';
@@ -8,6 +8,7 @@ import 'package:amnban/utils/converFunctions.dart'
     show alphabetP2, convertToPersianString;
 import 'package:amnban/widgets/app_card.dart';
 import 'package:amnban/widgets/data_base_entries.dart' show isEntryVisible;
+import 'package:amnban/widgets/detail_sheet.dart';
 import 'package:amnban/widgets/iran_plate.dart';
 import 'package:amnban/widgets/jalali_picker.dart';
 import 'package:amnban/widgets/licance_searcher.dart';
@@ -21,7 +22,7 @@ import 'package:printing/printing.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-/// Reports screen — filter panel on top, results table below.
+/// Reports screen — collapsible filter panel + results table.
 class Reportscreen extends StatefulWidget {
   Reportscreen({super.key});
 
@@ -32,6 +33,8 @@ class Reportscreen extends StatefulWidget {
 class _ReportscreenState extends State<Reportscreen> {
   reportController rcontroller = Get.find<reportController>();
   knowPersonController kcontroller = Get.find<knowPersonController>();
+
+  bool _filtersOpen = true;
 
   // ---- presentation-only filters (applied on top of the server results) --
   String _userType = 'همه';
@@ -93,12 +96,12 @@ class _ReportscreenState extends State<Reportscreen> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 26),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _filterPanel(),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           _resultsTable(),
         ],
       ),
@@ -108,151 +111,192 @@ class _ReportscreenState extends State<Reportscreen> {
   // ------------------------------------------------------------ filter UI
 
   Widget _filterPanel() {
-    return AppCard(
+    return BentoCard(
+      glass: true,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const AppSectionTitle(
-            title: 'جستجو در گزارش',
-            icon: Icons.filter_alt_outlined,
-          ),
-          const SizedBox(height: 14),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final columns = constraints.maxWidth >= 1000
-                  ? 4
-                  : constraints.maxWidth >= 640
-                      ? 3
-                      : 2;
-
-              final fields = <Widget>[
-                _dropdownField(
-                  label: 'نوع کاربر',
-                  value: _userType,
-                  items: _userTypes,
-                  onChanged: (v) => setState(() => _userType = v),
-                ),
-                _dropdownField(
-                  label: 'بازه زمانی',
-                  value: _period,
-                  items: _periods,
-                  onChanged: (v) {
-                    setState(() => _period = v);
-                    _applyPeriod(v);
-                  },
-                ),
-                _dateField(
-                  label: 'تاریخ شروع',
-                  value: rcontroller.firstDate.value,
-                  onPicked: (iso) {
-                    rcontroller.firstDate.value = iso;
-                    rcontroller.isDate.value = true;
-                    setState(() {});
-                  },
-                ),
-                _dateField(
-                  label: 'تاریخ پایان',
-                  value: rcontroller.lastDate.value,
-                  onPicked: (iso) {
-                    rcontroller.lastDate.value = iso;
-                    rcontroller.isDate.value = true;
-                    setState(() {});
-                  },
-                ),
-                _timeField(
-                  label: 'از ساعت',
-                  value: rcontroller.fistTime.value,
-                  onPicked: (time) {
-                    rcontroller.fistTime.value = time;
-                    rcontroller.isTime.value = true;
-                    setState(() {});
-                  },
-                ),
-                _timeField(
-                  label: 'تا ساعت',
-                  value: rcontroller.lastTime.value,
-                  onPicked: (time) {
-                    rcontroller.lastTime.value = time;
-                    setState(() {});
-                  },
-                ),
-                _dropdownField(
-                  label: 'نوع خودرو',
-                  value: _carType,
-                  items: _carTypes,
-                  onChanged: (v) => setState(() => _carType = v),
-                ),
-                _dropdownField(
-                  label: 'نوع پلاک',
-                  value: _plateType,
-                  items: _plateTypes,
-                  onChanged: (v) => setState(() => _plateType = v),
-                ),
-                _dropdownField(
-                  label: 'رنگ خودرو',
-                  value: _carColor,
-                  items: _carColors,
-                  onChanged: (v) => setState(() => _carColor = v),
-                ),
-                _textField(
-                  label: 'مدل خودرو',
-                  controller: _carModelController,
-                  onChanged: () => setState(() {}),
-                ),
-                _textField(
-                  label: 'توضیحات',
-                  controller: _descriptionController,
-                  onChanged: () => setState(() {}),
-                ),
-              ];
-
-              return Wrap(
-                spacing: 12,
-                runSpacing: 12,
+          InkWell(
+            onTap: () => setState(() => _filtersOpen = !_filtersOpen),
+            borderRadius: BorderRadius.circular(10),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
                 children: [
-                  for (final field in fields)
-                    SizedBox(
-                        width: _fieldWidth(constraints.maxWidth, columns),
-                        child: field),
+                  const Icon(Icons.tune_rounded,
+                      size: 17, color: AppColors.primary),
+                  const SizedBox(width: 9),
+                  const Expanded(
+                    child: Text(
+                      'جستجو در گزارش',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  AnimatedRotation(
+                    turns: _filtersOpen ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 220),
+                    child: const Icon(Icons.keyboard_arrow_down_rounded,
+                        size: 20, color: AppColors.textSecondary),
+                  ),
                 ],
-              );
-            },
+              ),
+            ),
           ),
-          const SizedBox(height: 14),
-          _plateField(),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              OutlinedButton.icon(
-                onPressed: _reset,
-                icon: const Icon(Icons.refresh, size: 16),
-                label: const Text('ریست'),
+          AnimatedCrossFade(
+            duration: const Duration(milliseconds: 240),
+            firstChild: const SizedBox(width: double.infinity),
+            secondChild: Padding(
+              padding: const EdgeInsets.only(top: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _fields(),
+                  const SizedBox(height: 14),
+                  _plateField(),
+                  const SizedBox(height: 16),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      OutlinedButton.icon(
+                        onPressed: _reset,
+                        icon: const Icon(Icons.refresh_rounded, size: 16),
+                        label: const Text('ریست'),
+                      ),
+                      const SizedBox(width: 10),
+                      OutlinedButton.icon(
+                        onPressed: () => saveToPdf(_filtered()),
+                        icon: const Icon(Icons.download_rounded, size: 16),
+                        label: const Text('دانلود'),
+                      ),
+                      const SizedBox(width: 10),
+                      ElevatedButton.icon(
+                        onPressed: _search,
+                        icon: const Icon(Icons.search_rounded, size: 16),
+                        label: const Text('جستجو'),
+                      ),
+                    ],
+                  ),
+                ],
               ),
-              const SizedBox(width: 10),
-              OutlinedButton.icon(
-                onPressed: () => saveToPdf(_filtered()),
-                icon: const Icon(Icons.download_outlined, size: 16),
-                label: const Text('دانلود'),
-              ),
-              const SizedBox(width: 10),
-              ElevatedButton.icon(
-                onPressed: _search,
-                icon: const Icon(Icons.search, size: 16),
-                label: const Text('جستجو در گزارش'),
-              ),
-            ],
+            ),
+            crossFadeState:
+                _filtersOpen ? CrossFadeState.showSecond : CrossFadeState.showFirst,
           ),
         ],
       ),
     );
   }
 
-  double _fieldWidth(double maxWidth, int columns) {
-    final usable = maxWidth - 32;
-    if (columns == 4) return (usable - 36) / 4;
-    if (columns == 3) return (usable - 24) / 3;
-    return (usable - 12) / 2;
+  Widget _fields() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final columns = constraints.maxWidth >= 1000
+            ? 4
+            : constraints.maxWidth >= 640
+                ? 3
+                : 2;
+
+        final fields = <Widget>[
+          _dropdownField(
+            label: 'نوع کاربر',
+            value: _userType,
+            items: _userTypes,
+            onChanged: (v) => setState(() => _userType = v),
+          ),
+          _dropdownField(
+            label: 'بازه زمانی',
+            value: _period,
+            items: _periods,
+            onChanged: (v) {
+              setState(() => _period = v);
+              _applyPeriod(v);
+            },
+          ),
+          _dateField(
+            label: 'تاریخ شروع',
+            value: rcontroller.firstDate.value,
+            onPicked: (iso) {
+              rcontroller.firstDate.value = iso;
+              rcontroller.isDate.value = true;
+              setState(() {});
+            },
+          ),
+          _dateField(
+            label: 'تاریخ پایان',
+            value: rcontroller.lastDate.value,
+            onPicked: (iso) {
+              rcontroller.lastDate.value = iso;
+              rcontroller.isDate.value = true;
+              setState(() {});
+            },
+          ),
+          _timeField(
+            label: 'از ساعت',
+            value: rcontroller.fistTime.value,
+            onPicked: (time) {
+              rcontroller.fistTime.value = time;
+              rcontroller.isTime.value = true;
+              setState(() {});
+            },
+          ),
+          _timeField(
+            label: 'تا ساعت',
+            value: rcontroller.lastTime.value,
+            onPicked: (time) {
+              rcontroller.lastTime.value = time;
+              setState(() {});
+            },
+          ),
+          _dropdownField(
+            label: 'نوع خودرو',
+            value: _carType,
+            items: _carTypes,
+            onChanged: (v) => setState(() => _carType = v),
+          ),
+          _dropdownField(
+            label: 'نوع پلاک',
+            value: _plateType,
+            items: _plateTypes,
+            onChanged: (v) => setState(() => _plateType = v),
+          ),
+          _dropdownField(
+            label: 'رنگ خودرو',
+            value: _carColor,
+            items: _carColors,
+            onChanged: (v) => setSetColor(v),
+          ),
+          _textField(
+            label: 'مدل خودرو',
+            controller: _carModelController,
+            onChanged: () => setState(() {}),
+          ),
+          _textField(
+            label: 'توضیحات',
+            controller: _descriptionController,
+            onChanged: () => setState(() {}),
+          ),
+        ];
+
+        final width = (constraints.maxWidth - 12 * (columns - 1)) / columns;
+
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            for (final field in fields) SizedBox(width: width, child: field),
+          ],
+        );
+      },
+    );
+  }
+
+  void setSetColor(String value) {
+    setState(() => _carColor = value);
   }
 
   Widget _dropdownField({
@@ -270,7 +314,7 @@ class _ReportscreenState extends State<Reportscreen> {
         ),
         const SizedBox(height: 5),
         DropdownButtonFormField<String>(
-          key: ValueKey<String>(_userType),
+          key: ValueKey<String>(value),
           initialValue: items.contains(value) ? value : items.first,
           items: [
             for (final item in items)
@@ -303,6 +347,7 @@ class _ReportscreenState extends State<Reportscreen> {
           controller: controller,
           onChanged: (_) => onChanged(),
           style: const TextStyle(fontSize: 12.5),
+          textAlign: TextAlign.right,
           decoration: const InputDecoration(hintText: '-'),
         ),
       ],
@@ -314,42 +359,20 @@ class _ReportscreenState extends State<Reportscreen> {
     required String value,
     required ValueChanged<String> onPicked,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
-        ),
-        const SizedBox(height: 5),
-        InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: () async {
-            final picked = await showJalaliDateTimePicker(
-              context,
-              initialDate: DateTime.now(),
-              title: label,
-            );
-            if (picked == null) return;
-            if (!mounted) return;
-            onPicked(_isoOf(picked));
-          },
-          child: Container(
-            height: 42,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            alignment: AlignmentDirectional.centerStart,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceMuted,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Text(
-              value.isEmpty ? '-' : value,
-              style: const TextStyle(fontSize: 12.5, color: AppColors.textPrimary),
-            ),
-          ),
-        ),
-      ],
+    return _tapField(
+      label: label,
+      value: value,
+      icon: Icons.calendar_month_rounded,
+      onTap: () async {
+        final picked = await showJalaliDateTimePicker(
+          context,
+          initialDate: DateTime.now(),
+          title: label,
+        );
+        if (picked == null) return;
+        if (!mounted) return;
+        onPicked(_isoOf(picked));
+      },
     );
   }
 
@@ -357,6 +380,31 @@ class _ReportscreenState extends State<Reportscreen> {
     required String label,
     required String value,
     required ValueChanged<String> onPicked,
+  }) {
+    return _tapField(
+      label: label,
+      value: value,
+      icon: Icons.schedule_rounded,
+      onTap: () async {
+        final picked = await showJalaliDateTimePicker(
+          context,
+          initialDate: DateTime.now(),
+          title: label,
+        );
+        if (picked == null) return;
+        if (!mounted) return;
+        final hh = picked.hour.toString().padLeft(2, '0');
+        final mm = picked.minute.toString().padLeft(2, '0');
+        onPicked('$hh:$mm');
+      },
+    );
+  }
+
+  Widget _tapField({
+    required String label,
+    required String value,
+    required IconData icon,
+    required VoidCallback onTap,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -367,31 +415,33 @@ class _ReportscreenState extends State<Reportscreen> {
         ),
         const SizedBox(height: 5),
         InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: () async {
-            final picked = await showJalaliDateTimePicker(
-              context,
-              initialDate: DateTime.now(),
-              title: label,
-            );
-            if (picked == null) return;
-            if (!mounted) return;
-            final hh = picked.hour.toString().padLeft(2, '0');
-            final mm = picked.minute.toString().padLeft(2, '0');
-            onPicked('$hh:$mm');
-          },
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
           child: Container(
-            height: 42,
+            height: 44,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             alignment: AlignmentDirectional.centerStart,
             decoration: BoxDecoration(
-              color: AppColors.surfaceMuted,
-              borderRadius: BorderRadius.circular(8),
+              color: AppColors.surfaceHigh,
+              borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.border),
             ),
-            child: Text(
-              value.isEmpty ? '-' : value,
-              style: const TextStyle(fontSize: 12.5, color: AppColors.textPrimary),
+            child: Row(
+              children: [
+                Icon(icon, size: 15, color: AppColors.textMuted),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    value.isEmpty ? '-' : value,
+                    textAlign: TextAlign.right,
+                    style: AppTheme.numeric(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -414,12 +464,12 @@ class _ReportscreenState extends State<Reportscreen> {
               width: 210,
               child: Obx(() => rcontroller.isArvand.value
                   ? Container(
-                      height: 42,
+                      height: 44,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       alignment: AlignmentDirectional.centerStart,
                       decoration: BoxDecoration(
-                        color: AppColors.surfaceMuted,
-                        borderRadius: BorderRadius.circular(8),
+                        color: AppColors.surfaceHigh,
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: AppColors.border),
                       ),
                       child: Text(
@@ -441,7 +491,7 @@ class _ReportscreenState extends State<Reportscreen> {
                       licanceSearcher(rcontroller: rcontroller),
                 );
               },
-              icon: const Icon(Icons.search, size: 15),
+              icon: const Icon(Icons.search_rounded, size: 15),
               label: const Text('انتخاب'),
             ),
           ],
@@ -453,31 +503,32 @@ class _ReportscreenState extends State<Reportscreen> {
   // ----------------------------------------------------------- results UI
 
   Widget _resultsTable() {
-    return AppCard(
+    return BentoCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
               const Expanded(
-                child: AppSectionTitle(
+                child: CardHeader(
                   title: 'نتایج گزارش',
-                  icon: Icons.table_chart_outlined,
+                  icon: Icons.table_chart_rounded,
                 ),
               ),
               Obx(() {
                 final count = _filtered().length;
                 return Text(
                   'گزارشی که یافت شد (${count.toString().toPersianDigit()} مورد یافت شد)',
-                  style: const TextStyle(
-                    fontSize: 11.5,
+                  style: AppTheme.numeric(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
                     color: AppColors.textMuted,
                   ),
                 );
               }),
               const SizedBox(width: 12),
               SizedBox(
-                width: 110,
+                width: 104,
                 child: DropdownButtonFormField<int>(
                   key: ValueKey<int>(_pageSize),
                   initialValue: _pageSize,
@@ -512,9 +563,9 @@ class _ReportscreenState extends State<Reportscreen> {
               );
             }
             if (rcontroller.searchError.value.isNotEmpty) {
-              return AppEmptyState(
-                message: rcontroller.searchError.value,
-                icon: Icons.error_outline,
+              return const AppEmptyState(
+                message: 'خطا در جستجو',
+                icon: Icons.error_outline_rounded,
               );
             }
 
@@ -522,217 +573,40 @@ class _ReportscreenState extends State<Reportscreen> {
             if (rows.isEmpty) {
               return const AppEmptyState(
                 message: 'رکوردی یافت نشد',
-                icon: Icons.search_off,
+                icon: Icons.search_off_rounded,
               );
             }
 
             final visible = rows.take(_pageSize).toList();
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _tableHeader(),
-                const SizedBox(height: 6),
-                ...visible.map((entry) => _tableRow(entry)),
-              ],
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _tableHeader() {
-    Widget head(String title, double width) => SizedBox(
-          width: width,
-          child: Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textSecondary,
-            ),
-          ),
-        );
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            head('پلاک', 130),
-            head('وضعیت تردد', 120),
-            head('جهت', 80),
-            head('تصویر', 90),
-            head('زمان تردد', 130),
-            head('عملیات', 120),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _tableRow(databaseClass entry) {
-    final person = kcontroller.personFor(entry.plateNum);
-    final status = statusForEntry(entry, kcontroller);
-    final camera = Get.find<cameraController>();
-
-    String? gate;
-    for (final c in camera.cameras) {
-      if (c.path == entry.rtpath) {
-        gate = c.gate ?? 'entre';
-        break;
-      }
-    }
-    final direction = (gate == null || gate == 'entre') ? 'ورود' : 'خروج';
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
-      onTap: () => _openDetail(entry),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              SizedBox(
-                width: 130,
-                child: Center(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: EntryPlate(entry: entry, height: 36),
-                  ),
-                ),
-              ),
-              SizedBox(
-                width: 120,
-                child: Center(
-                  child: StatusChip(status: status, dense: true),
-                ),
-              ),
-              SizedBox(
-                width: 80,
-                child: Center(
-                  child: Text(
-                    direction,
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w500,
-                      color: direction == 'ورود'
-                          ? AppColors.chartTeal
-                          : AppColors.warning,
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(
-                width: 90,
-                child: Center(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(6),
-                    child: Hero(
-                      tag: 'heroTag${entry.id}',
-                      child: SafeNetImage(
-                        url: pbFileUrlOf('database', entry.id, entry.imgpath),
-                        fit: BoxFit.cover,
-                        width: 72,
-                        height: 44,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              SizedBox(
-                width: 130,
-                child: Center(
+            return SizedBox(
+              height: 520,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  width: 720,
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        (entry.eTime ?? '-').toString().toPersianDigit(),
-                        style: const TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      Text(
-                        (entry.eDate ?? '').toPersianDate(),
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: AppColors.textMuted,
+                      const _TableHeader(),
+                      const SizedBox(height: 6),
+                      Expanded(
+                        child: ListView.separated(
+                          itemCount: visible.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 5),
+                          itemBuilder: (context, index) =>
+                              _TableRow(entry: visible[index]),
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-              SizedBox(
-                width: 120,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    IconButton(
-                      onPressed: () => _openDetail(entry),
-                      icon: const Icon(Icons.visibility_outlined, size: 18),
-                      color: AppColors.textSecondary,
-                      tooltip: 'مشاهده جزئیات',
-                    ),
-                    IconButton(
-                      onPressed: () => _openDetail(entry),
-                      icon: const Icon(Icons.print_outlined, size: 18),
-                      color: AppColors.textSecondary,
-                      tooltip: 'چاپ رسید',
-                    ),
-                    if (person != null)
-                      IconButton(
-                        onPressed: () => _openDetail(entry),
-                        icon: const Icon(Icons.person_outline, size: 18),
-                        color: AppColors.textSecondary,
-                        tooltip: person.name ?? '',
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
+            );
+          }),
+        ],
       ),
     );
-  }
-
-  Future<void> _openDetail(databaseClass entry) async {
-    final plate = entry.plateNum ?? '';
-    if (plate.isEmpty) return;
-    try {
-      final record = await pb
-          .collection('database')
-          .getFullList(filter: 'plateNum="${pbEscape(plate)}"')
-          .timeout(const Duration(seconds: 15));
-
-      if (!mounted) return;
-      Get.to(() => Detailedscreen(
-            rec: record,
-            kcontroller: kcontroller,
-            selectedModel: entry,
-            index: 0,
-          ));
-    } catch (e) {
-      appLog('report detail fetch failed', e);
-    }
   }
 
   // ---------------------------------------------------------- filter logic
@@ -870,6 +744,64 @@ class _ReportscreenState extends State<Reportscreen> {
     }
   }
 
+  Future<bool> searchFunction(reportController rcontroller) async {
+    // Fill missing "to" bounds from the "from" values
+    if (rcontroller.isDate.value && rcontroller.lastDate.value.isEmpty) {
+      rcontroller.lastDate.value = rcontroller.firstDate.value;
+    }
+    if (rcontroller.isTime.value && rcontroller.lastTime.value.isEmpty) {
+      rcontroller.lastTime.value = rcontroller.fistTime.value;
+    }
+
+    // Build the filter string based on active filters. Dates/times are
+    // filtered server-side so we never download the whole collection.
+    List<String> filters = [];
+
+    if (rcontroller.pickerPlate.value.isNotEmpty) {
+      filters.add('plateNum ~ "${pbEscape(rcontroller.pickerPlate.value)}"');
+    }
+
+    if (rcontroller.isDate.value) {
+      if (rcontroller.firstDate.value == rcontroller.lastDate.value) {
+        filters.add('eDate = "${pbEscape(rcontroller.firstDate.value)}"');
+      } else {
+        filters.add(
+            'eDate >= "${pbEscape(rcontroller.firstDate.value)}" && eDate <= "${pbEscape(rcontroller.lastDate.value)}"');
+      }
+    }
+
+    // eTime is stored zero-padded (HH:MM) so string comparison works.
+    if (rcontroller.isTime.value) {
+      if (rcontroller.fistTime.value == rcontroller.lastTime.value) {
+        filters.add('eTime = "${pbEscape(rcontroller.fistTime.value)}"');
+      } else {
+        filters.add(
+            'eTime >= "${pbEscape(rcontroller.fistTime.value)}" && eTime <= "${pbEscape(rcontroller.lastTime.value)}"');
+      }
+    }
+
+    String filterString = filters.join(' && ');
+
+    try {
+      // Fetch records from PocketBase
+      final records = await pb
+          .collection('database')
+          .getFullList(filter: filterString, sort: '-created')
+          .timeout(const Duration(seconds: 30));
+
+      // Replace previous results in one shot instead of appending (appending
+      // also made the second search filter on the first search's plate).
+      rcontroller.selectedModel
+          .assignAll(records.map((r) => databaseClass.fromJson(r.data)));
+
+      return true;
+    } catch (e) {
+      appLog('searchFunction failed', e);
+      rcontroller.searchError.value = 'خطا در جستجو — اتصال را بررسی کنید';
+      rethrow;
+    }
+  }
+
   // ------------------------------------------------------------------ PDF
 
   void saveToPdf(List<databaseClass> rows) async {
@@ -882,7 +814,6 @@ class _ReportscreenState extends State<Reportscreen> {
         crossAxisAlignment: pw.CrossAxisAlignment.end,
         build: (pw.Context context) {
           return [
-            // Replace the Column with a list of widgets
             pw.Row(children: [
               pw.Container(
                 height: 30,
@@ -939,7 +870,6 @@ class _ReportscreenState extends State<Reportscreen> {
                     style: pw.TextStyle(font: ttf) // Apply the font
                     ),
               ),
-
             ]),
             for (var i in rows)
               () {
@@ -1022,7 +952,6 @@ class _ReportscreenState extends State<Reportscreen> {
               }()
           ];
         },
-        // Optional: Add header/footer to all pages
         footer: (pw.Context context) => pw.Text(' صفحه  ${context.pageNumber}',
             style: pw.TextStyle(font: ttf),
             textDirection: pw.TextDirection.rtl),
@@ -1034,62 +963,199 @@ class _ReportscreenState extends State<Reportscreen> {
         usePrinterSettings: true,
         onLayout: (PdfPageFormat format) async => doc.save());
   }
+}
 
-  Future<bool> searchFunction(reportController rcontroller) async {
-    // Fill missing "to" bounds from the "from" values
-    if (rcontroller.isDate.value && rcontroller.lastDate.value.isEmpty) {
-      rcontroller.lastDate.value = rcontroller.firstDate.value;
-    }
-    if (rcontroller.isTime.value && rcontroller.lastTime.value.isEmpty) {
-      rcontroller.lastTime.value = rcontroller.fistTime.value;
-    }
+/// Sticky header of the results table.
+class _TableHeader extends StatelessWidget {
+  const _TableHeader();
 
-    // Build the filter string based on active filters. Dates/times are
-    // filtered server-side so we never download the whole collection.
-    List<String> filters = [];
+  @override
+  Widget build(BuildContext context) {
+    Widget head(String title, double width) => SizedBox(
+          width: width,
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        );
 
-    if (rcontroller.pickerPlate.value.isNotEmpty) {
-      filters.add('plateNum ~ "${pbEscape(rcontroller.pickerPlate.value)}"');
-    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceHigh,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          head('پلاک', 130),
+          head('وضعیت تردد', 120),
+          head('جهت', 80),
+          head('تصویر', 90),
+          head('زمان تردد', 130),
+          head('عملیات', 120),
+        ],
+      ),
+    );
+  }
+}
 
-    if (rcontroller.isDate.value) {
-      if (rcontroller.firstDate.value == rcontroller.lastDate.value) {
-        filters.add('eDate = "${pbEscape(rcontroller.firstDate.value)}"');
-      } else {
-        filters.add(
-            'eDate >= "${pbEscape(rcontroller.firstDate.value)}" && eDate <= "${pbEscape(rcontroller.lastDate.value)}"');
+/// A single row of the results table.
+class _TableRow extends StatelessWidget {
+  const _TableRow({required this.entry});
+
+  final databaseClass entry;
+
+  @override
+  Widget build(BuildContext context) {
+    final kcontroller = Get.find<knowPersonController>();
+    final person = kcontroller.personFor(entry.plateNum);
+    final status = statusForEntry(entry, kcontroller);
+
+    String? gate;
+    for (final c in Get.find<cameraController>().cameras) {
+      if (c.path == entry.rtpath) {
+        gate = c.gate ?? 'entre';
+        break;
       }
     }
+    final direction = (gate == null || gate == 'entre') ? 'ورود' : 'خروج';
 
-    // eTime is stored zero-padded (HH:MM) so string comparison works.
-    if (rcontroller.isTime.value) {
-      if (rcontroller.fistTime.value == rcontroller.lastTime.value) {
-        filters.add('eTime = "${pbEscape(rcontroller.fistTime.value)}"');
-      } else {
-        filters.add(
-            'eTime >= "${pbEscape(rcontroller.fistTime.value)}" && eTime <= "${pbEscape(rcontroller.lastTime.value)}"');
-      }
-    }
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: () => _open(context),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 130,
+              child: Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: EntryPlate(entry: entry, height: 34),
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 120,
+              child: Center(child: StatusChip(status: status, dense: true)),
+            ),
+            SizedBox(
+              width: 80,
+              child: Center(
+                child: Text(
+                  direction,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: direction == 'ورود'
+                        ? AppColors.primary
+                        : AppColors.warning,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 90,
+              child: Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(7),
+                  child: SafeNetImage(
+                    url: pbFileUrlOf('database', entry.id, entry.imgpath),
+                    fit: BoxFit.cover,
+                    width: 72,
+                    height: 42,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 130,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      (entry.eTime ?? '-').toString().toPersianDigit(),
+                      style: AppTheme.numeric(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      (entry.eDate ?? '').toPersianDate(),
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 120,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    onPressed: () => _open(context),
+                    icon: const Icon(Icons.visibility_outlined, size: 17),
+                    tooltip: 'مشاهده جزئیات',
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  IconButton(
+                    onPressed: () => _open(context),
+                    icon: const Icon(Icons.print_outlined, size: 17),
+                    tooltip: 'چاپ رسید',
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  if (person != null)
+                    IconButton(
+                      onPressed: () => _open(context),
+                      icon: const Icon(Icons.person_outline, size: 17),
+                      tooltip: person.name ?? '',
+                      visualDensity: VisualDensity.compact,
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-    String filterString = filters.join(' && ');
-
+  Future<void> _open(BuildContext context) async {
+    final plate = entry.plateNum ?? '';
+    if (plate.isEmpty) return;
     try {
-      // Fetch records from PocketBase
-      final records = await pb
+      final record = await pb
           .collection('database')
-          .getFullList(filter: filterString, sort: '-created')
-          .timeout(const Duration(seconds: 30));
+          .getFullList(filter: 'plateNum="${pbEscape(plate)}"')
+          .timeout(const Duration(seconds: 15));
 
-      // Replace previous results in one shot instead of appending (appending
-      // also made the second search filter on the first search's plate).
-      rcontroller.selectedModel
-          .assignAll(records.map((r) => databaseClass.fromJson(r.data)));
-
-      return true;
+      if (!context.mounted) return;
+      await showDetectionDetail(
+        context,
+        entry: entry,
+        rec: record,
+        kcontroller: Get.find<knowPersonController>(),
+      );
     } catch (e) {
-      appLog('searchFunction failed', e);
-      rcontroller.searchError.value = 'خطا در جستجو — اتصال را بررسی کنید';
-      rethrow;
+      appLog('report detail fetch failed', e);
     }
   }
 }

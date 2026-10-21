@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:amnban/theme/app_colors.dart';
+import 'package:amnban/theme/app_theme.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/utils/safe.dart';
@@ -44,7 +45,7 @@ class UserBox extends StatelessWidget {
                 ),
               );
             },
-            icon: const Icon(Icons.add, size: 16),
+            icon: const Icon(Icons.add_rounded, size: 16),
             label: const Text("اضافه کردن"),
           ),
         ),
@@ -59,10 +60,10 @@ class UserBox extends StatelessWidget {
             );
           }
           return SizedBox(
-            height: 300,
+            height: 280,
             child: ListView.separated(
               itemCount: users.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 6),
+              separatorBuilder: (context, index) => const SizedBox(height: 5),
               itemBuilder: (context, index) => _userRow(context, index),
             ),
           );
@@ -74,13 +75,12 @@ class UserBox extends StatelessWidget {
   Widget _userRow(BuildContext context, int index) {
     final user = ucontroller.users[index];
 
-    Widget cell(String value, double width, {IconData? icon}) => SizedBox(
-          width: width,
+    Widget cell(String value, IconData? icon) => Expanded(
           child: Row(
             children: [
               if (icon != null) ...[
                 Icon(icon, size: 13, color: AppColors.textMuted),
-                const SizedBox(width: 4),
+                const SizedBox(width: 5),
               ],
               Expanded(
                 child: Text(
@@ -99,37 +99,45 @@ class UserBox extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(8),
+        color: AppColors.surfaceHigh,
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
         children: [
           SizedBox(
-            width: 30,
+            width: 28,
             child: Text(
               '${index + 1}'.toPersianDigit(),
-              style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+              style: AppTheme.numeric(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textMuted,
+              ),
             ),
           ),
-          Expanded(flex: 3, child: cell(user.nickname ?? '-', 160)),
-          Expanded(flex: 3, child: cell(user.email ?? '-', 160)),
-          Expanded(flex: 2, child: cell(user.username ?? '-', 110)),
+          Expanded(flex: 3, child: cell(user.nickname ?? '-', null)),
+          Expanded(flex: 3, child: cell(user.email ?? '-', Icons.mail_outline)),
+          Expanded(flex: 2, child: cell(user.username ?? '-', null)),
           Expanded(
             flex: 2,
-            child: cell(user.accsesslvl ?? '-', 90,
-                icon: Icons.admin_panel_settings_outlined),
+            child: cell(
+              user.accsesslvl ?? '-',
+              Icons.admin_panel_settings_outlined,
+            ),
           ),
           IconButton(
             onPressed: () => _edit(context, index),
             icon: const Icon(Icons.edit_outlined, size: 18),
             tooltip: 'ویرایش',
+            visualDensity: VisualDensity.compact,
           ),
           IconButton(
             onPressed: () => _delete(index),
             icon: const Icon(Icons.delete_outline,
                 size: 18, color: AppColors.danger),
             tooltip: 'حذف',
+            visualDensity: VisualDensity.compact,
           ),
         ],
       ),

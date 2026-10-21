@@ -43,8 +43,7 @@ class IranPlate extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(4),
         border: Border.all(color: AppColors.plateBorder, width: 1.2),
-      ),
-      child: Directionality(
+      ),      child: Directionality(
         // The plate itself is a fixed physical layout, always left to right.
         textDirection: TextDirection.ltr,
         child: Row(
@@ -208,7 +207,7 @@ class _EmptyPlate extends StatelessWidget {
       width: 90,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
+        color: AppColors.surfaceHigh,
         borderRadius: BorderRadius.circular(4),
         border: Border.all(color: AppColors.border),
       ),

@@ -1,6 +1,7 @@
 import 'package:amnban/models/databaseEntry.dart';
 import 'package:amnban/screens/details_screen.dart';
 import 'package:amnban/theme/app_colors.dart';
+import 'package:amnban/theme/app_theme.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/utils/safe.dart';
@@ -20,22 +21,22 @@ Future<dynamic> showAmarDialog(
 ) {
   return showDialog(
     context: context,
-    barrierColor: Colors.black.withValues(alpha: 0.35),
+    barrierColor: Colors.black.withValues(alpha: 0.62),
     builder: (context) {
       return Directionality(
         textDirection: TextDirection.rtl,
         child: Dialog(
           insetPadding: const EdgeInsets.all(16),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 640, maxHeight: 460),
+            constraints: const BoxConstraints(maxWidth: 660, maxHeight: 470),
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const AppSectionTitle(
+                  const CardHeader(
                     title: 'لیست پلاک های امروز',
-                    icon: Icons.list_alt_outlined,
+                    icon: Icons.list_alt_rounded,
                   ),
                   const SizedBox(height: 12),
                   Expanded(
@@ -44,13 +45,13 @@ Future<dynamic> showAmarDialog(
                         : ListView.separated(
                             itemCount: data.length,
                             separatorBuilder: (context, index) =>
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 5),
                             itemBuilder: (context, index) {
                               final entry = data[index];
                               final person =
                                   kcontroller.personFor(entry.plateNum);
                               return InkWell(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(10),
                                 onTap: () async {
                                   final plate = entry.plateNum ?? '';
                                   if (plate.isEmpty) return;
@@ -83,19 +84,19 @@ Future<dynamic> showAmarDialog(
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 10, vertical: 8),
                                   decoration: BoxDecoration(
-                                    color: AppColors.surfaceMuted,
-                                    borderRadius: BorderRadius.circular(8),
+                                    color: AppColors.surfaceHigh,
+                                    borderRadius: BorderRadius.circular(10),
                                     border:
                                         Border.all(color: AppColors.border),
                                   ),
                                   child: Row(
                                     children: [
                                       SizedBox(
-                                        width: 96,
+                                        width: 92,
                                         child: FittedBox(
                                           fit: BoxFit.scaleDown,
                                           child: EntryPlate(
-                                              entry: entry, height: 32),
+                                              entry: entry, height: 30),
                                         ),
                                       ),
                                       const SizedBox(width: 8),
@@ -113,13 +114,14 @@ Future<dynamic> showAmarDialog(
                                       ),
                                       const SizedBox(width: 8),
                                       SizedBox(
-                                        width: 70,
+                                        width: 64,
                                         child: Text(
                                           (entry.eTime ?? '-')
                                               .toString()
                                               .toPersianDigit(),
-                                          style: const TextStyle(
+                                          style: AppTheme.numeric(
                                             fontSize: 11,
+                                            fontWeight: FontWeight.w600,
                                             color: AppColors.textSecondary,
                                           ),
                                         ),

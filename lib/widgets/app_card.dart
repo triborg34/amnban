@@ -1,68 +1,129 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 
-/// Rounded white panel used all over the dashboard / reports screens.
-class AppCard extends StatelessWidget {
-  const AppCard({
+/// Bento card — layered dark surface with a hairline border.
+///
+/// The [glass] variant adds a blurred backdrop so the card floats above the
+/// content behind it (used by the reports filter panel).
+class BentoCard extends StatelessWidget {
+  const BentoCard({
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(16),
     this.margin,
+    this.glass = false,
+    this.glow = false,
     this.color,
-    this.borderColor,
     this.radius = AppTheme.cardRadius,
+    this.borderColor,
     this.onTap,
   });
 
   final Widget child;
   final EdgeInsetsGeometry padding;
   final EdgeInsetsGeometry? margin;
+  final bool glass;
+  final bool glow;
   final Color? color;
-  final Color? borderColor;
   final double radius;
+  final Color? borderColor;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final content = Container(
+    final borderRadius = BorderRadius.circular(radius);
+
+    Widget content = Container(
       margin: margin,
       padding: padding,
-      decoration: AppTheme.cardDecoration(
-        color: color,
-        radius: radius,
-        borderColor: borderColor,
-      ),
+      decoration: _decoration(),
       child: child,
     );
 
+    if (glass) {
+      content = ClipRRect(
+        borderRadius: borderRadius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+          child: Container(
+            margin: margin,
+            padding: padding,
+            decoration: BoxDecoration(
+              color: AppColors.surface.withValues(alpha: 0.55),
+              borderRadius: borderRadius,
+              border: Border.all(
+                color: borderColor ?? AppColors.border,
+              ),
+            ),
+            child: child,
+          ),
+        ),
+      );
+    }
+
     if (onTap == null) return content;
+
     return Material(
       color: Colors.transparent,
-      borderRadius: BorderRadius.circular(radius),
+      borderRadius: borderRadius,
       clipBehavior: Clip.antiAlias,
       child: InkWell(onTap: onTap, child: content),
     );
   }
+
+  /// Layered background: a barely-visible gradient over the dark surface plus
+  /// a hairline border — depth without heavy shadows.
+  BoxDecoration _decoration() {
+    final base = color ?? AppColors.surface;
+    return BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topRight,
+        end: Alignment.bottomLeft,
+        colors: [
+          Color.lerp(base, AppColors.surfaceHigh, 0.45)!,
+          base,
+        ],
+      ),
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(color: borderColor ?? AppColors.border),
+      boxShadow: [
+        if (glow)
+          BoxShadow(
+            color: AppColors.primary.withValues(alpha: 0.16),
+            blurRadius: 22,
+            spreadRadius: -6,
+          )
+        else
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.30),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+      ],
+    );
+  }
 }
 
-/// Small caption + optional trailing action used as a card header.
-class AppSectionTitle extends StatelessWidget {
-  const AppSectionTitle({
+/// Header of a card: small caption + optional trailing widget.
+class CardHeader extends StatelessWidget {
+  const CardHeader({
     super.key,
     required this.title,
     this.subtitle,
     this.icon,
     this.trailing,
-    this.dense = false,
+    this.accent = AppColors.primary,
   });
 
   final String title;
   final String? subtitle;
   final IconData? icon;
   final Widget? trailing;
-  final bool dense;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
@@ -74,12 +135,12 @@ class AppSectionTitle extends StatelessWidget {
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-              color: AppColors.primaryLight,
-              borderRadius: BorderRadius.circular(8),
+              color: accent.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(9),
             ),
-            child: Icon(icon, size: 16, color: AppColors.primary),
+            child: Icon(icon, size: 15, color: accent),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 9),
         ],
         Expanded(
           child: Column(
@@ -88,8 +149,8 @@ class AppSectionTitle extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: TextStyle(
-                  fontSize: dense ? 13 : 14,
+                style: const TextStyle(
+                  fontSize: 13.5,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
                 ),
@@ -114,7 +175,98 @@ class AppSectionTitle extends StatelessWidget {
   }
 }
 
-/// Neutral label chip used for metadata (camera IP, direction, ...).
+/// Thin gradient hairline used between sections.
+class GradientDivider extends StatelessWidget {
+  const GradientDivider({
+    super.key,
+    this.height = 1.5,
+    this.vertical = false,
+    this.color = AppColors.primary,
+  });
+
+  final double height;
+  final bool vertical;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final gradient = LinearGradient(
+      colors: [
+        Colors.transparent,
+        color.withValues(alpha: 0.55),
+        Colors.transparent,
+      ],
+      begin: vertical ? Alignment.topCenter : Alignment.centerLeft,
+      end: vertical ? Alignment.bottomCenter : Alignment.centerRight,
+    );
+
+    if (vertical) {
+      return Container(
+        width: height,
+        decoration: BoxDecoration(gradient: gradient),
+      );
+    }
+
+    return Container(
+      height: height,
+      decoration: BoxDecoration(gradient: gradient),
+    );
+  }
+}
+
+/// One cell of a [BentoGrid].
+class BentoItem {
+  const BentoItem({
+    required this.child,
+    this.span = 1,
+    this.height,
+  });
+
+  final Widget child;
+
+  /// How many grid columns the cell occupies.
+  final int span;
+  final double? height;
+}
+
+/// Asymmetric grid — cells can span one or more columns.
+class BentoGrid extends StatelessWidget {
+  const BentoGrid({
+    super.key,
+    required this.items,
+    this.columns = 3,
+    this.spacing = 14,
+  });
+
+  final List<BentoItem> items;
+  final int columns;
+  final double spacing;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final unit = (width - spacing * (columns - 1)) / columns;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            for (final item in items)
+              SizedBox(
+                width: unit * item.span + spacing * (item.span - 1),
+                height: item.height,
+                child: item.child,
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Neutral metadata chip (camera IP, direction, ...).
 class InfoChip extends StatelessWidget {
   const InfoChip({
     super.key,
@@ -123,6 +275,7 @@ class InfoChip extends StatelessWidget {
     this.color = AppColors.textSecondary,
     this.background,
     this.dense = false,
+    this.mono = false,
   });
 
   final String label;
@@ -130,17 +283,18 @@ class InfoChip extends StatelessWidget {
   final Color color;
   final Color? background;
   final bool dense;
+  final bool mono;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: dense ? 6 : 8,
-        vertical: dense ? 2 : 4,
+        horizontal: dense ? 7 : 9,
+        vertical: dense ? 3 : 5,
       ),
       decoration: BoxDecoration(
-        color: background ?? AppColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(6),
+        color: background ?? AppColors.surfaceHigh,
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.border),
       ),
       child: Row(
@@ -148,15 +302,14 @@ class InfoChip extends StatelessWidget {
         children: [
           if (icon != null) ...[
             Icon(icon, size: dense ? 11 : 13, color: color),
-            const SizedBox(width: 4),
+            const SizedBox(width: 5),
           ],
           Text(
             label,
-            style: TextStyle(
-              fontSize: dense ? 10 : 11.5,
-              color: color,
-              fontWeight: FontWeight.w500,
-            ),
+            style: (mono
+                    ? AppTheme.numeric(fontSize: dense ? 10.5 : 11.5)
+                    : const TextStyle(fontSize: 11.5))
+                .copyWith(color: color, fontWeight: FontWeight.w500),
           ),
         ],
       ),
@@ -164,7 +317,7 @@ class InfoChip extends StatelessWidget {
   }
 }
 
-/// Full-width placeholder used by empty states.
+/// Empty / placeholder state.
 class AppEmptyState extends StatelessWidget {
   const AppEmptyState({
     super.key,

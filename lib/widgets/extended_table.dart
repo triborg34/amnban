@@ -29,13 +29,13 @@ class ExtendedTable extends StatelessWidget {
       final entry = dcontroller.tableContect.value;
       final person = kcontroller.personFor(entry.plateNum);
 
-      return AppCard(
+      return BentoCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const AppSectionTitle(
+            const CardHeader(
               title: 'جزئیات تردد انتخاب شده',
-              icon: Icons.visibility_outlined,
+              icon: Icons.visibility_rounded,
             ),
             const SizedBox(height: 12),
             SingleChildScrollView(
@@ -43,10 +43,10 @@ class ExtendedTable extends StatelessWidget {
               child: Row(
                 children: [
                   SizedBox(
-                    width: 118,
+                    width: 112,
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
-                      child: EntryPlate(entry: entry, height: 40),
+                      child: EntryPlate(entry: entry, height: 38),
                     ),
                   ),
                   const SizedBox(width: 10),
@@ -72,16 +72,16 @@ class ExtendedTable extends StatelessWidget {
                         appLog('extended detail fetch failed', e);
                       }
                     },
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(8),
                     child: ClipRRect(
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(8),
                       child: Hero(
                         tag: 'heroTag${entry.id ?? dcontroller.selectedIndex.value}',
                         child: SafeNetImage(
                           url: pbFileUrlOf('database', entry.id, entry.imgpath),
                           fit: BoxFit.cover,
-                          width: 120,
-                          height: 72,
+                          width: 112,
+                          height: 68,
                         ),
                       ),
                     ),
@@ -110,8 +110,8 @@ class ExtendedTable extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       margin: const EdgeInsets.only(left: 8),
       decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(8),
+        color: AppColors.surfaceHigh,
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(

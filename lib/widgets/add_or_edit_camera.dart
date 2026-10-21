@@ -123,7 +123,7 @@ class _AddOrEditCameraState extends State<AddOrEditCamera> {
                               dropdownColor: AppColors.surface,
                               decoration: InputDecoration(
                                   focusColor: Colors.transparent,
-                                  fillColor: AppColors.surfaceMuted,
+                                  fillColor: AppColors.surfaceHigh,
                                   filled: true,
                                   focusedBorder: OutlineInputBorder(
                                       borderSide:

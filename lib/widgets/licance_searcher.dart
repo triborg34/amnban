@@ -144,7 +144,7 @@ class SeccondSearchBox extends StatelessWidget {
           height: 40,
           child: TextButton(
             style: TextButton.styleFrom(
-              backgroundColor: AppColors.surfaceMuted,
+              backgroundColor: AppColors.surfaceHigh,
               foregroundColor: AppColors.textPrimary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),

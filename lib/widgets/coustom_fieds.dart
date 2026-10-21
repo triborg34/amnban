@@ -24,7 +24,7 @@ class CoustomTextField1 extends StatelessWidget {
         decoration: InputDecoration(
           hintTextDirection: TextDirection.rtl,
           hintText: hint,
-          fillColor: AppColors.surfaceMuted,
+          fillColor: AppColors.surfaceHigh,
           filled: true,
           isDense: true,
           contentPadding:
@@ -63,7 +63,7 @@ class CoustomTextField2 extends StatelessWidget {
       style: const TextStyle(fontFamily: 'arial', fontSize: 13),
       decoration: InputDecoration(
           filled: true,
-          fillColor: AppColors.surfaceMuted,
+          fillColor: AppColors.surfaceHigh,
           hintText: hint,
           hintStyle: const TextStyle(color: AppColors.textMuted),
           hintTextDirection: hint.toLowerCase() != 'نام'
@@ -105,7 +105,7 @@ class CoustomTextField3 extends StatelessWidget {
         decoration: InputDecoration(
             hintTextDirection: TextDirection.rtl,
             hintText: hint,
-            fillColor: AppColors.surfaceMuted,
+            fillColor: AppColors.surfaceHigh,
             filled: true,
             focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),

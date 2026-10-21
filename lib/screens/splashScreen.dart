@@ -6,8 +6,8 @@ import 'package:amnban/widgets/app_logo.dart';
 
 import 'package:flutter/material.dart';
 
-/// Splash screen — shows the DIESPI emblem for two seconds and then hands
-/// over to the login page (same behaviour as the previous `SplashView`).
+/// Splash screen — shows the "امن آفرین" app mark for two seconds and then
+/// hands over to the login page.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({
     super.key,
@@ -40,26 +40,41 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.loginBackground,
+      backgroundColor: AppColors.background,
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const DiespiEmblem(size: 110),
-            const SizedBox(height: 18),
-            const DiespiWordmark(fontSize: 28),
-            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: AppColors.border),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.12),
+                    blurRadius: 36,
+                    spreadRadius: -12,
+                  ),
+                ],
+              ),
+              child: const AppMark(size: 44),
+            ),
+            const SizedBox(height: 20),
+            const CompanyName(fontSize: 20),
+            const SizedBox(height: 8),
             const Text(
               'سامانه پایش خودکار پلاک',
-              style: TextStyle(fontSize: 12.5, color: Colors.white70),
+              style: TextStyle(fontSize: 12.5, color: AppColors.textSecondary),
             ),
-            const SizedBox(height: 26),
+            const SizedBox(height: 28),
             const SizedBox(
               width: 160,
               child: LinearProgressIndicator(
                 minHeight: 3,
                 color: AppColors.primary,
-                backgroundColor: Colors.white24,
+                backgroundColor: AppColors.surfaceHigh,
               ),
             ),
           ],

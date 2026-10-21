@@ -1,22 +1,18 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../models/cameraClass.dart';
 import '../theme/app_colors.dart';
-import '../utils/consts.dart';
+import '../theme/app_theme.dart';
 import '../utils/controller.dart';
 import '../utils/dashboard_stats.dart';
+import '../utils/stream.dart';
 import 'app_card.dart';
 import 'iran_plate.dart';
 import 'status_chip.dart';
 import 'CemraFeed.dart';
 
-/// Dashboard card for a single camera.
-///
-/// Shows the live feed and the latest detection of that camera in a compact
-/// table (time / status / plate).
+/// Card for a single camera — live frame, label and the latest detection.
 class CameraGridCard extends StatelessWidget {
   const CameraGridCard({
     super.key,
@@ -33,23 +29,46 @@ class CameraGridCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
+    final isEntry = (camera.gate ?? 'entre') == 'entre';
+
+    return BentoCard(
       padding: const EdgeInsets.all(12),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _header(),
-          const SizedBox(height: 8),
-          Center(
-            child: Text(
-              'آخرین تردد',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textPrimary,
+          Row(
+            children: [
+              Container(
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: isEntry ? AppColors.primary : AppColors.warning,
+                  shape: BoxShape.circle,
+                ),
               ),
-            ),
+              const SizedBox(width: 7),
+              Expanded(
+                child: Text(
+                  camera.name?.trim().isNotEmpty == true
+                      ? camera.name!.trim()
+                      : 'دوربین ${index + 1}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: () => onExpand?.call(camera),
+                icon: const Icon(Icons.open_in_full_rounded, size: 16),
+                tooltip: 'بزرگنمایی',
+                visualDensity: VisualDensity.compact,
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           _preview(),
@@ -60,72 +79,52 @@ class CameraGridCard extends StatelessWidget {
     );
   }
 
-  Widget _header() {
-    final label = camera.name?.trim();
-    final title = (label == null || label.isEmpty) ? 'دوربین' : label;
-    return Row(
-      children: [
-        Expanded(
-          child: Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: InfoChip(
-              label: '${title}  •  ${camera.ip ?? '-'}',
-              icon: Icons.videocam_outlined,
-              dense: true,
-            ),
-          ),
-        ),
-        const SizedBox(width: 6),
-        InkWell(
-          onTap: () => onExpand?.call(camera),
-          borderRadius: BorderRadius.circular(6),
-          child: const Padding(
-            padding: EdgeInsets.all(4),
-            child: Icon(
-              Icons.fullscreen_outlined,
-              size: 17,
-              color: AppColors.textMuted,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   Widget _preview() {
-    final streamUrl =
-        'http://$url:$port/${role == 'ناظر' ? 'rtsp_feed' : 'video_feed'}/rt${index + 1}?source=${camera.rtspUrl?.replaceAll("&", "%26") ?? ''}';
+    final streamUrl = cameraStreamUrl(index, camera);
+    final hasStream = (camera.rtspUrl ?? '').isNotEmpty;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(8),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // 16:9 preview that scales with the card width.
-          final previewHeight =
-              (constraints.maxWidth * 9 / 16).clamp(140.0, 260.0).toDouble();
-          return Container(
-            height: previewHeight,
-            color: const Color(0xFF10201F),
-            child: Stack(
-              fit: StackFit.expand,
-              children: [
-                CameraFeed(key: ValueKey(streamUrl), streamUrl: streamUrl),
-                const PositionedDirectional(
-                  start: 8,
-                  bottom: 8,
-                  child: _LiveClock(),
+      borderRadius: BorderRadius.circular(12),
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Container(color: AppColors.surfaceHigh),
+            if (hasStream)
+              CameraFeed(key: ValueKey(streamUrl), streamUrl: streamUrl)
+            else
+              const Center(
+                child: Icon(Icons.videocam_off_outlined,
+                    size: 26, color: AppColors.textMuted),
+              ),
+            PositionedDirectional(
+              top: 8,
+              start: 8,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.62),
+                  borderRadius: BorderRadius.circular(7),
                 ),
-              ],
+                child: Text(
+                  camera.ip ?? '-',
+                  style: const TextStyle(
+                    fontFamily: 'arial',
+                    fontSize: 10.5,
+                    color: Colors.white70,
+                  ),
+                ),
+              ),
             ),
-          );
-        },
+          ],
+        ),
       ),
     );
   }
 
   Widget _footer() {
-    // The footer tracks the detection list on its own so the (heavy) live
-    // feed is never rebuilt when a new detection arrives.
     return Obx(() {
       final dcontroller = Get.find<databaseController>();
       final latest =
@@ -135,103 +134,43 @@ class CameraGridCard extends StatelessWidget {
           : statusForEntry(latest, kcontroller);
 
       return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
         decoration: BoxDecoration(
+          color: AppColors.surfaceHigh,
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: AppColors.border),
-          borderRadius: BorderRadius.circular(8),
         ),
-        child: Column(
+        child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              decoration: const BoxDecoration(
-                color: AppColors.surfaceMuted,
-                border: Border(bottom: BorderSide(color: AppColors.border)),
-              ),
-              child: const Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'ساعت',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      'وضعیت تردد',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(
-                      'پلاک',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ),
-                ],
+            Text(
+              latest?.eTime ?? '-',
+              style: AppTheme.numeric(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      latest?.eTime ?? '-',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: StatusChip(
-                        status: status,
-                        dense: true,
-                        label: latest == null ? 'بدون تردد' : null,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: latest == null
-                          ? const Text(
-                              '-',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textMuted,
-                              ),
-                            )
-                          : FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: EntryPlate(
-                                entry: latest,
-                                height: 32,
-                                showIranLabel: false,
-                              ),
-                            ),
-                    ),
-                  ),
-                ],
-              ),
+            const SizedBox(width: 10),
+            StatusChip(
+              status: status,
+              dense: true,
+              label: latest == null ? 'بدون تردد' : null,
             ),
+            const Spacer(),
+            if (latest == null)
+              const Text(
+                '-',
+                style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+              )
+            else
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: EntryPlate(
+                  entry: latest,
+                  height: 28,
+                  showIranLabel: false,
+                ),
+              ),
           ],
         ),
       );
@@ -239,61 +178,7 @@ class CameraGridCard extends StatelessWidget {
   }
 }
 
-/// Small clock rendered on top of the live feed.
-///
-/// It is a separate widget so the (heavy) camera feed is never rebuilt when
-/// the time ticks.
-class _LiveClock extends StatefulWidget {
-  const _LiveClock();
-
-  @override
-  State<_LiveClock> createState() => _LiveClockState();
-}
-
-class _LiveClockState extends State<_LiveClock> {
-  Timer? _timer;
-  late DateTime _now;
-
-  @override
-  void initState() {
-    super.initState();
-    _now = DateTime.now();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() => _now = DateTime.now());
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final hh = _now.hour.toString().padLeft(2, '0');
-    final mm = _now.minute.toString().padLeft(2, '0');
-    final ss = _now.second.toString().padLeft(2, '0');
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-      decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        '$hh:$mm:$ss',
-        style: const TextStyle(
-          fontSize: 10,
-          color: Colors.white,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    );
-  }
-}
-
-/// Responsive grid of [CameraGridCard]s (3 columns on desktop, 1–2 on
-/// phones).
+/// Responsive grid of [CameraGridCard]s.
 class CameraGrid extends StatelessWidget {
   const CameraGrid({
     super.key,
@@ -309,7 +194,7 @@ class CameraGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (cameras.isEmpty) {
-      return const AppCard(
+      return const BentoCard(
         child: AppEmptyState(
           message: 'دوربینی ثبت نشده است',
           icon: Icons.videocam_off_outlined,

@@ -37,7 +37,7 @@ class PlatePicked extends StatelessWidget {
       width: 210,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
+        color: AppColors.surfaceHigh,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.border),
       ),
@@ -95,9 +95,9 @@ class PlatePicked extends StatelessWidget {
       width: 34,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: AppColors.primaryLight,
+        color: AppColors.primary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.30)),
       ),
       child: Text(
         value,

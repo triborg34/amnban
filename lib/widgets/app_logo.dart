@@ -1,113 +1,103 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 
-/// Green hexagonal "D" emblem used in the sidebar, login card and app bar.
-class DiespiEmblem extends StatelessWidget {
-  const DiespiEmblem({super.key, this.size = 48});
+/// Company name — used everywhere the brand appears.
+const String kCompanyName = 'امن آفرین';
 
-  final double size;
+/// Primary logo (`assets/mainlogo2.png`) used in the main page header and in
+/// the navigation rail header.
+class CompanyLogo extends StatelessWidget {
+  const CompanyLogo({super.key, this.height = 30, this.showName = true});
+
+  final double height;
+  final bool showName;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: size,
-      height: size,
-      child: CustomPaint(
-        painter: _HexagonPainter(),
-        child: Center(
-          child: Transform(
-            // Slight italic skew, mirroring the reference logo.
-            alignment: Alignment.center,
-            transform: Matrix4.skewX(-0.18),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          height: height,
+          padding: EdgeInsets.symmetric(horizontal: height * 0.12),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceHigh,
+            borderRadius: BorderRadius.circular(height * 0.28),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Image.asset(
+            'assets/mainlogo2.png',
+            height: height * 0.68,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => SizedBox(width: height * 1.6),
+          ),
+        ),
+        if (showName) ...[
+          const SizedBox(width: 10),
+          Flexible(
             child: Text(
-              'D',
-              style: TextStyle(
-                fontFamily: AppThemeFont.family,
-                fontSize: size * 0.62,
+              kCompanyName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 14,
                 fontWeight: FontWeight.w700,
-                height: 1,
-                color: Colors.white,
+                color: AppColors.textPrimary,
+                height: 1.2,
               ),
             ),
           ),
-        ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Small app-icon style mark (`assets/logo.png`) used on the login screen,
+/// the splash state and in the app bar.
+class AppMark extends StatelessWidget {
+  const AppMark({super.key, this.size = 28, this.radius});
+
+  final double size;
+  final double? radius;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: size,
+      width: size * 1.55,
+      decoration: BoxDecoration(
+        color: AppColors.surfaceHigh,
+        borderRadius: BorderRadius.circular(radius ?? size * 0.26),
+        border: Border.all(color: AppColors.border),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: size * 0.1),
+      child: Image.asset(
+        'assets/logo.png',
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
       ),
     );
   }
 }
 
-/// "DIESPI" word mark with the two "I" letters in the brand green.
-class DiespiWordmark extends StatelessWidget {
-  const DiespiWordmark({super.key, this.fontSize = 26});
+/// Standalone company name text.
+class CompanyName extends StatelessWidget {
+  const CompanyName({super.key, this.fontSize = 14});
 
   final double fontSize;
 
   @override
   Widget build(BuildContext context) {
-    final base = TextStyle(
-      fontFamily: 'arial',
-      fontSize: fontSize,
-      fontWeight: FontWeight.w800,
-      height: 1.1,
-      letterSpacing: 1.5,
-      fontStyle: FontStyle.italic,
-    );
-
-    return Directionality(
-      // Latin word mark — always left to right, even in the RTL app.
-      textDirection: TextDirection.ltr,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text('D', style: base.copyWith(color: const Color(0xFF1B1B1B))),
-          Text('I', style: base.copyWith(color: AppColors.primary)),
-          Text('E', style: base.copyWith(color: const Color(0xFF1B1B1B))),
-          Text('S', style: base.copyWith(color: const Color(0xFF1B1B1B))),
-          Text('P', style: base.copyWith(color: const Color(0xFF1B1B1B))),
-          Text('I', style: base.copyWith(color: AppColors.primary)),
-        ],
+    return Text(
+      kCompanyName,
+      style: TextStyle(
+        fontSize: fontSize,
+        fontWeight: FontWeight.w700,
+        color: AppColors.textPrimary,
+        height: 1.2,
       ),
     );
   }
-}
-
-class _HexagonPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = Path();
-    final w = size.width;
-    final h = size.height;
-    const inset = 0.22;
-
-    path.moveTo(0, h / 2);
-    path.lineTo(w * inset, 0);
-    path.lineTo(w * (1 - inset), 0);
-    path.lineTo(w, h / 2);
-    path.lineTo(w * (1 - inset), h);
-    path.lineTo(w * inset, h);
-    path.close();
-
-    canvas.drawPath(path, Paint()..color = AppColors.primary);
-
-    // Subtle inner highlight so the emblem does not look flat.
-    final glow = Paint()
-      ..color = Colors.white.withValues(alpha: 0.10)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = math.max(1, w * 0.02);
-    canvas.drawPath(path, glow);
-  }
-
-  @override
-  bool shouldRepaint(covariant _HexagonPainter oldDelegate) => false;
-}
-
-/// Font family constants (kept in one place so widgets do not hardcode them).
-class AppThemeFont {
-  const AppThemeFont._();
-
-  static const String family = 'Vazir';
 }

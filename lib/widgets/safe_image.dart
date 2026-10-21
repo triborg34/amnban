@@ -102,7 +102,7 @@ class _PlaceholderBoxState extends State<_PlaceholderBox>
     return Container(
       width: widget.width,
       height: widget.height,
-      color: AppColors.surfaceMuted,
+      color: AppColors.surfaceHigh,
       child: widget.shimmer
           ? AnimatedBuilder(
               animation: _controller,

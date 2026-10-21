@@ -62,16 +62,23 @@ String get platformName {
 }
 
 /// Storage used by the origin (cache, IndexedDB, ...) versus the quota.
+///
+/// `navigator.storage.estimate()` is asynchronous, so the returned promise is
+/// awaited before the `usage` / `quota` properties are read.
 Future<SystemUsage?> storageUsage() async {
   try {
     final storage = _navigatorStorage;
     if (storage == null) return null;
-    final estimate = storage.callMethod<JSObject?>('estimate'.toJS);
+    final pending = storage.callMethod<JSObject?>('estimate'.toJS);
+    if (pending == null) return null;
+    final estimate = await (pending as JSPromise<JSObject?>).toDart;
     if (estimate == null) return null;
-    final usage = estimate.getProperty<JSNumber>('usage'.toJS).toDartDouble;
-    final quota = estimate.getProperty<JSNumber>('quota'.toJS).toDartDouble;
-    if (quota <= 0) return null;
-    return SystemUsage(used: usage, total: quota);
+    final usage =
+        estimate.getProperty<JSNumber?>('usage'.toJS)?.toDartDouble;
+    final quota =
+        estimate.getProperty<JSNumber?>('quota'.toJS)?.toDartDouble;
+    if (quota == null || quota <= 0) return null;
+    return SystemUsage(used: usage ?? 0, total: quota);
   } catch (_) {
     return null;
   }
@@ -82,11 +89,13 @@ SystemUsage? memoryUsage() {
   try {
     final memory = _performanceMemory;
     if (memory == null) return null;
-    final used =
-        memory.getProperty<JSNumber>('usedJSHeapSize'.toJS).toDartDouble;
-    final total =
-        memory.getProperty<JSNumber>('jsHeapSizeLimit'.toJS).toDartDouble;
-    if (total <= 0) return null;
+    final used = memory
+        .getProperty<JSNumber?>('usedJSHeapSize'.toJS)
+        ?.toDartDouble;
+    final total = memory
+        .getProperty<JSNumber?>('jsHeapSizeLimit'.toJS)
+        ?.toDartDouble;
+    if (used == null || total == null || total <= 0) return null;
     return SystemUsage(used: used, total: total);
   } catch (_) {
     return null;

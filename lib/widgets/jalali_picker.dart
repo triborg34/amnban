@@ -5,6 +5,7 @@ import 'package:persian_number_utility/persian_number_utility.dart';
 import 'package:shamsi_date/shamsi_date.dart';
 
 import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
 
 const List<String> _jalaliMonthNames = [
   'فروردین',
@@ -33,7 +34,7 @@ Future<DateTime?> showJalaliDateTimePicker(
 }) {
   return showDialog<DateTime>(
     context: context,
-    barrierColor: Colors.black.withValues(alpha: 0.35),
+    barrierColor: Colors.black.withValues(alpha: 0.62),
     builder: (context) => Directionality(
       textDirection: TextDirection.rtl,
       child: _JalaliDateTimeDialog(
@@ -148,7 +149,7 @@ class _JalaliDateTimeDialogState extends State<_JalaliDateTimeDialog> {
               const SizedBox(height: 4),
               _dayGrid(leading),
               const SizedBox(height: 12),
-              const Divider(height: 1, color: AppColors.divider),
+              const Divider(height: 1, color: AppColors.border),
               const SizedBox(height: 12),
               _timeSection(),
               const SizedBox(height: 14),
@@ -165,27 +166,29 @@ class _JalaliDateTimeDialogState extends State<_JalaliDateTimeDialog> {
   Widget _header() {
     return Row(
       children: [
-        Text(
-          widget.title,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+        Expanded(
+          child: Text(
+            widget.title,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
           ),
         ),
-        const Spacer(),
         _iconButton(Icons.chevron_left, 'سال قبل', () => _changeYear(-1)),
         _iconButton(Icons.chevron_right, 'ماه قبل', () => _changeMonth(-1)),
         const SizedBox(width: 4),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: AppColors.primaryLight,
-            borderRadius: BorderRadius.circular(8),
+            color: AppColors.primary.withValues(alpha: 0.13),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppColors.primary.withValues(alpha: 0.35)),
           ),
           child: Text(
             '${_jalaliMonthNames[_view.month - 1]} ${_view.year.toString().toPersianDigit()}',
-            style: const TextStyle(
+            style: AppTheme.numeric(
               fontSize: 12.5,
               fontWeight: FontWeight.w700,
               color: AppColors.primary,
@@ -234,7 +237,7 @@ class _JalaliDateTimeDialogState extends State<_JalaliDateTimeDialog> {
   int _leadingBlanks() {
     final firstGregorian =
         Jalali(_view.year, _view.month, 1).toGregorian().toDateTime();
-    // DateTime.weekday: 1 = Monday … 7 = Sunday. Persian week starts on
+    // DateTime.weekday: 1 = Monday … 7 = Sunday. The Persian week starts on
     // Saturday, so Saturday maps to 0.
     return (firstGregorian.weekday + 1) % 7;
   }
@@ -252,21 +255,35 @@ class _JalaliDateTimeDialogState extends State<_JalaliDateTimeDialog> {
         Padding(
           padding: const EdgeInsets.all(2),
           child: InkWell(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(9),
             onTap: () => _pickDay(day),
-            child: Container(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
               height: 34,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: selected ? AppColors.primary : Colors.transparent,
-                borderRadius: BorderRadius.circular(8),
+                color: selected
+                    ? AppColors.primary.withValues(alpha: 0.16)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(9),
+                border: Border.all(
+                  color: selected ? AppColors.primary : Colors.transparent,
+                ),
+                boxShadow: [
+                  if (selected)
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.28),
+                      blurRadius: 12,
+                      spreadRadius: -4,
+                    ),
+                ],
               ),
               child: Text(
                 day.toString().toPersianDigit(),
-                style: TextStyle(
+                style: AppTheme.numeric(
                   fontSize: 12,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: selected ? Colors.white : AppColors.textPrimary,
+                  color: selected ? AppColors.primary : AppColors.textPrimary,
                 ),
               ),
             ),
@@ -292,8 +309,8 @@ class _JalaliDateTimeDialogState extends State<_JalaliDateTimeDialog> {
       children: [
         Center(
           child: SizedBox(
-            width: 150,
-            height: 150,
+            width: 140,
+            height: 140,
             child: CustomPaint(
               painter: _ClockPainter(
                 hour: _view.hour,
@@ -379,13 +396,13 @@ class _TimeStepper extends StatelessWidget {
           height: 30,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: AppColors.surfaceMuted,
-            borderRadius: BorderRadius.circular(6),
+            color: AppColors.surfaceHigh,
+            borderRadius: BorderRadius.circular(8),
             border: Border.all(color: AppColors.border),
           ),
           child: Text(
             value.toString().padLeft(2, '0').toPersianDigit(),
-            style: const TextStyle(
+            style: AppTheme.numeric(
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: AppColors.textPrimary,
@@ -409,7 +426,7 @@ class _TimeStepper extends StatelessWidget {
   }
 }
 
-/// Analogue clock face drawn with the brand green.
+/// Analogue clock face drawn in the brand cyan.
 class _ClockPainter extends CustomPainter {
   _ClockPainter({
     required this.hour,
@@ -426,17 +443,22 @@ class _ClockPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = math.min(size.width, size.height) / 2;
 
-    final face = Paint()..color = AppColors.primary;
-    canvas.drawCircle(center, radius, face);
-
-    final ring = Paint()
-      ..color = Colors.white.withValues(alpha: 0.35)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    canvas.drawCircle(center, radius - 2, ring);
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()..color = AppColors.surfaceHigh,
+    );
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..color = AppColors.primary.withValues(alpha: 0.55)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.4,
+    );
 
     // Hour ticks.
-    final tick = Paint()..color = Colors.white.withValues(alpha: 0.85);
+    final tick = Paint()..color = AppColors.textMuted;
     for (var i = 0; i < 12; i++) {
       final angle = (i * 30 - 90) * math.pi / 180;
       final outer = Offset(
@@ -444,13 +466,13 @@ class _ClockPainter extends CustomPainter {
         center.dy + (radius - 10) * math.sin(angle),
       );
       final inner = Offset(
-        center.dx + (radius - 16) * math.cos(angle),
-        center.dy + (radius - 16) * math.sin(angle),
+        center.dx + (radius - 15) * math.cos(angle),
+        center.dy + (radius - 15) * math.sin(angle),
       );
       canvas.drawLine(inner, outer, tick..strokeWidth = 2);
     }
 
-    void hand(double angleDegrees, double length, double width) {
+    void hand(double angleDegrees, double length, double width, Color color) {
       final angle = (angleDegrees - 90) * math.pi / 180;
       final end = Offset(
         center.dx + length * math.cos(angle),
@@ -460,17 +482,17 @@ class _ClockPainter extends CustomPainter {
         center,
         end,
         Paint()
-          ..color = Colors.white
+          ..color = color
           ..strokeWidth = width
           ..strokeCap = StrokeCap.round,
       );
     }
 
-    hand((hour % 12) * 30 + minute * 0.5, radius * 0.48, 4);
-    hand(minute * 6, radius * 0.72, 3);
-    hand(second * 6, radius * 0.80, 1.4);
+    hand((hour % 12) * 30 + minute * 0.5, radius * 0.46, 4, AppColors.textPrimary);
+    hand(minute * 6, radius * 0.70, 3, AppColors.primary);
+    hand(second * 6, radius * 0.78, 1.4, AppColors.warning);
 
-    canvas.drawCircle(center, 4, Paint()..color = Colors.white);
+    canvas.drawCircle(center, 4, Paint()..color = AppColors.primary);
   }
 
   @override

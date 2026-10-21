@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:amnban/models/userClass.dart';
 import 'package:amnban/screens/main_screen.dart';
 import 'package:amnban/theme/app_colors.dart';
+import 'package:amnban/theme/app_theme.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/widgets/app_logo.dart';
@@ -11,7 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Login screen — cream card on the deep teal background of the reference.
+/// Login screen — dark card with the "امن آفرین" app mark.
 class ModernLoginPage extends StatefulWidget {
   const ModernLoginPage({super.key});
 
@@ -88,7 +89,7 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.loginBackground,
+      backgroundColor: AppColors.background,
       body: KeyboardListener(
         focusNode: _keyboardFocusNode,
         autofocus: true,
@@ -102,10 +103,10 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
           width: double.infinity,
           height: double.infinity,
           decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [AppColors.loginBackground, Color(0xFF223A3D)],
+            gradient: RadialGradient(
+              center: Alignment.topRight,
+              radius: 1.4,
+              colors: [Color(0xFF12222C), AppColors.background],
             ),
           ),
           child: Center(
@@ -116,14 +117,14 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
                 children: [
                   Container(
                     decoration: BoxDecoration(
-                      color: AppColors.loginCard,
+                      color: AppColors.surface,
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: AppColors.loginCardBorder),
+                      border: Border.all(color: AppColors.border),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.25),
-                          blurRadius: 28,
-                          offset: const Offset(0, 10),
+                          color: AppColors.primary.withValues(alpha: 0.10),
+                          blurRadius: 40,
+                          spreadRadius: -12,
                         ),
                       ],
                     ),
@@ -140,7 +141,7 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 brand,
-                                const SizedBox(height: 22),
+                                const SizedBox(height: 24),
                                 form,
                               ],
                             ),
@@ -153,8 +154,7 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
                             mainAxisSize: MainAxisSize.min,
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              // RTL: the first child is rendered on the right,
-                              // so the form comes first and the brand second.
+                              // RTL: first child is rendered on the right.
                               SizedBox(width: 300, child: form),
                               const SizedBox(width: 36),
                               SizedBox(width: 280, child: brand),
@@ -166,9 +166,9 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
                   ),
                   const SizedBox(height: 18),
                   const Text(
-                    'ممانعت از دسترسی غیرمجاز به سامانه کنترل شده توسط: شرکت دیسپی',
+                    'ممانعت از دسترسی غیرمجاز به سامانه کنترل شده توسط: شرکت امن آفرین',
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 11.5, color: Colors.white54),
+                    style: TextStyle(fontSize: 11.5, color: AppColors.textMuted),
                   ),
                 ],
               ),
@@ -183,10 +183,18 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const DiespiEmblem(size: 120),
-        const SizedBox(height: 16),
-        const DiespiWordmark(fontSize: 30),
-        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surfaceHigh,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: const AppMark(size: 52),
+        ),
+        const SizedBox(height: 18),
+        const CompanyName(fontSize: 22),
+        const SizedBox(height: 8),
         const Text(
           'سامانه پایش خودکار پلاک',
           textAlign: TextAlign.center,
@@ -211,9 +219,9 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
             'ورود به سامانه',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 22,
+              fontSize: 20,
               fontWeight: FontWeight.w700,
-              color: AppColors.sidebar,
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
@@ -231,6 +239,7 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
           TextFormField(
             controller: _usernameController,
             textDirection: TextDirection.ltr,
+            textAlign: TextAlign.right,
             style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
             decoration: const InputDecoration(
               hintText: 'نام کاربری',
@@ -248,6 +257,7 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
             controller: _passwordController,
             obscureText: true,
             textDirection: TextDirection.ltr,
+            textAlign: TextAlign.right,
             style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
             decoration: const InputDecoration(
               hintText: 'رمز عبور',
@@ -268,8 +278,8 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
                 child: Checkbox(
                   value: _rememberMe,
                   activeColor: AppColors.primary,
-                  checkColor: Colors.white,
-                  side: const BorderSide(color: AppColors.textMuted),
+                  checkColor: const Color(0xFF04211F),
+                  side: const BorderSide(color: AppColors.border),
                   onChanged: (bool? value) {
                     setState(() {
                       _rememberMe = value ?? false;
@@ -293,10 +303,10 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
             onPressed: _isLoggingIn ? null : _login,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(0, 44),
+              foregroundColor: const Color(0xFF04211F),
+              minimumSize: const Size(0, AppTheme.buttonHeight),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(AppTheme.buttonRadius),
               ),
             ),
             child: _isLoggingIn
@@ -304,14 +314,14 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
+                        strokeWidth: 2, color: Color(0xFF04211F)),
                   )
                 : const Text(
                     'ورود',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white,
+                      color: Color(0xFF04211F),
                     ),
                   ),
           ),

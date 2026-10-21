@@ -18,13 +18,13 @@ class SettingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 26),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _section(
             title: 'کاربران',
-            icon: Icons.group_outlined,
+            icon: Icons.group_rounded,
             isOpen: scontroller.isUsers,
             onTap: () =>
                 scontroller.isUsers.value = !scontroller.isUsers.value,
@@ -36,7 +36,7 @@ class SettingScreen extends StatelessWidget {
           const SizedBox(height: 12),
           _section(
             title: 'عمومی',
-            icon: Icons.tune_outlined,
+            icon: Icons.tune_rounded,
             isOpen: scontroller.isGeneral,
             onTap: () =>
                 scontroller.isGeneral.value = !scontroller.isGeneral.value,
@@ -45,7 +45,7 @@ class SettingScreen extends StatelessWidget {
           const SizedBox(height: 12),
           _section(
             title: 'درباره',
-            icon: Icons.info_outline,
+            icon: Icons.info_outline_rounded,
             isOpen: scontroller.isInfo,
             onTap: () =>
                 scontroller.isInfo.value = !scontroller.isInfo.value,
@@ -66,15 +66,8 @@ class SettingScreen extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-        ],
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -84,9 +77,11 @@ class SettingScreen extends StatelessWidget {
             onTap: onTap,
             child: Obx(
               () => Container(
-                height: 52,
+                height: 54,
                 padding: const EdgeInsets.symmetric(horizontal: 14),
-                color: isOpen.value ? AppColors.primaryLight : Colors.transparent,
+                color: isOpen.value
+                    ? AppColors.primary.withValues(alpha: 0.08)
+                    : Colors.transparent,
                 child: Row(
                   children: [
                     Icon(
@@ -108,12 +103,14 @@ class SettingScreen extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    Icon(
-                      isOpen.value
-                          ? Icons.keyboard_arrow_down
-                          : Icons.keyboard_arrow_left,
-                      size: 19,
-                      color: AppColors.textMuted,
+                    AnimatedRotation(
+                      turns: isOpen.value ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 200),
+                      child: const Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        size: 20,
+                        color: AppColors.textMuted,
+                      ),
                     ),
                   ],
                 ),
@@ -130,7 +127,7 @@ class SettingScreen extends StatelessWidget {
               crossFadeState: isOpen.value
                   ? CrossFadeState.showSecond
                   : CrossFadeState.showFirst,
-              duration: const Duration(milliseconds: 250),
+              duration: const Duration(milliseconds: 220),
               firstCurve: Curves.decelerate,
               secondCurve: Curves.decelerate,
             ),
@@ -154,17 +151,17 @@ class InfoBox extends StatelessWidget {
       children: [
         KeyValueRow(
             keyString: "BuilDNumber", valueString: "SN/1404717"),
-        const Divider(color: AppColors.divider),
+        const Divider(color: AppColors.border),
         KeyValueRow(keyString: "UpdateNo", valueString: "14040828"),
-        const Divider(color: AppColors.divider),
+        const Divider(color: AppColors.border),
         KeyValueRow(
             keyString: "Last Update",
             valueString:
                 "${now.year}/${now.month}/${now.day}"),
-        const Divider(color: AppColors.divider),
+        const Divider(color: AppColors.border),
         KeyValueRow(
             keyString: "Train Model Serial", valueString: "YOLOV5M100300"),
-        const Divider(color: AppColors.divider),
+        const Divider(color: AppColors.border),
       ],
     );
   }
