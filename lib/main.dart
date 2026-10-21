@@ -1,4 +1,5 @@
 import 'package:amnban/screens/splashScreen.dart';
+import 'package:amnban/theme/app_theme.dart';
 import 'package:amnban/utils/bindings.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/network_info.dart';
@@ -23,9 +24,14 @@ class MyApp extends StatelessWidget {
         initialBinding: MyBindings(),
         debugShowCheckedModeBanner: false,
         title: "AmnBan",
-        theme: ThemeData(fontFamily: 'byekan',fontFamilyFallback: ['arial','robot']),
+        theme: AppTheme.light,
         getPages: pages,
         home: SplashScreen(),
+        // The whole application is right-to-left.
+        builder: (context, child) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: child ?? const SizedBox.shrink(),
+        ),
         onInit: () {
           // GetMaterialApp.onInit is not awaited before bindings' onReady,
           // so resolve synchronously with safe fallbacks. Controllers must
@@ -41,7 +47,7 @@ class MyApp extends StatelessWidget {
             if (hostPort is String && hostPort.isNotEmpty) {
               port = hostPort;
               // port="8000";
-            
+
             }
           } catch (_) {
             // Keep compiled defaults (127.0.0.1:8000).

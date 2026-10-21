@@ -1,12 +1,13 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+
+import '../theme/app_colors.dart';
 
 /// Single place for network images so we never show a red error box or crash
 /// on a null/empty id, missing filename, or failed download.
 ///
-/// Keeps the existing visual style (same fit/size) and only adds:
-/// - null/empty URL guard
-/// - loading placeholder (grey box + progress)
-/// - error placeholder (broken-image icon)
+/// Uses `cached_network_image` so the (many) plate / car thumbnails are
+/// fetched only once and kept in the disk cache.
 class SafeNetImage extends StatelessWidget {
   const SafeNetImage({
     super.key,
@@ -25,13 +26,10 @@ class SafeNetImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget placeholder(IconData icon) => Container(
+    Widget placeholder(IconData icon) => _PlaceholderBox(
           width: width,
           height: height,
-          color: Colors.white10,
-          child: Center(
-            child: Icon(icon, color: Colors.white38, size: 24),
-          ),
+          icon: icon,
         );
 
     if (url == null || url!.isEmpty || url!.endsWith('/null')) {
@@ -40,32 +38,93 @@ class SafeNetImage extends StatelessWidget {
         child: placeholder(Icons.image_not_supported_outlined),
       );
     }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
-      child: Image.network(
-        url!,
+      child: CachedNetworkImage(
+        imageUrl: url!,
         width: width,
         height: height,
         fit: fit,
         // Avoid decoding a huge original when we only show a thumbnail.
-        cacheWidth: width == null ? null : (width! * 2).toInt(),
-        loadingBuilder: (context, child, progress) {
-          if (progress == null) return child;
-          return Container(
-            width: width,
-            height: height,
-            color: Colors.white10,
-            child: const Center(
-              child: SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
+        memCacheWidth: width == null ? null : (width! * 2).toInt(),
+        placeholder: (context, _) => _PlaceholderBox(
+          width: width,
+          height: height,
+          shimmer: true,
+        ),
+        errorWidget: (context, _, __) =>
+            placeholder(Icons.broken_image_outlined),
+      ),
+    );
+  }
+}
+
+/// Grey placeholder with a soft pulse — a lightweight "shimmer".
+class _PlaceholderBox extends StatefulWidget {
+  const _PlaceholderBox({
+    this.width,
+    this.height,
+    this.icon,
+    this.shimmer = false,
+  });
+
+  final double? width;
+  final double? height;
+  final IconData? icon;
+  final bool shimmer;
+
+  @override
+  State<_PlaceholderBox> createState() => _PlaceholderBoxState();
+}
+
+class _PlaceholderBoxState extends State<_PlaceholderBox>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.shimmer) _controller.repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: widget.width,
+      height: widget.height,
+      color: AppColors.surfaceMuted,
+      child: widget.shimmer
+          ? AnimatedBuilder(
+              animation: _controller,
+              builder: (context, child) => Opacity(
+                opacity: 0.45 + (_controller.value * 0.35),
+                child: child,
+              ),
+              child: const Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            )
+          : Center(
+              child: Icon(
+                widget.icon,
+                color: AppColors.textMuted,
+                size: 22,
               ),
             ),
-          );
-        },
-        errorBuilder: (_, __, ___) => placeholder(Icons.broken_image_outlined),
-      ),
     );
   }
 }

@@ -1,5 +1,7 @@
+import 'package:amnban/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
+/// Light, borderless field used inside the plate-grabber rows.
 class CoustomTextField1 extends StatelessWidget {
   CoustomTextField1({
     required this.controller,
@@ -18,23 +20,30 @@ class CoustomTextField1 extends StatelessWidget {
       child: TextField(
         textDirection: hint != '' ? TextDirection.rtl : TextDirection.ltr,
         controller: controller,
+        style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
         decoration: InputDecoration(
-            hintTextDirection: TextDirection.rtl,
-            hintText: hint,
-            fillColor: Colors.white,
-            filled: true,
-            focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Colors.transparent, width: 3.0)),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.transparent, width: 3.0),
-            )),
+          hintTextDirection: TextDirection.rtl,
+          hintText: hint,
+          fillColor: AppColors.surfaceMuted,
+          filled: true,
+          isDense: true,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide:
+                  const BorderSide(color: AppColors.primary, width: 1.4)),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+        ),
       ),
     );
   }
 }
 
+/// Dark field used by the camera / RTSP forms.
 class CoustomTextField2 extends StatelessWidget {
   CoustomTextField2({
     required this.hint,
@@ -51,26 +60,28 @@ class CoustomTextField2 extends StatelessWidget {
       textDirection:
           hint.toLowerCase() != 'نام' ? TextDirection.ltr : TextDirection.rtl,
       controller: tcontroller,
-      style: TextStyle(fontFamily: 'arial', color: Colors.white),
+      style: const TextStyle(fontFamily: 'arial', fontSize: 13),
       decoration: InputDecoration(
           filled: true,
-          fillColor: Color.fromARGB(255, 25, 32, 71),
+          fillColor: AppColors.surfaceMuted,
           hintText: hint,
-          hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.3)),
+          hintStyle: const TextStyle(color: AppColors.textMuted),
           hintTextDirection: hint.toLowerCase() != 'نام'
               ? TextDirection.ltr
               : TextDirection.rtl,
           focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.transparent, width: 3.0)),
+              borderRadius: BorderRadius.circular(8),
+              borderSide:
+                  const BorderSide(color: AppColors.primary, width: 1.4)),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(10),
-            borderSide: BorderSide(color: Colors.transparent, width: 3.0),
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: AppColors.border),
           )),
     );
   }
 }
 
+/// Light field used by the user form (obscures the password hint).
 class CoustomTextField3 extends StatelessWidget {
   CoustomTextField3({
     required this.controller,
@@ -90,17 +101,19 @@ class CoustomTextField3 extends StatelessWidget {
         textDirection: hint != '' ? TextDirection.rtl : TextDirection.ltr,
         controller: controller,
         obscureText: hint == 'رمز عبور' ? true : false,
+        style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
         decoration: InputDecoration(
             hintTextDirection: TextDirection.rtl,
             hintText: hint,
-            fillColor: Colors.white,
+            fillColor: AppColors.surfaceMuted,
             filled: true,
             focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: Colors.black, width: 1.0)),
+                borderRadius: BorderRadius.circular(8),
+                borderSide:
+                    const BorderSide(color: AppColors.primary, width: 1.4)),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.black, width: 1.0),
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: AppColors.border),
             )),
       ),
     );

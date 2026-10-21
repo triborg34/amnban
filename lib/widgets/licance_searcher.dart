@@ -1,4 +1,4 @@
-import 'package:amnban/utils/consts.dart';
+import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/widgets/AlphaBetSelector.dart';
 import 'package:amnban/widgets/reportTextField.dart';
@@ -55,56 +55,55 @@ class _licanceSearcherState extends State<licanceSearcher> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-        child: Container(
-      padding: EdgeInsets.all(12),
-      width: 400,
-      height: 200,
-      child: Column(
-        textDirection: TextDirection.rtl,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            " اطلاعات پلاک را وارد کنید",
-            style: TextStyle(
-                color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800),
-          ),
-          SizedBox(
-            height: 15,
-          ),
-          Obx(() => AnimatedCrossFade(
-              firstChild: ReportTextField(
-                width: 310,
-                tcontroller: rcontroller.arvandDigit,
+    return Dialog(
+      insetPadding: const EdgeInsets.all(16),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 420),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            textDirection: TextDirection.rtl,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Text(
+                " اطلاعات پلاک را وارد کنید",
+                style: TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
-              secondChild: SeccondSearchBox(rcontroller: rcontroller),
-              crossFadeState: rcontroller.isArvand.value
-                  ? CrossFadeState.showFirst
-                  : CrossFadeState.showSecond,
-              duration: Duration(milliseconds: 350))),
-          // SeccondSearchBox(rcontroller: rcontroller),
-          SizedBox(
-            height: 10,
+              const SizedBox(height: 16),
+              Obx(() => AnimatedCrossFade(
+                  firstChild: ReportTextField(
+                    width: 310,
+                    tcontroller: rcontroller.arvandDigit,
+                  ),
+                  secondChild: SeccondSearchBox(rcontroller: rcontroller),
+                  crossFadeState: rcontroller.isArvand.value
+                      ? CrossFadeState.showFirst
+                      : CrossFadeState.showSecond,
+                  duration: const Duration(milliseconds: 250))),
+              const SizedBox(height: 12),
+              IconButton(
+                onPressed: () {
+                  rcontroller.isArvand.value = !rcontroller.isArvand.value;
+                },
+                icon: const Icon(Icons.swap_horiz, color: AppColors.primary),
+                tooltip: 'پلاک اروند',
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: 200,
+                child: ElevatedButton(
+                    onPressed: _submit, child: const Text("ثبت")),
+              ),
+            ],
           ),
-          IconButton(
-              onPressed: () {
-                rcontroller.isArvand.value = !rcontroller.isArvand.value;
-              },
-              icon: Icon(Icons.change_circle)),
-          SizedBox(
-            height: 10,
-          ),
-          Container(
-            width: 200,
-            child: ElevatedButton(
-                onPressed: _submit,
-                child: Text("ثبت")),
-          )
-        ],
+        ),
       ),
-      decoration: BoxDecoration(
-          color: purpule, borderRadius: BorderRadius.circular(15)),
-    ));
+    );
   }
 
   void _submit() {
@@ -138,13 +137,20 @@ class SeccondSearchBox extends StatelessWidget {
       textDirection: TextDirection.ltr,
       children: [
         ReportTextField(width: 50, tcontroller: rcontroller.firstTwoDigit),
-        SizedBox(
+        const SizedBox(
           width: 10,
         ),
         SizedBox(
           height: 40,
           child: TextButton(
-            style: TextButton.styleFrom(backgroundColor: Colors.deepPurple),
+            style: TextButton.styleFrom(
+              backgroundColor: AppColors.surfaceMuted,
+              foregroundColor: AppColors.textPrimary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: const BorderSide(color: AppColors.border),
+              ),
+            ),
             onPressed: () async {
               await showModalBottomSheet(
                 context: context,
@@ -168,22 +174,22 @@ class SeccondSearchBox extends StatelessWidget {
                   rcontroller.persianalhpabet.value == ''
                       ? "انتخاب حرف"
                       : rcontroller.persianalhpabet.value,
-                  style: TextStyle(color: Colors.white),
+                  style: const TextStyle(color: AppColors.textPrimary),
                 )),
           ),
         ),
-        SizedBox(
+        const SizedBox(
           width: 10,
         ),
         ReportTextField(width: 70, tcontroller: rcontroller.threeDigit),
-        SizedBox(
+        const SizedBox(
           width: 10,
         ),
-        Text(
+        const Text(
           '/',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: AppColors.textMuted),
         ),
-        SizedBox(
+        const SizedBox(
           width: 10,
         ),
         ReportTextField(width: 50, tcontroller: rcontroller.lastTwoDigit),

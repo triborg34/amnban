@@ -1,4 +1,5 @@
 import 'package:amnban/screens/person_screen.dart';
+import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/widgets/coustom_fieds.dart';
@@ -75,211 +76,185 @@ class _add_or_edit_personState extends State<add_or_edit_person> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-        child: Material(
-      color: Colors.transparent,
-      child: Container(
-        padding: EdgeInsets.all(15),
-        width: 450,
-        decoration: BoxDecoration(
-            color: const Color(0xFF6A5ACD),
-            borderRadius: BorderRadius.circular(15)),
-        height: 320,
-        child: Column(
-          textDirection: TextDirection.rtl,
-          children: [
-            Text(
-              isEdit? "ویرایش افراد": 'ثبت افراد',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold),
-            ),
-            SizedBox(
-              height: 15,
-            ),
-            Row(
-              children: [
-                Obx(() => AnimatedCrossFade(
-                    secondChild: ArvandGrapper(kcontroller: kcontroller),
-                    duration: Duration(milliseconds: 350),
-                    crossFadeState: kcontroller.isArvand.value
-                        ? CrossFadeState.showSecond
-                        : CrossFadeState.showFirst,
-                    firstChild: LicanceGrapper(kcontroller: kcontroller))),
-                TextButton(
+    return Dialog(
+      insetPadding: const EdgeInsets.all(16),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 480),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            textDirection: TextDirection.rtl,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                isEdit ? "ویرایش افراد" : 'ثبت افراد',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Obx(() => AnimatedCrossFade(
+                        duration: const Duration(milliseconds: 250),
+                        crossFadeState: kcontroller.isArvand.value
+                            ? CrossFadeState.showSecond
+                            : CrossFadeState.showFirst,
+                        firstChild:
+                            LicanceGrapper(kcontroller: kcontroller),
+                        secondChild:
+                            ArvandGrapper(kcontroller: kcontroller))),
+                  ),
+                  const SizedBox(width: 10),
+                  TextButton.icon(
                     onPressed: () {
                       kcontroller.isArvand.value = !kcontroller.isArvand.value;
                     },
-                    child: Text(
-                      "پلاک اروند",
-                      style: TextStyle(color: Colors.white),
-                    ))
-              ],
-            ),
-            SizedBox(
-              height: 15,
-            ),
-            Directionality(
-              textDirection: TextDirection.rtl,
-              child: Row(
-                textDirection: TextDirection.rtl,
-                children: [
-                  CoustomTextField1(
-                      controller: kcontroller.name, hint: "نام", width: 200),
-                  SizedBox(
-                    width: 15,
+                    icon: const Icon(Icons.swap_horiz, size: 16),
+                    label: const Text("پلاک اروند"),
                   ),
-                  CoustomTextField1(
-                      controller: kcontroller.lastName,
-                      hint: "نام خانوادگی",
-                      width: 200)
                 ],
               ),
-            ),
-            SizedBox(
-              height: 15,
-            ),
-            Directionality(
-              textDirection: TextDirection.rtl,
-              child: Row(
-                textDirection: TextDirection.rtl,
+              const SizedBox(height: 14),
+              Row(
                 children: [
-                  CoustomTextField1(
-                      controller: kcontroller.carNmae,
-                      hint: "نام ماشین",
-                      width: 200),
-                  SizedBox(
-                    width: 15,
+                  Expanded(
+                    child: CoustomTextField1(
+                        controller: kcontroller.name, hint: "نام", width: 200),
                   ),
-                  SizedBox(
-                    width: 200,
-                    child: Obx(() => DropdownButtonFormField(
-                        dropdownColor: Colors.white,
-                        decoration: InputDecoration(
-                            focusColor: Colors.transparent,
-                            fillColor: Colors.white,
-                            filled: true,
-                            focusedBorder: OutlineInputBorder(
-                                borderSide:
-                                    BorderSide(color: Colors.transparent)),
-                            enabledBorder: OutlineInputBorder(
-                                borderSide:
-                                    BorderSide(color: Colors.transparent)),
-                            border: OutlineInputBorder(
-                                borderSide:
-                                    BorderSide(color: Colors.transparent))),
-                        initialValue: (kcontroller.role.value == 'مجاز' ||
-                                kcontroller.role.value == 'غیر مجاز')
-                            ? kcontroller.role.value
-                            : 'مجاز',
-                        onChanged: (value) {
-                          if (value != null) kcontroller.role.value = value;
-                        },
-                        items: [
-                          DropdownMenuItem(value: 'مجاز', child: Text("مجاز")),
-                          DropdownMenuItem(
-                              value: 'غیر مجاز', child: Text("غیر مجاز"))
-                        ])),
-                  )
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: CoustomTextField1(
+                        controller: kcontroller.lastName,
+                        hint: "نام خانوادگی",
+                        width: 200),
+                  ),
                 ],
               ),
-            ),
-            SizedBox(
-              height: 15,
-            ),
-            SizedBox(
-                height: 45,
-                width: 400,
-                child: ElevatedButton(
-                    onPressed: () async {
-                      try {
-                        final String plateNumber;
-                        if (kcontroller.isArvand.value) {
-                          plateNumber = kcontroller.arvandDigits.text;
-                        } else {
-                          plateNumber =
-                              '${kcontroller.firstTwoDigit.text}${kcontroller.engishAlphabet.value}${kcontroller.threeDigit.text}${kcontroller.lastTwoDigit.text}';
-                        }
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: CoustomTextField1(
+                        controller: kcontroller.carNmae,
+                        hint: "نام ماشین",
+                        width: 200),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Obx(() => DropdownButtonFormField<String>(
+                      initialValue: (kcontroller.role.value == 'مجاز' ||
+                              kcontroller.role.value == 'غیر مجاز')
+                          ? kcontroller.role.value
+                          : 'مجاز',
+                      onChanged: (value) {
+                        if (value != null) kcontroller.role.value = value;
+                      },
+                      isExpanded: true,
+                      style: const TextStyle(
+                          fontSize: 12.5, color: AppColors.textPrimary),
+                      items: const [
+                        DropdownMenuItem(
+                            value: 'مجاز', child: Text("مجاز")),
+                        DropdownMenuItem(
+                            value: 'غیر مجاز', child: Text("غیر مجاز")),
+                      ],
+                    )),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  try {
+                    final String plateNumber;
+                    if (kcontroller.isArvand.value) {
+                      plateNumber = kcontroller.arvandDigits.text;
+                    } else {
+                      plateNumber =
+                          '${kcontroller.firstTwoDigit.text}${kcontroller.engishAlphabet.value}${kcontroller.threeDigit.text}${kcontroller.lastTwoDigit.text}';
+                    }
 
-                        String name =
-                            '${kcontroller.name.text.trim()} ${kcontroller.lastName.text.trim()}';
-                        String eDate =
-                            "${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}";
-                        String eTime =
-                            "${TimeOfDay.now().hour.toString().padLeft(2, '0')}:${TimeOfDay.now().minute.toString().padLeft(2, '0')}";
+                    String name =
+                        '${kcontroller.name.text.trim()} ${kcontroller.lastName.text.trim()}';
+                    String eDate =
+                        "${DateTime.now().year}-${DateTime.now().month}-${DateTime.now().day}";
+                    String eTime =
+                        "${TimeOfDay.now().hour.toString().padLeft(2, '0')}:${TimeOfDay.now().minute.toString().padLeft(2, '0')}";
 
-                        var body = {
-                          "name": name,
-                          'plateNumber': plateNumber,
-                          'carName': kcontroller.carNmae.text.trim(),
-                          'isarvand': kcontroller.isArvand.value
-                              ? 'arvand'
-                              : 'notarvand',
-                          'rtpath': '/rt1',
-                          'eDate': eDate,
-                          'eTime': eTime,
-                          'role': kcontroller.role.value,
-                          'firstTwoDigit': kcontroller.firstTwoDigit.text,
-                          'threeDigit': kcontroller.threeDigit.text,
-                          'lastTwoDigit': kcontroller.lastTwoDigit.text,
-                          'englishAlphabet': kcontroller.engishAlphabet.value,
-                          'persinalAlphabet': kcontroller.persianAlhpabet.value
-                        };
-                        if (isEdit) {
-                          final id = (index != null &&
-                                  index! >= 0 &&
-                                  index! < kcontroller.knowPerson.length)
-                              ? kcontroller.knowPerson[index!].id
-                              : null;
-                          if (id == null || id.isEmpty) {
-                            ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                                const SnackBar(
-                                    content: Directionality(
-                                        textDirection: TextDirection.rtl,
-                                        child:
-                                            Text("خطا دوباره امتحان کنید"))));
-                            return;
-                          }
-                          final record = await pb
-                              .collection('registredDb')
-                              .update(id,
-                                  body: body)
-                              .timeout(const Duration(seconds: 15));
-
-                          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                              SnackBar(
-                                  content: Directionality(
-                                      textDirection: TextDirection.rtl,
-                                      child: Text(
-                                          "موفیت آمیز بود ${record.id}"))));
-                        } else {
-                          final record = await pb
-                              .collection('registredDb')
-                              .create(body: body)
-                              .timeout(const Duration(seconds: 15));
-
-                          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                              SnackBar(
-                                  content: Directionality(
-                                      textDirection: TextDirection.rtl,
-                                      child: Text(
-                                          "موفیت آمیز بود ${record.id}"))));
-                        }
-                      } catch (e) {
+                    var body = {
+                      "name": name,
+                      'plateNumber': plateNumber,
+                      'carName': kcontroller.carNmae.text.trim(),
+                      'isarvand': kcontroller.isArvand.value
+                          ? 'arvand'
+                          : 'notarvand',
+                      'rtpath': '/rt1',
+                      'eDate': eDate,
+                      'eTime': eTime,
+                      'role': kcontroller.role.value,
+                      'firstTwoDigit': kcontroller.firstTwoDigit.text,
+                      'threeDigit': kcontroller.threeDigit.text,
+                      'lastTwoDigit': kcontroller.lastTwoDigit.text,
+                      'englishAlphabet': kcontroller.engishAlphabet.value,
+                      'persinalAlphabet': kcontroller.persianAlhpabet.value
+                    };
+                    if (isEdit) {
+                      final id = (index != null &&
+                              index! >= 0 &&
+                              index! < kcontroller.knowPerson.length)
+                          ? kcontroller.knowPerson[index!].id
+                          : null;
+                      if (id == null || id.isEmpty) {
                         ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                            SnackBar(
+                            const SnackBar(
                                 content: Directionality(
                                     textDirection: TextDirection.rtl,
-                                    child: Text("خطا دوباره امتحان کنید"))));
+                                    child:
+                                        Text("خطا دوباره امتحان کنید"))));
+                        return;
                       }
+                      final record = await pb
+                          .collection('registredDb')
+                          .update(id, body: body)
+                          .timeout(const Duration(seconds: 15));
 
-                      if (context.mounted) Navigator.pop(context);
-                    },
-                    child: Text("ثبت")))
-          ],
+                      ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(
+                          content: Directionality(
+                              textDirection: TextDirection.rtl,
+                              child: Text("موفیت آمیز بود ${record.id}"))));
+                    } else {
+                      final record = await pb
+                          .collection('registredDb')
+                          .create(body: body)
+                          .timeout(const Duration(seconds: 15));
+
+                      ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(
+                          content: Directionality(
+                              textDirection: TextDirection.rtl,
+                              child: Text("موفیت آمیز بود ${record.id}"))));
+                    }
+                  } catch (e) {
+                    ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(
+                        content: Directionality(
+                            textDirection: TextDirection.rtl,
+                            child: Text("خطا دوباره امتحان کنید"))));
+                  }
+
+                  if (context.mounted) Navigator.pop(context);
+                },
+                icon: const Icon(Icons.check, size: 16),
+                label: const Text("ثبت"),
+              ),
+            ],
+          ),
         ),
       ),
-    ));
+    );
   }
 }

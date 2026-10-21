@@ -23,7 +23,9 @@ class GeneralSetting extends StatelessWidget {
         SizedBox(
           height: 15,
         ),
-        ElevatedButton(
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: ElevatedButton.icon(
             onPressed: () async {
               final portParsed =
                   int.tryParse(scontroller.rfportConroller.text.trim());
@@ -75,7 +77,10 @@ class GeneralSetting extends StatelessWidget {
                 )));
               }
             },
-            child: Text("ذخیره"))
+            icon: const Icon(Icons.save_outlined, size: 16),
+            label: const Text("ذخیره"),
+          ),
+        ),
       ],
     );
   }

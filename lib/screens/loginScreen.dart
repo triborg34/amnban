@@ -2,13 +2,16 @@ import 'dart:convert';
 
 import 'package:amnban/models/userClass.dart';
 import 'package:amnban/screens/main_screen.dart';
+import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
+import 'package:amnban/widgets/app_logo.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// Login screen — cream card on the deep teal background of the reference.
 class ModernLoginPage extends StatefulWidget {
   const ModernLoginPage({super.key});
 
@@ -85,6 +88,7 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.loginBackground,
       body: KeyboardListener(
         focusNode: _keyboardFocusNode,
         autofocus: true,
@@ -97,205 +101,234 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
         child: Container(
           width: double.infinity,
           height: double.infinity,
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Colors.purple.shade900,
-                Colors.black,
-              ],
+              colors: [AppColors.loginBackground, Color(0xFF223A3D)],
             ),
           ),
           child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Image.asset(
-                      'assets/images/mainlogo2.png',
-                      width: 200,
-                      height: 200,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppColors.loginCard,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: AppColors.loginCardBorder),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.25),
+                          blurRadius: 28,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
                     ),
-                    Text(
-                      "سامانه پایش خودکار پلاک\n Automatic Numberplate Recognition",
-                      style: TextStyle(color: Colors.white, fontSize: 18),
-                      textAlign: TextAlign.center,
-                    )
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  textDirection: TextDirection.rtl,
-                  children: [
-                    SizedBox(
-                      height: 500,
-                      width: 500,
-                      child: SingleChildScrollView(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 30),
-                          child: Form(
-                            key: _formKey,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final wide = constraints.maxWidth >= 720;
+                        final brand = _brand();
+                        final form = _form();
+
+                        if (!wide) {
+                          return Padding(
+                            padding: const EdgeInsets.all(24),
                             child: Column(
-                              textDirection: TextDirection.rtl,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                // Logo or App Name
-                                Text(
-                                  'ورود',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 36,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(height: 40),
-
-                                // Username TextField
-                                TextFormField(
-                                  controller: _usernameController,
-                                  decoration: InputDecoration(
-                                    prefixIcon: Icon(Icons.person,
-                                        color: Colors.purple),
-                                    hintText: 'نام کاربری',
-                                    filled: true,
-                                    fillColor: Colors.white.withValues(alpha: 0.1),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                      borderSide: BorderSide(
-                                          color: Colors.purple, width: 2),
-                                    ),
-                                    hintStyle: TextStyle(color: Colors.white54),
-                                  ),
-                                  style: TextStyle(color: Colors.white),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'لطفا نام کاربری خود را وارد کنید';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                const SizedBox(height: 20),
-
-                                // Password TextField
-                                TextFormField(
-                                  controller: _passwordController,
-                                  obscureText: true,
-                                  decoration: InputDecoration(
-                                    prefixIcon:
-                                        Icon(Icons.lock, color: Colors.purple),
-                                    hintText: 'رمز عبور',
-                                    filled: true,
-                                    fillColor: Colors.white.withValues(alpha:0.1),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                      borderSide: BorderSide.none,
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                      borderSide: BorderSide(
-                                          color: Colors.purple, width: 2),
-                                    ),
-                                    hintStyle: TextStyle(color: Colors.white54),
-                                  ),
-                                  style: TextStyle(color: Colors.white),
-                                  validator: (value) {
-                                    if (value == null || value.isEmpty) {
-                                      return 'لطفا رمز عبور خود را وارد کنید';
-                                    }
-                                    return null;
-                                  },
-                                ),
-                                const SizedBox(height: 10),
-
-                                // Remember Me Checkbox
-                                Row(
-                                  textDirection: TextDirection.rtl,
-                                  children: [
-                                    Checkbox(
-                                      value: _rememberMe,
-                                      activeColor: Colors.purple,
-                                      checkColor: Colors.white,
-                                      side: BorderSide(color: Colors.white54),
-                                      onChanged: (bool? value) {
-                                        setState(() {
-                                          _rememberMe = value ?? false;
-                                        });
-                                      },
-                                    ),
-                                    Text(
-                                      'مرا به یاد داشته باش',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                    Spacer(),
-                                  ],
-                                ),
-                                const SizedBox(height: 30),
-
-                                // Login Button
-                                ElevatedButton(
-                                  autofocus: false,
-                                  onPressed: () async {
-                                   
-                                    await _login();
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.purple,
-                                    padding: EdgeInsets.symmetric(vertical: 15),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    'ورود',
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
+                                brand,
+                                const SizedBox(height: 22),
+                                form,
                               ],
                             ),
+                          );
+                        }
+
+                        return Padding(
+                          padding: const EdgeInsets.all(28),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // RTL: the first child is rendered on the right,
+                              // so the form comes first and the brand second.
+                              SizedBox(width: 300, child: form),
+                              const SizedBox(width: 36),
+                              SizedBox(width: 280, child: brand),
+                            ],
                           ),
-                        ),
-                      ),
+                        );
+                      },
                     ),
-                    Container(
-                      width: 800,
-                      height: 600,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(15),
-                        child: Image.asset(
-                          'assets/images/ban.jpg',
-                          fit: BoxFit.fill,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 18),
+                  const Text(
+                    'ممانعت از دسترسی غیرمجاز به سامانه کنترل شده توسط: شرکت دیسپی',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 11.5, color: Colors.white54),
+                  ),
+                ],
+              ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _brand() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const DiespiEmblem(size: 120),
+        const SizedBox(height: 16),
+        const DiespiWordmark(fontSize: 30),
+        const SizedBox(height: 10),
+        const Text(
+          'سامانه پایش خودکار پلاک',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w500,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _form() {
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'ورود به سامانه',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w700,
+              color: AppColors.sidebar,
+            ),
+          ),
+          const SizedBox(height: 4),
+          const Text(
+            'پنل مدیریت پارکینگ',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 12.5,
+              color: AppColors.primary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 22),
+          _label('نام کاربری'),
+          TextFormField(
+            controller: _usernameController,
+            textDirection: TextDirection.ltr,
+            style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+            decoration: const InputDecoration(
+              hintText: 'نام کاربری',
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'لطفا نام کاربری خود را وارد کنید';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 14),
+          _label('رمز عبور'),
+          TextFormField(
+            controller: _passwordController,
+            obscureText: true,
+            textDirection: TextDirection.ltr,
+            style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
+            decoration: const InputDecoration(
+              hintText: 'رمز عبور',
+            ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'لطفا رمز عبور خود را وارد کنید';
+              }
+              return null;
+            },
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              SizedBox(
+                height: 24,
+                width: 24,
+                child: Checkbox(
+                  value: _rememberMe,
+                  activeColor: AppColors.primary,
+                  checkColor: Colors.white,
+                  side: const BorderSide(color: AppColors.textMuted),
+                  onChanged: (bool? value) {
+                    setState(() {
+                      _rememberMe = value ?? false;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(width: 6),
+              const Text(
+                'مرا به یاد داشته باش',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          ElevatedButton(
+            autofocus: false,
+            onPressed: _isLoggingIn ? null : _login,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(0, 44),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: _isLoggingIn
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white),
+                  )
+                : const Text(
+                    'ورود',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _label(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 11.5,
+          color: AppColors.textSecondary,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );

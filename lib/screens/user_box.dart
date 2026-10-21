@@ -1,14 +1,16 @@
 import 'dart:convert';
 
-import 'package:amnban/models/userClass.dart';
+import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/utils/safe.dart';
 import 'package:amnban/widgets/add_or_edit_user.dart';
+import 'package:amnban/widgets/app_card.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:responsive_sizer/responsive_sizer.dart';
+import 'package:persian_number_utility/persian_number_utility.dart';
 
+/// Users list (accounts + access level).
 class UserBox extends StatelessWidget {
   UserBox({
     required this.ucontroller,
@@ -21,194 +23,159 @@ class UserBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(15),
-      width: Get.width,
-      height: 400,
-      child: Column(
-        children: [
-          Obx(() => SizedBox(
-                height: 300,
-                child: ListView.builder(
-                  itemBuilder: (context, index) => Container(
-                    height: 50,
-                    decoration: BoxDecoration(
-                        border: Border.all(
-                          color: selecetpurpule,
-                        ),
-                        borderRadius: BorderRadius.circular(5)),
-                    width: Get.width,
-                    child: Row(
-                      textDirection: TextDirection.rtl,
-                      children: [
-                        SizedBox(
-                          width: 3.w,
-                          height: 50,
-                          child: Center(
-                            child: Text(
-                              (index + 1).toString(),
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ),
-                        VerticalDivider(
-                          color: selecetpurpule,
-                        ),
-                        SizedBox(
-                          width: 5.w,
-                          height: 50,
-                          child: Center(
-                            child: Text(
-                              ucontroller.users[index].nickname ?? '-',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ),
-                        VerticalDivider(
-                          color: selecetpurpule,
-                        ),
-                        SizedBox(
-                          width: 12.w,
-                          height: 50,
-                          child: Center(
-                            child: Text(
-                              ucontroller.users[index].email ?? '-',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ),
-                        VerticalDivider(
-                          color: selecetpurpule,
-                        ),
-                        SizedBox(
-                          width: 6.w,
-                          height: 50,
-                          child: Center(
-                            child: Text(
-                              ucontroller.users[index].username ?? '-',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ),
-                        VerticalDivider(
-                          color: selecetpurpule,
-                        ),
-                        SizedBox(
-                          width: 5.w,
-                          height: 50,
-                          child: Center(
-                            child: Text(
-                              ucontroller.users[index].accsesslvl ?? '-',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        ),
-                        VerticalDivider(
-                          color: selecetpurpule,
-                        ),
-                        SizedBox(
-                          width: 5.w,
-                          height: 50,
-                          child: Center(
-                              child: IconButton(
-                                  onPressed: () async {
-                                    userClass user = ucontroller.users[index];
-                                    String passwordPlain = '';
-                                    try {
-                                      final stored = user.password;
-                                      if (stored != null &&
-                                          stored.isNotEmpty) {
-                                        passwordPlain = utf8
-                                            .decode(base64.decode(stored));
-                                      }
-                                    } catch (e) {
-                                      appLog('user password decode failed', e);
-                                    }
-                                    List<String> nameSplit =
-                                        (user.nickname ?? '').split(' ');
-                                    await showAdaptiveDialog(
-                                        context: context,
-                                        builder: (context) => add_or_edit_user(
-                                            name: nameSplit.isNotEmpty
-                                                ? nameSplit[0]
-                                                : '',
-                                            lastName:
-                                                nameSplit.length > 1 ? nameSplit.sublist(1).join(' ') : '',
-                                            username: user.username ?? '',
-                                            password: passwordPlain,
-                                            email: user.email ?? '',
-                                            isEdit: true,
-                                            role: user.accsesslvl ?? 'مدیر',
-                                            index: index,
-                                            ucontroller: ucontroller));
-                                  },
-                                  icon: Icon(Icons.edit))),
-                        ),
-                        VerticalDivider(
-                          color: selecetpurpule,
-                        ),
-                       SizedBox(
-                          width: 5.w,
-                          height: 50,
-                          child: Center(
-                              child: IconButton(
-                                  onPressed: () async {
-                                    userClass user = ucontroller.users[index];
-                                    final id = user.id;
-                                    if (id == null || id.isEmpty) return;
-                                    try {
-                                      await pb
-                                          .collection('users')
-                                          .delete(id)
-                                          .timeout(const Duration(
-                                              seconds: 15));
-                                    } catch (e) {
-                                      appLog('delete user failed', e);
-                                    }
-                                  },
-                                  icon: Icon(
-                                    Icons.delete,
-                                    color: Colors.red,
-                                  ))),
-                        ),
-                        VerticalDivider(
-                          color: selecetpurpule,
-                        )
-                      ],
-                    ),
-                  ),
-                  itemCount: ucontroller.users.length,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: ElevatedButton.icon(
+            onPressed: () async {
+              await showAdaptiveDialog(
+                context: context,
+                builder: (context) => add_or_edit_user(
+                  email: '',
+                  isEdit: false,
+                  lastName: '',
+                  name: '',
+                  password: '',
+                  role: 'مدیر',
+                  username: '',
+                  ucontroller: ucontroller,
                 ),
-              )),
-          Align(
-              alignment: Alignment.centerRight,
-              child: ElevatedButton(
-                  onPressed: () async {
-                    await showAdaptiveDialog(
-                      context: context,
-                      builder: (context) => add_or_edit_user(
-                        email: '',
-                        isEdit: false,
-                        lastName: '',
-                        name: '',
-                        password: '',
-                        role: 'مدیر',
-                        username: '',
-                        ucontroller: ucontroller,
-                      ),
-                    );
-                  },
-                  child: Text("اضافه کردن")))
+              );
+            },
+            icon: const Icon(Icons.add, size: 16),
+            label: const Text("اضافه کردن"),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Obx(() {
+          final users = ucontroller.users;
+          if (users.isEmpty) {
+            return const AppEmptyState(
+              message: 'کاربری ثبت نشده است',
+              icon: Icons.person_outline,
+              compact: true,
+            );
+          }
+          return SizedBox(
+            height: 300,
+            child: ListView.separated(
+              itemCount: users.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 6),
+              itemBuilder: (context, index) => _userRow(context, index),
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _userRow(BuildContext context, int index) {
+    final user = ucontroller.users[index];
+
+    Widget cell(String value, double width, {IconData? icon}) => SizedBox(
+          width: width,
+          child: Row(
+            children: [
+              if (icon != null) ...[
+                Icon(icon, size: 13, color: AppColors.textMuted),
+                const SizedBox(width: 4),
+              ],
+              Expanded(
+                child: Text(
+                  value,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 30,
+            child: Text(
+              '${index + 1}'.toPersianDigit(),
+              style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+            ),
+          ),
+          Expanded(flex: 3, child: cell(user.nickname ?? '-', 160)),
+          Expanded(flex: 3, child: cell(user.email ?? '-', 160)),
+          Expanded(flex: 2, child: cell(user.username ?? '-', 110)),
+          Expanded(
+            flex: 2,
+            child: cell(user.accsesslvl ?? '-', 90,
+                icon: Icons.admin_panel_settings_outlined),
+          ),
+          IconButton(
+            onPressed: () => _edit(context, index),
+            icon: const Icon(Icons.edit_outlined, size: 18),
+            tooltip: 'ویرایش',
+          ),
+          IconButton(
+            onPressed: () => _delete(index),
+            icon: const Icon(Icons.delete_outline,
+                size: 18, color: AppColors.danger),
+            tooltip: 'حذف',
+          ),
         ],
       ),
-      decoration: BoxDecoration(
-          color: Colors.transparent,
-          border: Border.all(color: purpule),
-          borderRadius: BorderRadius.circular(15)),
     );
+  }
+
+  Future<void> _edit(BuildContext context, int index) async {
+    final user = ucontroller.users[index];
+    String passwordPlain = '';
+    try {
+      final stored = user.password;
+      if (stored != null && stored.isNotEmpty) {
+        passwordPlain = utf8.decode(base64.decode(stored));
+      }
+    } catch (e) {
+      appLog('user password decode failed', e);
+    }
+    final nameSplit = (user.nickname ?? '').split(' ');
+    if (!context.mounted) return;
+    await showAdaptiveDialog(
+      context: context,
+      builder: (context) => add_or_edit_user(
+        name: nameSplit.isNotEmpty ? nameSplit[0] : '',
+        lastName: nameSplit.length > 1 ? nameSplit.sublist(1).join(' ') : '',
+        username: user.username ?? '',
+        password: passwordPlain,
+        email: user.email ?? '',
+        isEdit: true,
+        role: user.accsesslvl ?? 'مدیر',
+        index: index,
+        ucontroller: ucontroller,
+      ),
+    );
+  }
+
+  Future<void> _delete(int index) async {
+    final user = ucontroller.users[index];
+    final id = user.id;
+    if (id == null || id.isEmpty) return;
+    try {
+      await pb
+          .collection('users')
+          .delete(id)
+          .timeout(const Duration(seconds: 15));
+    } catch (e) {
+      appLog('delete user failed', e);
+    }
   }
 }

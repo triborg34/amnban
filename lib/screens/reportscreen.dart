@@ -1,25 +1,27 @@
 import 'package:amnban/models/databaseEntry.dart';
 import 'package:amnban/screens/details_screen.dart';
+import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/utils/safe.dart';
-import 'package:amnban/utils/converFunctions.dart' show alphabetP2, convertToPersian, convertToPersianString, latinLetters;
-import 'package:amnban/widgets/arvandpelak.dart';
+import 'package:amnban/utils/converFunctions.dart'
+    show alphabetP2, convertToPersianString;
+import 'package:amnban/widgets/app_card.dart';
+import 'package:amnban/widgets/data_base_entries.dart' show isEntryVisible;
+import 'package:amnban/widgets/iran_plate.dart';
+import 'package:amnban/widgets/jalali_picker.dart';
+import 'package:amnban/widgets/licance_searcher.dart';
+import 'package:amnban/widgets/plate_picked.dart';
 import 'package:amnban/widgets/safe_image.dart';
+import 'package:amnban/widgets/status_chip.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:persian_number_utility/persian_number_utility.dart';
 import 'package:printing/printing.dart';
-import 'package:amnban/widgets/licance_searcher.dart';
-import 'package:amnban/widgets/lisancepage.dart';
-import 'package:amnban/widgets/plate_picked.dart';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:persian_datetime_picker/persian_datetime_picker.dart';
 
-import 'package:responsive_sizer/responsive_sizer.dart';
-
+/// Reports screen — filter panel on top, results table below.
 class Reportscreen extends StatefulWidget {
   Reportscreen({super.key});
 
@@ -31,6 +33,48 @@ class _ReportscreenState extends State<Reportscreen> {
   reportController rcontroller = Get.find<reportController>();
   knowPersonController kcontroller = Get.find<knowPersonController>();
 
+  // ---- presentation-only filters (applied on top of the server results) --
+  String _userType = 'همه';
+  String _period = 'همه';
+  String _carType = 'همه';
+  String _plateType = 'همه';
+  String _carColor = 'همه';
+  final TextEditingController _carModelController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+
+  int _pageSize = 50;
+
+  static const List<String> _userTypes = [
+    'همه',
+    'مجاز',
+    'غیر مجاز',
+    'بدون مالک',
+  ];
+  static const List<String> _periods = [
+    'همه',
+    'امروز',
+    'هفت روز اخیر',
+    'سی روز اخیر',
+    'سال جاری',
+  ];
+  static const List<String> _carTypes = [
+    'همه',
+    'شخصی',
+    'تاکسی',
+    'دولتی',
+    'کامیون',
+  ];
+  static const List<String> _plateTypes = ['همه', 'عادی', 'اروند'];
+  static const List<String> _carColors = [
+    'همه',
+    'سفید',
+    'مشکی',
+    'نقره ای',
+    'خاکستری',
+    'آبی',
+    'قرمز',
+  ];
+
   @override
   void initState() {
     // Reset search state once per visit, not on every rebuild (a rebuild used
@@ -40,502 +84,795 @@ class _ReportscreenState extends State<Reportscreen> {
   }
 
   @override
+  void dispose() {
+    _carModelController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height,
-      width: MediaQuery.of(context).size.width,
-      padding: EdgeInsets.all(15),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
       child: Column(
-        textDirection: TextDirection.rtl,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            textDirection: TextDirection.rtl,
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              GetBuilder<reportController>(
-                  builder: (controller) => Obx(() => rcontroller.isArvand.value
-                      ? Container(
-                          height: 40,
-                          width: 210,
-                          decoration: BoxDecoration(
-                              color: purpule,
-                              borderRadius: BorderRadius.circular(15)),
-                          child: Center(
-                            child: Text(
-                              rcontroller.pickerPlate.value,
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                        )
-                      : PlatePicked(rcontroller: rcontroller))),
-              TextButton(
-                onPressed: () async {
-                  await showAdaptiveDialog(
-                    context: context,
-                    builder: (context) =>
-                        licanceSearcher(rcontroller: rcontroller),
-                  );
-                },
-                child: Text(
-                  "انتخاب",
-                  style: TextStyle(color: Colors.white),
-                ),
-                style: TextButton.styleFrom(),
-              ),
-              SizedBox(
-                width: 25,
-              ),
-              SizedBox(
-                height: 40,
-                width: 130,
-                child: FilledButton(
-                    style: TextButton.styleFrom(backgroundColor: purpule),
-                    onPressed: () async {
-                      Jalali? picked = await showPersianDatePicker(
-                          context: context,
-                          textDirection: TextDirection.ltr,
-                          initialDate: Jalali.now(),
-                          firstDate: Jalali(1385),
-                          lastDate: Jalali(1499));
-
-                      if (picked == null) return;
-                      if (!context.mounted) return;
-                      var d = picked.toGregorian();
-                      rcontroller.firstDate.value =
-                          d.toDateTime().toString().split(' ')[0];
-                      rcontroller.isDate.value = true;
-                    },
-                    child: Obx(() => Text(
-                        rcontroller.firstDate.value.length == 0
-                            ? "از تاریخ"
-                            : rcontroller.firstDate.value.toPersianDate(),
-                        style: TextStyle(fontSize: 14)))),
-              ),
-              SizedBox(
-                width: 10,
-              ),
-              SizedBox(
-                height: 40,
-                width: 130,
-                child: FilledButton(
-                    style: TextButton.styleFrom(backgroundColor: purpule),
-                    onPressed: () async {
-                      Jalali? picked = await showPersianDatePicker(
-                          context: context,
-                          initialDate: Jalali.now(),
-                          textDirection: TextDirection.ltr,
-                          firstDate: Jalali(1385),
-                          lastDate: Jalali(1499));
-
-                      if (picked == null) return;
-                      if (!context.mounted) return;
-                      var d = picked.toGregorian();
-                      rcontroller.lastDate.value =
-                          d.toDateTime().toString().split(' ')[0];
-                    },
-                    child: Obx(() => Text(
-                        rcontroller.lastDate.value.length == 0
-                            ? "به تاریخ"
-                            : rcontroller.lastDate.value.toPersianDate(),
-                        style: TextStyle(fontSize: 14)))),
-              ),
-              SizedBox(
-                width: 25,
-              ),
-              SizedBox(
-                height: 40,
-                width: 130,
-                child: FilledButton(
-                    style: TextButton.styleFrom(backgroundColor: purpule),
-                    onPressed: () async {
-                      var t = await showTimePicker(
-                        context: context,
-                        helpText: "ساعت را وارد کنید",
-                        confirmText: "تایید",
-                        cancelText: "لغو",
-                        hourLabelText: "ساعت",
-                        minuteLabelText: "دقیقه",
-                        initialTime: TimeOfDay.now(),
-                        initialEntryMode: TimePickerEntryMode.input,
-                        builder: (context, child) {
-                          return MediaQuery(
-                              data: MediaQuery.of(context)
-                                  .copyWith(alwaysUse24HourFormat: true),
-                              child: child!);
-                        },
-                      );
-                      if (t == null) return;
-                      if (!context.mounted) return;
-                      rcontroller.fistTime.value =
-                          '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
-                      rcontroller.isTime.value = true;
-                    },
-                    child: Obx(() => Text(
-                          rcontroller.fistTime.value.length == 0
-                              ? " از ساعت"
-                              : rcontroller.fistTime.toString(),
-                          style: TextStyle(fontSize: 16),
-                        ))),
-              ),
-              SizedBox(
-                width: 10,
-              ),
-              SizedBox(
-                height: 40,
-                width: 130,
-                child: FilledButton(
-                    style: TextButton.styleFrom(backgroundColor: purpule),
-                    onPressed: () async {
-                      var t = await showTimePicker(
-                        context: context,
-                        initialTime: TimeOfDay.now(),
-                        helpText: "ساعت را وارد کنید",
-                        confirmText: "تایید",
-                        cancelText: "لغو",
-                        hourLabelText: "ساعت",
-                        minuteLabelText: "دقیقه",
-                        initialEntryMode: TimePickerEntryMode.input,
-                        builder: (context, child) {
-                          return MediaQuery(
-                              data: MediaQuery.of(context)
-                                  .copyWith(alwaysUse24HourFormat: true),
-                              child: child!);
-                        },
-                      );
-                      if (t == null) return;
-                      if (!context.mounted) return;
-                      rcontroller.lastTime.value =
-                          '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
-                    },
-                    child: Obx(() => Text(
-                          rcontroller.lastTime.value.length == 0
-                              ? " به ساعت"
-                              : rcontroller.lastTime.toString(),
-                          style: TextStyle(fontSize: 16),
-                        ))),
-              ),
-              SizedBox(
-                width: 25,
-              ),
-              ElevatedButton(
-                  onPressed: () async {
-                    if (rcontroller.isLoading.value) return;
-                    rcontroller.isLoading.value = true;
-                    rcontroller.searchError.value = '';
-
-                    try {
-                      rcontroller.isCompleted.value =
-                          await searchFunction(rcontroller);
-                    } catch (e) {
-                      rcontroller.searchError.value = 'خطا در جستجو';
-                      appLog('search failed', e);
-                    } finally {
-                      rcontroller.isLoading.value = false;
-                    }
-                  },
-                  child: Text("جستجو")),
-              SizedBox(
-                width: 10,
-              ),
-              ElevatedButton(onPressed: saveToPdf, child: Text("ذخیره")),
-              SizedBox(
-                width: 10,
-              ),
-              ElevatedButton(
-                  onPressed: () {
-                    rcontroller.inilazed();
-                    rcontroller.update();
-                  },
-                  child: Text("ریست"))
-            ],
-          ),
-          SizedBox(
-            height: 10,
-          ),
-          Obx(() => AnimatedCrossFade(
-                duration: Duration(milliseconds: 300),
-                crossFadeState: rcontroller.isCompleted.value
-                    ? CrossFadeState.showSecond
-                    : CrossFadeState.showFirst,
-                firstChild: rcontroller.isLoading.value
-                    ? Center(
-                        child: SizedBox(
-                            width: 100,
-                            height: 100,
-                            child: CircularProgressIndicator()),
-                      )
-                    : SizedBox.shrink(),
-                secondChild: SingleChildScrollView(
-                  child: Container(
-                    width: Get.width,
-                    height: 700,
-                    child: ListView.builder(
-                      itemBuilder: (context, index) => Builder(builder: (context) {
-                        final item = rcontroller.selectedModel[index];
-                        final plate = item.plateNum ?? '';
-                        bool visible;
-                        try {
-                          visible = item.isarvand == 'arvand'
-                              ? (plate.isNotEmpty &&
-                                  !plate.contains(latinLetters))
-                              : (plate.isNotEmpty &&
-                                  convertToPersian(plate, alphabetP2)[0] != '-');
-                        } catch (_) {
-                          visible = false;
-                        }
-                        if (!visible) return const SizedBox.shrink();
-                        return Container(
-                          child: Row(
-                            textDirection: TextDirection.rtl,
-                            children: [
-                              Container(
-                                  padding: EdgeInsets.all(5.0),
-                                  height: 50,
-                                  width: 10.w,
-                                  decoration: BoxDecoration(
-                                      border: Border(
-                                          right: BorderSide(color: purpule),
-                                          left: BorderSide(color: purpule))),
-                                  child: rcontroller
-                                              .selectedModel[index].isarvand ==
-                                          "arvand"
-                                      ? SizedBox(
-                                          width: 12.w,
-                                          height: 50,
-                                          child: ArvandPelak(
-                                              entry: rcontroller
-                                                  .selectedModel[index]))
-                                      : LicanceNumber(
-                                          entry: rcontroller
-                                              .selectedModel[index])),
-                              Container(
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                      border: Border(
-                                          left: BorderSide(color: purpule))),
-                                  width: 12.w,
-                                  child: Center(
-                                    child: InkWell(
-                                        onTap: () async {
-                                          final plate = rcontroller
-                                                  .selectedModel[index]
-                                                  .plateNum ??
-                                              '';
-                                          if (plate.isEmpty) return;
-                                          try {
-                                            var record = await pb
-                                                .collection('database')
-                                                .getFullList(
-                                                  filter:
-                                                      'plateNum="${pbEscape(plate)}"',
-                                                )
-                                                .timeout(const Duration(
-                                                    seconds: 15));
-
-                                            Get.to(() => Detailedscreen(
-                                                  rec: record,
-                                                  kcontroller: kcontroller,
-                                                  selectedModel: rcontroller
-                                                      .selectedModel[index],
-                                                  index: index,
-                                                ));
-                                          } catch (e) {
-                                            appLog(
-                                                'report detail fetch failed',
-                                                e);
-                                          }
-                                        },
-                                        child: Hero(
-                                            tag:
-                                                "heroTag${rcontroller.selectedModel[index].id ?? index}",
-                                            child: SafeNetImage(
-                                              url: pbFileUrlOf(
-                                                  'database',
-                                                  rcontroller
-                                                      .selectedModel[index].id,
-                                                  rcontroller
-                                                      .selectedModel[index]
-                                                      .imgpath),
-                                              fit: BoxFit.fill,
-                                              width: 12.w,
-                                              height: 48,
-                                            ))),
-                                  )),
-                              Container(
-                                decoration: BoxDecoration(
-                                    border: Border(
-                                        left: BorderSide(color: purpule))),
-                                width: 10.w,
-                                height: 50,
-                                child: Center(
-                                  child: Text(
-                                    kcontroller
-                                            .personFor(rcontroller
-                                                .selectedModel[index].plateNum)
-                                            ?.name ??
-                                        "-",
-                                    textDirection: TextDirection.rtl,
-                                    style: TextStyle(
-                                        color: Colors.white, fontSize: 18),
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                decoration: BoxDecoration(
-                                    border: Border(
-                                        left: BorderSide(color: purpule))),
-                                width: 9.w,
-                                height: 50,
-                                child: Center(
-                                  child: Text(
-                                    kcontroller
-                                            .personFor(rcontroller
-                                                .selectedModel[index].plateNum)
-                                            ?.carName ??
-                                        "-",
-                                    textDirection: TextDirection.rtl,
-                                    style: TextStyle(
-                                        color: Colors.white, fontSize: 18),
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                  padding: EdgeInsets.all(3.0),
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                      border: Border(
-                                          left: BorderSide(color: purpule))),
-                                  width: 5.w,
-                                  child: Center(
-                                    child: Text(
-                                      kcontroller
-                                              .personFor(rcontroller
-                                                  .selectedModel[index]
-                                                  .plateNum)
-                                              ?.role ??
-                                          "-",
-                                      style: TextStyle(
-                                          color: Colors.white, fontSize: 18),
-                                    ),
-                                  )),
-                              // Container(
-                              //     padding: EdgeInsets.all(3.0),
-                              //     height: 50,
-                              //     decoration: BoxDecoration(
-                              //         border: Border(
-                              //             left: BorderSide(color: purpule))),
-                              //     width: 12.w,
-                              //     child: Center(
-                              //       child: Text(
-                              //         rcontroller
-                              //                 .selectedModel[index].platePercent
-                              //                 .toString() +
-                              //             "%",
-                              //         style: TextStyle(
-                              //             color: Colors.white, fontSize: 18),
-                              //       ),
-                              //     )),
-                                Container(
-                                  padding: EdgeInsets.all(3.0),
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                      border: Border(
-                                          left: BorderSide(color: purpule))),
-                                  width: 7.w,
-                                  child: Center(
-                                    child: Text(
-                                           rcontroller
-                                              .selectedModel[index].provice=="None" ? "خوزستان" :rcontroller
-                                              .selectedModel[index].provice!,
-                                      style: TextStyle(
-                                          color: Colors.white, fontSize: 18),
-                                    ),
-                                  )),
-                                    Container(
-                                  padding: EdgeInsets.all(3.0),
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                      border: Border(
-                                          left: BorderSide(color: purpule))),
-                                  width: 7.w,
-                                  child: Center(
-                                    child: Text(
-                                      rcontroller
-                                              .selectedModel[index].city=="None" ? "اهواز" :rcontroller
-                                              .selectedModel[index].city!,
-                                      style: TextStyle(
-                                          color: Colors.white, fontSize: 18),
-                                    ),
-                                  )),
-                              Container(
-                                  padding: EdgeInsets.all(3.0),
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                      border: Border(
-                                          left: BorderSide(color: purpule))),
-                                  width: 12.w,
-                                  child: Center(
-                                      child: Text(
-                                    Get.find<cameraController>()
-                                        .cameraNameFor(rcontroller
-                                            .selectedModel[index].rtpath),
-                                    style: TextStyle(
-                                        color: Colors.white, fontSize: 18),
-                                  ))),
-                              Container(
-                                  padding: EdgeInsets.all(3.0),
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                      border: Border(
-                                          left: BorderSide(color: purpule))),
-                                  width: 12.w,
-                                  child: Center(
-                                    child: Text(
-                                      rcontroller.selectedModel[index].eTime ??
-                                          '-',
-                                      style: TextStyle(
-                                          color: Colors.white, fontSize: 18),
-                                    ),
-                                  )),
-                              Container(
-                                  padding: EdgeInsets.all(3.0),
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                      border: Border(
-                                          left: BorderSide(color: purpule))),
-                                  width: 12.w,
-                                  child: Center(
-                                    child: Text(
-                                      (rcontroller.selectedModel[index].eDate ??
-                                              '')
-                                          .toPersianDate(),
-                                      style: TextStyle(
-                                          color: Colors.white, fontSize: 18),
-                                    ),
-                                  )),
-                            ],
-                          ),
-                           margin: EdgeInsets.only(bottom: 10),
-                          height: 50,
-                          decoration: BoxDecoration(
-                              border: Border.all(color: purpule),
-                              borderRadius: BorderRadius.circular(10)),
-                        );
-                      }),
-                      itemCount: rcontroller.selectedModel.length,
-                    ),
-                  ),
-                ),
-              ))
+          _filterPanel(),
+          const SizedBox(height: 16),
+          _resultsTable(),
         ],
       ),
     );
   }
 
-  void saveToPdf() async {
+  // ------------------------------------------------------------ filter UI
+
+  Widget _filterPanel() {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const AppSectionTitle(
+            title: 'جستجو در گزارش',
+            icon: Icons.filter_alt_outlined,
+          ),
+          const SizedBox(height: 14),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final columns = constraints.maxWidth >= 1000
+                  ? 4
+                  : constraints.maxWidth >= 640
+                      ? 3
+                      : 2;
+
+              final fields = <Widget>[
+                _dropdownField(
+                  label: 'نوع کاربر',
+                  value: _userType,
+                  items: _userTypes,
+                  onChanged: (v) => setState(() => _userType = v),
+                ),
+                _dropdownField(
+                  label: 'بازه زمانی',
+                  value: _period,
+                  items: _periods,
+                  onChanged: (v) {
+                    setState(() => _period = v);
+                    _applyPeriod(v);
+                  },
+                ),
+                _dateField(
+                  label: 'تاریخ شروع',
+                  value: rcontroller.firstDate.value,
+                  onPicked: (iso) {
+                    rcontroller.firstDate.value = iso;
+                    rcontroller.isDate.value = true;
+                    setState(() {});
+                  },
+                ),
+                _dateField(
+                  label: 'تاریخ پایان',
+                  value: rcontroller.lastDate.value,
+                  onPicked: (iso) {
+                    rcontroller.lastDate.value = iso;
+                    rcontroller.isDate.value = true;
+                    setState(() {});
+                  },
+                ),
+                _timeField(
+                  label: 'از ساعت',
+                  value: rcontroller.fistTime.value,
+                  onPicked: (time) {
+                    rcontroller.fistTime.value = time;
+                    rcontroller.isTime.value = true;
+                    setState(() {});
+                  },
+                ),
+                _timeField(
+                  label: 'تا ساعت',
+                  value: rcontroller.lastTime.value,
+                  onPicked: (time) {
+                    rcontroller.lastTime.value = time;
+                    setState(() {});
+                  },
+                ),
+                _dropdownField(
+                  label: 'نوع خودرو',
+                  value: _carType,
+                  items: _carTypes,
+                  onChanged: (v) => setState(() => _carType = v),
+                ),
+                _dropdownField(
+                  label: 'نوع پلاک',
+                  value: _plateType,
+                  items: _plateTypes,
+                  onChanged: (v) => setState(() => _plateType = v),
+                ),
+                _dropdownField(
+                  label: 'رنگ خودرو',
+                  value: _carColor,
+                  items: _carColors,
+                  onChanged: (v) => setState(() => _carColor = v),
+                ),
+                _textField(
+                  label: 'مدل خودرو',
+                  controller: _carModelController,
+                  onChanged: () => setState(() {}),
+                ),
+                _textField(
+                  label: 'توضیحات',
+                  controller: _descriptionController,
+                  onChanged: () => setState(() {}),
+                ),
+              ];
+
+              return Wrap(
+                spacing: 12,
+                runSpacing: 12,
+                children: [
+                  for (final field in fields)
+                    SizedBox(
+                        width: _fieldWidth(constraints.maxWidth, columns),
+                        child: field),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 14),
+          _plateField(),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              OutlinedButton.icon(
+                onPressed: _reset,
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('ریست'),
+              ),
+              const SizedBox(width: 10),
+              OutlinedButton.icon(
+                onPressed: () => saveToPdf(_filtered()),
+                icon: const Icon(Icons.download_outlined, size: 16),
+                label: const Text('دانلود'),
+              ),
+              const SizedBox(width: 10),
+              ElevatedButton.icon(
+                onPressed: _search,
+                icon: const Icon(Icons.search, size: 16),
+                label: const Text('جستجو در گزارش'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  double _fieldWidth(double maxWidth, int columns) {
+    final usable = maxWidth - 32;
+    if (columns == 4) return (usable - 36) / 4;
+    if (columns == 3) return (usable - 24) / 3;
+    return (usable - 12) / 2;
+  }
+
+  Widget _dropdownField({
+    required String label,
+    required String value,
+    required List<String> items,
+    required ValueChanged<String> onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: 5),
+        DropdownButtonFormField<String>(
+          key: ValueKey<String>(_userType),
+          initialValue: items.contains(value) ? value : items.first,
+          items: [
+            for (final item in items)
+              DropdownMenuItem(value: item, child: Text(item)),
+          ],
+          onChanged: (v) {
+            if (v != null) onChanged(v);
+          },
+          isExpanded: true,
+          style: const TextStyle(fontSize: 12.5, color: AppColors.textPrimary),
+        ),
+      ],
+    );
+  }
+
+  Widget _textField({
+    required String label,
+    required TextEditingController controller,
+    required VoidCallback onChanged,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: 5),
+        TextField(
+          controller: controller,
+          onChanged: (_) => onChanged(),
+          style: const TextStyle(fontSize: 12.5),
+          decoration: const InputDecoration(hintText: '-'),
+        ),
+      ],
+    );
+  }
+
+  Widget _dateField({
+    required String label,
+    required String value,
+    required ValueChanged<String> onPicked,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: 5),
+        InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () async {
+            final picked = await showJalaliDateTimePicker(
+              context,
+              initialDate: DateTime.now(),
+              title: label,
+            );
+            if (picked == null) return;
+            if (!mounted) return;
+            onPicked(_isoOf(picked));
+          },
+          child: Container(
+            height: 42,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            alignment: AlignmentDirectional.centerStart,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceMuted,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Text(
+              value.isEmpty ? '-' : value,
+              style: const TextStyle(fontSize: 12.5, color: AppColors.textPrimary),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _timeField({
+    required String label,
+    required String value,
+    required ValueChanged<String> onPicked,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: 5),
+        InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () async {
+            final picked = await showJalaliDateTimePicker(
+              context,
+              initialDate: DateTime.now(),
+              title: label,
+            );
+            if (picked == null) return;
+            if (!mounted) return;
+            final hh = picked.hour.toString().padLeft(2, '0');
+            final mm = picked.minute.toString().padLeft(2, '0');
+            onPicked('$hh:$mm');
+          },
+          child: Container(
+            height: 42,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            alignment: AlignmentDirectional.centerStart,
+            decoration: BoxDecoration(
+              color: AppColors.surfaceMuted,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Text(
+              value.isEmpty ? '-' : value,
+              style: const TextStyle(fontSize: 12.5, color: AppColors.textPrimary),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _plateField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'شماره پلاک',
+          style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: 5),
+        Row(
+          children: [
+            SizedBox(
+              width: 210,
+              child: Obx(() => rcontroller.isArvand.value
+                  ? Container(
+                      height: 42,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      alignment: AlignmentDirectional.centerStart,
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceMuted,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: Text(
+                        rcontroller.pickerPlate.value.isEmpty
+                            ? '-'
+                            : rcontroller.pickerPlate.value,
+                        style: const TextStyle(
+                            fontSize: 12.5, color: AppColors.textPrimary),
+                      ),
+                    )
+                  : PlatePicked(rcontroller: rcontroller)),
+            ),
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
+              onPressed: () async {
+                await showAdaptiveDialog(
+                  context: context,
+                  builder: (context) =>
+                      licanceSearcher(rcontroller: rcontroller),
+                );
+              },
+              icon: const Icon(Icons.search, size: 15),
+              label: const Text('انتخاب'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // ----------------------------------------------------------- results UI
+
+  Widget _resultsTable() {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: AppSectionTitle(
+                  title: 'نتایج گزارش',
+                  icon: Icons.table_chart_outlined,
+                ),
+              ),
+              Obx(() {
+                final count = _filtered().length;
+                return Text(
+                  'گزارشی که یافت شد (${count.toString().toPersianDigit()} مورد یافت شد)',
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    color: AppColors.textMuted,
+                  ),
+                );
+              }),
+              const SizedBox(width: 12),
+              SizedBox(
+                width: 110,
+                child: DropdownButtonFormField<int>(
+                  key: ValueKey<int>(_pageSize),
+                  initialValue: _pageSize,
+                  items: const [
+                    DropdownMenuItem(value: 50, child: Text('۵۰')),
+                    DropdownMenuItem(value: 100, child: Text('۱۰۰')),
+                    DropdownMenuItem(value: 500, child: Text('۵۰۰')),
+                  ],
+                  onChanged: (v) {
+                    if (v == null) return;
+                    setState(() => _pageSize = v);
+                  },
+                  isExpanded: true,
+                  style: const TextStyle(
+                      fontSize: 12, color: AppColors.textPrimary),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Obx(() {
+            if (rcontroller.isLoading.value) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 40),
+                child: Center(
+                  child: SizedBox(
+                    width: 26,
+                    height: 26,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              );
+            }
+            if (rcontroller.searchError.value.isNotEmpty) {
+              return AppEmptyState(
+                message: rcontroller.searchError.value,
+                icon: Icons.error_outline,
+              );
+            }
+
+            final rows = _filtered();
+            if (rows.isEmpty) {
+              return const AppEmptyState(
+                message: 'رکوردی یافت نشد',
+                icon: Icons.search_off,
+              );
+            }
+
+            final visible = rows.take(_pageSize).toList();
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _tableHeader(),
+                const SizedBox(height: 6),
+                ...visible.map((entry) => _tableRow(entry)),
+              ],
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _tableHeader() {
+    Widget head(String title, double width) => SizedBox(
+          width: width,
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            head('پلاک', 130),
+            head('وضعیت تردد', 120),
+            head('جهت', 80),
+            head('تصویر', 90),
+            head('زمان تردد', 130),
+            head('عملیات', 120),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _tableRow(databaseClass entry) {
+    final person = kcontroller.personFor(entry.plateNum);
+    final status = statusForEntry(entry, kcontroller);
+    final camera = Get.find<cameraController>();
+
+    String? gate;
+    for (final c in camera.cameras) {
+      if (c.path == entry.rtpath) {
+        gate = c.gate ?? 'entre';
+        break;
+      }
+    }
+    final direction = (gate == null || gate == 'entre') ? 'ورود' : 'خروج';
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () => _openDetail(entry),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              SizedBox(
+                width: 130,
+                child: Center(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: EntryPlate(entry: entry, height: 36),
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 120,
+                child: Center(
+                  child: StatusChip(status: status, dense: true),
+                ),
+              ),
+              SizedBox(
+                width: 80,
+                child: Center(
+                  child: Text(
+                    direction,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w500,
+                      color: direction == 'ورود'
+                          ? AppColors.chartTeal
+                          : AppColors.warning,
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 90,
+                child: Center(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: Hero(
+                      tag: 'heroTag${entry.id}',
+                      child: SafeNetImage(
+                        url: pbFileUrlOf('database', entry.id, entry.imgpath),
+                        fit: BoxFit.cover,
+                        width: 72,
+                        height: 44,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 130,
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        (entry.eTime ?? '-').toString().toPersianDigit(),
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      Text(
+                        (entry.eDate ?? '').toPersianDate(),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(
+                width: 120,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      onPressed: () => _openDetail(entry),
+                      icon: const Icon(Icons.visibility_outlined, size: 18),
+                      color: AppColors.textSecondary,
+                      tooltip: 'مشاهده جزئیات',
+                    ),
+                    IconButton(
+                      onPressed: () => _openDetail(entry),
+                      icon: const Icon(Icons.print_outlined, size: 18),
+                      color: AppColors.textSecondary,
+                      tooltip: 'چاپ رسید',
+                    ),
+                    if (person != null)
+                      IconButton(
+                        onPressed: () => _openDetail(entry),
+                        icon: const Icon(Icons.person_outline, size: 18),
+                        color: AppColors.textSecondary,
+                        tooltip: person.name ?? '',
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openDetail(databaseClass entry) async {
+    final plate = entry.plateNum ?? '';
+    if (plate.isEmpty) return;
+    try {
+      final record = await pb
+          .collection('database')
+          .getFullList(filter: 'plateNum="${pbEscape(plate)}"')
+          .timeout(const Duration(seconds: 15));
+
+      if (!mounted) return;
+      Get.to(() => Detailedscreen(
+            rec: record,
+            kcontroller: kcontroller,
+            selectedModel: entry,
+            index: 0,
+          ));
+    } catch (e) {
+      appLog('report detail fetch failed', e);
+    }
+  }
+
+  // ---------------------------------------------------------- filter logic
+
+  /// Applies the presentation-only filters on top of the server results.
+  List<databaseClass> _filtered() {
+    final model = _carModelController.text.trim();
+    final description = _descriptionController.text.trim();
+
+    return rcontroller.selectedModel.where((entry) {
+      // Rows with an unreadable plate were hidden before the redesign too.
+      if (!isEntryVisible(entry)) return false;
+
+      final plate = entry.plateNum ?? '';
+      final person = kcontroller.personFor(plate);
+
+      // --- user type ---
+      if (_userType != 'همه') {
+        if (_userType == 'بدون مالک') {
+          if (person != null) return false;
+        } else if (_userType == 'مجاز') {
+          if (person == null || person.role != 'مجاز') return false;
+        } else {
+          if (person == null || person.role == 'مجاز') return false;
+        }
+      }
+
+      // --- plate type ---
+      if (_plateType != 'همه') {
+        final isArvand = entry.isarvand == 'arvand';
+        if (_plateType == 'اروند' && !isArvand) return false;
+        if (_plateType == 'عادی' && isArvand) return false;
+      }
+
+      // --- car type (derived from the plate itself) ---
+      if (_carType != 'همه') {
+        if (_carTypeOf(plate) != _carType) return false;
+      }
+
+      // --- car model / colour (matched against the person's car name) ---
+      final carName = person?.carName ?? '';
+      if (model.isNotEmpty && !carName.contains(model)) return false;
+      if (_carColor != 'همه' && !carName.contains(_carColor)) return false;
+
+      // --- free text ---
+      if (description.isNotEmpty) {
+        final haystack = [
+          plate,
+          person?.name ?? '',
+          carName,
+          entry.city ?? '',
+          entry.provice ?? '',
+        ].join(' ');
+        if (!haystack.contains(description)) return false;
+      }
+
+      return true;
+    }).toList();
+  }
+
+  static String _carTypeOf(String plate) {
+    if (plate.contains('x')) return 'تاکسی';
+    if (plate.contains(RegExp(r'(?<![A-Za-z])A(?![A-Za-z])'))) return 'دولتی';
+    if (plate.contains('EIN')) return 'کامیون';
+    return 'شخصی';
+  }
+
+  /// Maps the "بازه زمانی" selection onto the existing date filters.
+  void _applyPeriod(String period) {
+    final now = DateTime.now();
+    switch (period) {
+      case 'امروز':
+        final iso = _isoOf(now);
+        rcontroller.firstDate.value = iso;
+        rcontroller.lastDate.value = iso;
+        rcontroller.isDate.value = true;
+        break;
+      case 'هفت روز اخیر':
+        rcontroller.firstDate.value =
+            _isoOf(now.subtract(const Duration(days: 6)));
+        rcontroller.lastDate.value = _isoOf(now);
+        rcontroller.isDate.value = true;
+        break;
+      case 'سی روز اخیر':
+        rcontroller.firstDate.value =
+            _isoOf(now.subtract(const Duration(days: 29)));
+        rcontroller.lastDate.value = _isoOf(now);
+        rcontroller.isDate.value = true;
+        break;
+      case 'سال جاری':
+        rcontroller.firstDate.value = _isoOf(DateTime(now.year, 1, 1));
+        rcontroller.lastDate.value = _isoOf(now);
+        rcontroller.isDate.value = true;
+        break;
+      default:
+        rcontroller.firstDate.value = '';
+        rcontroller.lastDate.value = '';
+        rcontroller.isDate.value = false;
+        break;
+    }
+  }
+
+  static String _isoOf(DateTime date) {
+    final m = date.month.toString().padLeft(2, '0');
+    final d = date.day.toString().padLeft(2, '0');
+    return '${date.year}-$m-$d';
+  }
+
+  void _reset() {
+    rcontroller.inilazed();
+    rcontroller.update();
+    setState(() {
+      _userType = 'همه';
+      _period = 'همه';
+      _carType = 'همه';
+      _plateType = 'همه';
+      _carColor = 'همه';
+      _carModelController.clear();
+      _descriptionController.clear();
+    });
+  }
+
+  Future<void> _search() async {
+    if (rcontroller.isLoading.value) return;
+    rcontroller.isLoading.value = true;
+    rcontroller.searchError.value = '';
+
+    try {
+      rcontroller.isCompleted.value = await searchFunction(rcontroller);
+    } catch (e) {
+      rcontroller.searchError.value = 'خطا در جستجو';
+      appLog('search failed', e);
+    } finally {
+      rcontroller.isLoading.value = false;
+    }
+  }
+
+  // ------------------------------------------------------------------ PDF
+
+  void saveToPdf(List<databaseClass> rows) async {
     final doc = pw.Document();
     final ttf = await fontFromAssetBundle('assets/fonts/arial.ttf');
     doc.addPage(
@@ -602,9 +939,9 @@ class _ReportscreenState extends State<Reportscreen> {
                     style: pw.TextStyle(font: ttf) // Apply the font
                     ),
               ),
-              
+
             ]),
-            for (var i in rcontroller.selectedModel)
+            for (var i in rows)
               () {
                 try {
                   final plate = i.plateNum ?? '';

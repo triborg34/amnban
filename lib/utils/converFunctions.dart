@@ -227,7 +227,12 @@ String convertString(String input) {
   return '\u200F' + result + '\u200E';
 }
 
-List convertToPersian(String input, Map<String, String> dictionary) {
+/// Maps a raw plate (`12P34567`) onto its dictionary representation
+/// (`12پ34567`).
+///
+/// Shared by [convertToPersian], [convertToPersianString] and the plate
+/// widgets so every renderer agrees on the exact character layout.
+String tokenizePlate(String input, Map<String, String> dictionary) {
   String result = '';
 
   // Loop through each character or group of characters in the input
@@ -248,6 +253,12 @@ List convertToPersian(String input, Map<String, String> dictionary) {
       result += input[i];
     }
   }
+
+  return result;
+}
+
+List convertToPersian(String input, Map<String, String> dictionary) {
+  String result = tokenizePlate(input, dictionary);
 
   try {
     var persianres = [
@@ -265,26 +276,7 @@ List convertToPersian(String input, Map<String, String> dictionary) {
 }
 
 String convertToPersianString(String input, Map<String, String> dictionary) {
-  String result = '';
-
-  // Loop through each character or group of characters in the input
-  for (int i = 0; i < input.length; i++) {
-    // Check if multi-character tokens exist in the dictionary
-    if (i + 2 < input.length &&
-        dictionary.containsKey(input.substring(i, i + 3))) {
-      result += dictionary[input.substring(i, i + 3)]!;
-      i += 2; // Skip next two characters since we used three
-    } else if (i + 1 < input.length &&
-        dictionary.containsKey(input.substring(i, i + 2))) {
-      result += dictionary[input.substring(i, i + 2)]!;
-      i += 1; // Skip next character since we used two
-    } else if (dictionary.containsKey(input[i])) {
-      result += dictionary[input[i]]!;
-    } else {
-      // If the character is not in the dictionary, just append it as is
-      result += input[i];
-    }
-  }
+  String result = tokenizePlate(input, dictionary);
 
   try {
     var persianres =

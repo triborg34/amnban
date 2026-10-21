@@ -1,13 +1,23 @@
+import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
-import 'package:amnban/widgets/amar_dialog.dart';
-import 'package:amnban/widgets/extended_table.dart';
+import 'package:amnban/utils/dashboard_stats.dart';
+import 'package:amnban/widgets/app_card.dart';
+import 'package:amnban/widgets/dashboard_charts.dart';
 import 'package:amnban/widgets/data_base_entries.dart';
+import 'package:amnban/widgets/extended_table.dart';
+import 'package:amnban/widgets/amar_dialog.dart';
+import 'package:amnban/widgets/stat_card.dart';
+import 'package:amnban/widgets/system_info_card.dart';
 import 'package:amnban/widgets/video_box.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:persian_number_utility/persian_number_utility.dart';
 
+/// Dashboard — mirrors the DIESPI reference layout:
+/// stat strip → live camera grid → traffic chart → usage donuts → system
+/// information.
 class HomeSceen extends StatefulWidget {
   HomeSceen({
     required this.mController,
@@ -46,336 +56,295 @@ class _HomeSceenState extends State<HomeSceen> {
         }
       },
       child: SingleChildScrollView(
-        child: Container(
-          padding: EdgeInsets.all(15),
-          width: MediaQuery.of(context).size.width,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            textDirection: TextDirection.rtl,
-            children: [
-              // Wrap on narrow windows instead of overflowing.
-              LayoutBuilder(builder: (context, constraints) {
-                final narrow = constraints.maxWidth < 900;
-                final video = VideoBox(mController: widget.mController);
-                final entries = dataBaseEntries(
-                    dcontroller: dcontroller,
-                    mController: widget.mController,
-                    kcontroller: kcontroller);
-                if (narrow) {
-                  return Column(children: [
-                    SizedBox(height: 450, child: video),
-                    SizedBox(height: 15),
-                    SizedBox(height: 450, child: entries),
-                  ]);
-                }
-                return Row(
-                  textDirection: TextDirection.rtl,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: video),
-                    SizedBox(width: 15),
-                    Expanded(child: entries),
-                  ],
-                );
-              }),
-              SizedBox(
-                height: 15,
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _statStrip(),
+            const SizedBox(height: 16),
+            _sectionCard(
+              title: 'آخرین تردد ها',
+              icon: Icons.videocam_outlined,
+              child: VideoBox(mController: widget.mController),
+            ),
+            const SizedBox(height: 16),
+            _sectionCard(
+              title: 'لیست ترددها',
+              icon: Icons.list_alt_outlined,
+              child: dataBaseEntries(
+                dcontroller: dcontroller,
+                mController: widget.mController,
+                kcontroller: kcontroller,
               ),
-              Obx(() => dcontroller.entries.isEmpty
-                  ? SizedBox.shrink()
-                  : Visibility(
-                      visible: widget.mController.isSelected.value,
-                      child: ExtendedTable(
-                          index: dcontroller.selectedIndex.value,
-                          dcontroller: dcontroller,
-                          kcontroller: kcontroller),
-                    )),
-              SizedBox(
-                height: 6,
-              ),
-              // Guard empty settings: previously `settings.last!` threw a red
-              // screen before settings finished loading.
-              Obx(() {
-                final scontroller = Get.find<settingController>();
-                if (scontroller.settings.isEmpty) return SizedBox.shrink();
-                final s = scontroller.settings.last;
-                if ((s.isRfid ?? false) && (s.rfconnect ?? false)) {
-                  return Row(
-                      textDirection: TextDirection.rtl,
-                      children: [
-                        TextButton(
-                          onPressed: () => onRelayOne(),
-                          child: Text(
-                            "درب یک",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                        SizedBox(
-                          width: 25,
-                        ),
-                        TextButton(
-                            onPressed: () => onRelayTwo(),
-                            child: Text("درب دو",
-                                style: TextStyle(color: Colors.white)))
-                      ],
-                    );
-                }
-                return SizedBox.shrink();
-              }),
-              SizedBox(
-                height: 15,
-              ),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                textDirection: TextDirection.rtl,
-                children: [
-                  Container(
-                      width: 300,
-                      decoration: BoxDecoration(
-                          color: purpule,
-                          borderRadius: BorderRadius.circular(15)),
-                      child: Column(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            textDirection: TextDirection.rtl,
-                            children: [
-                              Obx(() => amarWidget(
-                                title: "تعداد کل پلاک های امروز",
-                                value: dcontroller.todayCount.value.toString(),
-                              )),
-                              SizedBox(height: 5),
-                              Obx(() => amarWidget(
-                                  title: "تعداد کل پلاک های مجاز امروز ",
-                                  value: dcontroller.todayallowd.length
-                                      .toString())),
-                              SizedBox(height: 5),
-                              Obx(() => amarWidget(
-                                  title: "تعداد کل پلاک های غیر مجاز امروز ",
-                                  value: dcontroller.todayunallowed.length
-                                      .toString())),
-                              SizedBox(height: 5),
-                              Obx(() => amarWidget(
-                                  title: "تعداد کل پلاک های سالم امروز ",
-                                  value:
-                                      dcontroller.goodPlate.value.toString())),
-                              SizedBox(height: 5),
-                              Obx(() => amarWidget(
-                                  title: "تعداد کل پلاک های مخدوش امروز ",
-                                  value: dcontroller.badPlate.value.toString())),
-                              SizedBox(
-                                height: 5,
-                              ),
-                              TextButton(
-                                  onPressed: () async {
-                                    await showAmarDialog(
-                                        context, dcontroller.todayallowd, kcontroller);
-                                  },
-                                  child: Text(
-                                    "لیست پلاک های مجاز امروز",
-                                    style: TextStyle(
-                                        color: Colors.white, fontSize: 16),
-                                  )),
-                              SizedBox(
-                                height: 5,
-                              ),
-                              TextButton(
-                                  onPressed: () async {
-                                    await showAmarDialog(context,
-                                        dcontroller.todayunallowed, kcontroller);
-                                  },
-                                  child: Text(
-                                    "لیست پلاک های غیر مجاز امروز",
-                                    style: TextStyle(
-                                        color: Colors.white, fontSize: 16),
-                                  )),
-                            ],
-                          )),
-                  SizedBox(
-                    width: 15,
-                  ),
-                  Obx(
-                    () {
-                      if (dcontroller.todayCount.value == 0) {
-                        return SizedBox.shrink();
-                      } else {
-                        return Container(
-                          color: Colors.transparent,
-                          width: 300,
-                          height: 300,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              barChartWidget(
-                                total: dcontroller.todayCount.value,
-                                portiant: dcontroller.goodPlate.value,
-                                title: "سالم",
-                                color: Colors.red,
-                              ),
-                              SizedBox(
-                                width: 5,
-                              ),
-                              barChartWidget(
-                                total: dcontroller.todayCount.value,
-                                portiant: dcontroller.badPlate.value,
-                                title: "مخدوش",
-                                color: Colors.yellow,
-                              ),
-                              SizedBox(
-                                width: 5,
-                              ),
-                              barChartWidget(
-                                total: dcontroller.todayCount.value,
-                                portiant: dcontroller.todayallowd.length,
-                                title: "مجاز",
-                                color: Colors.blue,
-                              ),
-                              SizedBox(
-                                width: 5,
-                              ),
-                              barChartWidget(
-                                total: dcontroller.todayCount.value,
-                                portiant: dcontroller.todayunallowed.length,
-                                title: "غیر مجاز",
-                                color: Colors.cyan,
-                              )
-                            ],
-                          ),
-                        );
-                      }
-                    },
-                  )
-                  // dcontroller.todayCount.value == 0
-                  //     ? SizedBox.shrink()
-                  //     :
-                  //
-                  //                 ),
-                ],
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 16),
+            _liveEntries(),
+            const SizedBox(height: 16),
+            _trafficChart(),
+            const SizedBox(height: 16),
+            const SystemUsagePanel(),
+            const SizedBox(height: 16),
+            _todaySummary(),
+            const SizedBox(height: 16),
+            const SystemInfoCard(),
+            const SizedBox(height: 16),
+            _relayButtons(),
+          ],
         ),
       ),
     );
   }
 
-}
+  // ------------------------------------------------------------------ stats
 
-class amarWidget extends StatelessWidget {
-  amarWidget({super.key, required this.title, required this.value});
+  Widget _statStrip() {
+    return Obx(() {
+      final cameras = Get.find<cameraController>();
+      final today = DashboardStats.today(
+        entries: dcontroller.entries,
+        cameras: cameras,
+        persons: kcontroller,
+      );
 
-  String? title;
-  String? value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-        padding: EdgeInsets.all(10),
-        child: Row(
-          textDirection: TextDirection.rtl,
-          children: [
-            Text(
-              ": $title",
-              style: TextStyle(color: Colors.white, fontSize: 16),
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 640;
+          final cards = [
+            StatCard(
+              label: 'موجود در پارکینگ',
+              value: DashboardStats.presentInParking(today)
+                  .toString()
+                  .toPersianDigit(),
+              icon: Icons.directions_car_filled_outlined,
+              accent: AppColors.primary,
             ),
-            Spacer(),
-            Text(
-              "$value",
-              style: TextStyle(color: Colors.white, fontSize: 16),
-            )
+            StatCard(
+              label: 'خروج روزانه',
+              value: today.exits.toString().toPersianDigit(),
+              icon: Icons.logout,
+              accent: AppColors.warning,
+            ),
+            StatCard(
+              label: 'ورود روزانه',
+              value: today.entries.toString().toPersianDigit(),
+              icon: Icons.login,
+              accent: AppColors.chartTeal,
+            ),
+          ];
+
+          if (!wide) {
+            return Column(
+              children: [
+                for (var i = 0; i < cards.length; i++) ...[
+                  if (i > 0) const SizedBox(height: 12),
+                  cards[i],
+                ],
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              for (var i = 0; i < cards.length; i++) ...[
+                if (i > 0) const SizedBox(width: 12),
+                Expanded(child: cards[i]),
+              ],
+            ],
+          );
+        },
+      );
+    });
+  }
+
+  // ----------------------------------------------------------- camera grid
+
+  Widget _sectionCard({
+    required String title,
+    required IconData icon,
+    required Widget child,
+  }) {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AppSectionTitle(title: title, icon: icon),
+          const SizedBox(height: 14),
+          child,
+        ],
+      ),
+    );
+  }
+
+  // --------------------------------------------------------- live entries
+
+  Widget _liveEntries() {
+    return Obx(() {
+      if (dcontroller.entries.isEmpty) {
+        return const SizedBox.shrink();
+      }
+      return Visibility(
+        visible: widget.mController.isSelected.value,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ExtendedTable(
+              index: dcontroller.selectedIndex.value,
+              dcontroller: dcontroller,
+              kcontroller: kcontroller,
+            ),
+            const SizedBox(height: 16),
           ],
-        ));
+        ),
+      );
+    });
+  }
+
+  // ---------------------------------------------------------------- charts
+
+  Widget _trafficChart() {
+    return Obx(() {
+      final cameras = Get.find<cameraController>();
+      final days = DashboardStats.lastDays(
+        entries: dcontroller.entries,
+        cameras: cameras,
+        persons: kcontroller,
+      );
+
+      return _sectionCard(
+        title: 'گزارش ورود و خروج ۷ روز گذشته',
+        icon: Icons.bar_chart_outlined,
+        child: WeeklyTrafficChart(days: days),
+      );
+    });
+  }
+
+  // --------------------------------------------------------------- summary
+
+  Widget _todaySummary() {
+    return Obx(() {
+      return AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const AppSectionTitle(
+              title: 'آمار امروز',
+              icon: Icons.insights_outlined,
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                _summaryTile(
+                  'تعداد کل پلاک های امروز',
+                  dcontroller.todayCount.value.toString(),
+                ),
+                _summaryTile(
+                  'تعداد کل پلاک های مجاز امروز',
+                  dcontroller.todayallowd.length.toString(),
+                  color: AppColors.success,
+                ),
+                _summaryTile(
+                  'تعداد کل پلاک های غیر مجاز امروز',
+                  dcontroller.todayunallowed.length.toString(),
+                  color: AppColors.unauthorized,
+                ),
+                _summaryTile(
+                  'تعداد کل پلاک های سالم امروز',
+                  dcontroller.goodPlate.value.toString(),
+                ),
+                _summaryTile(
+                  'تعداد کل پلاک های مخدوش امروز',
+                  dcontroller.badPlate.value.toString(),
+                  color: AppColors.warning,
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await showAmarDialog(
+                        context, dcontroller.todayallowd, kcontroller);
+                  },
+                  icon: const Icon(Icons.verified_outlined, size: 16),
+                  label: const Text('لیست پلاک های مجاز امروز'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await showAmarDialog(
+                        context, dcontroller.todayunallowed, kcontroller);
+                  },
+                  icon: const Icon(Icons.gpp_bad_outlined, size: 16),
+                  label: const Text('لیست پلاک های غیر مجاز امروز'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _summaryTile(String title, String value, {Color? color}) {
+    return Container(
+      width: 210,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value.toString().toPersianDigit(),
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: color ?? AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ----------------------------------------------------------------- relay
+
+  Widget _relayButtons() {
+    return Obx(() {
+      final scontroller = Get.find<settingController>();
+      if (scontroller.settings.isEmpty) return const SizedBox.shrink();
+      final s = scontroller.settings.last;
+      if (!((s.isRfid ?? false) && (s.rfconnect ?? false))) {
+        return const SizedBox.shrink();
+      }
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          OutlinedButton.icon(
+            onPressed: onRelayOne,
+            icon: const Icon(Icons.sensor_door_outlined, size: 16),
+            label: const Text('درب یک'),
+          ),
+          const SizedBox(width: 10),
+          OutlinedButton.icon(
+            onPressed: onRelayTwo,
+            icon: const Icon(Icons.sensor_door_outlined, size: 16),
+            label: const Text('درب دو'),
+          ),
+        ],
+      );
+    });
   }
 }
-
-class barChartWidget extends StatelessWidget {
-  barChartWidget(
-      {super.key,
-      required this.total,
-      required this.portiant,
-      required this.title,
-      required this.color});
-
-  int total;
-  int portiant;
-  String title;
-  Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    int cacul = 0;
-    try {
-      cacul = caculate(total, portiant);
-    } catch (e) {
-      cacul = 0;
-    }
-
-    return Column(mainAxisAlignment: MainAxisAlignment.end, children: [
-      Container(
-        width: 50,
-        child: Center(child: Text("${cacul}%")),
-        color: color,
-        height: cacul == 0 ? 0 : cacul.toDouble() + 20,
-      ),
-      SizedBox(
-        height: 15,
-      ),
-      Text(
-        title,
-        style: TextStyle(color: Colors.white),
-      )
-    ]);
-  }
-
-  int caculate(int total, int section) {
-    if (total <= 0 || section <= 0) return 0;
-    double res = section / total;
-    return (res * 100).toInt().clamp(0, 100);
-  }
-}
-
-
-
-/*
-
-
-PieChart(PieChartData(sections: [
-                        PieChartSectionData(
-                          radius: 50,
-                            titleStyle: TextStyle(color: Colors.white),
-                            showTitle: true,
-                            title:
-                                "سالم\n %${(caculate(dcontroller.todayCount.value, dcontroller.goodPlate.value) * 100).toInt()}",
-                            value: caculate(dcontroller.todayCount.value,
-                                dcontroller.goodPlate.value),
-                            color: Colors.red),
-                        PieChartSectionData(
-                          radius: 50,
-                            titleStyle: TextStyle(color: Colors.white),
-                            showTitle: true,
-                            title:
-                                "مخدوش \n%${(caculate(dcontroller.todayCount.value, dcontroller.badPlate.value) * 100).toInt()}",
-                            value: caculate(dcontroller.todayCount.value,
-                                dcontroller.badPlate.value),
-                            color: Colors.green),
-                             PieChartSectionData(
-                              radius: 50,
-                            titleStyle: TextStyle(color: Colors.black),
-                            showTitle: true,
-                            title:
-                                "مجاز \n%${(caculate(dcontroller.todayCount.value, dcontroller.todayallowd.length) * 100).toInt()}",
-                            value: caculate(dcontroller.todayCount.value,
-                                dcontroller.todayallowd.length),
-                            color: Colors.white),
-                                    PieChartSectionData(
-                                      radius: 50,
-                            titleStyle: TextStyle(color: Colors.black),
-                            showTitle: true,
-                            title:
-                                "غیر مجاز \n%${(caculate(dcontroller.todayCount.value, dcontroller.todayunallowed.length) * 100).toInt()}",
-                            value: caculate(dcontroller.todayCount.value,
-                                dcontroller.todayunallowed.length),
-                            color: Colors.cyan),
-                      ]))
-*/

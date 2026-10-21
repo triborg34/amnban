@@ -1,15 +1,17 @@
 import 'package:amnban/models/databaseEntry.dart';
+import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/utils/converFunctions.dart';
 import 'package:amnban/utils/safe.dart';
 import 'package:amnban/widgets/add_or_edit_person.dart';
-import 'package:amnban/widgets/arvandpelak.dart';
-import 'package:amnban/widgets/lisancepage.dart';
+import 'package:amnban/widgets/app_card.dart';
+import 'package:amnban/widgets/iran_plate.dart';
 import 'package:amnban/widgets/safe_image.dart';
+import 'package:amnban/widgets/status_chip.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:responsive_sizer/responsive_sizer.dart';
+import 'package:persian_number_utility/persian_number_utility.dart';
 
 /// Parses a stored plate like `12P34567` into person-dialog fields without
 /// ever throwing RangeError on malformed plates.
@@ -56,6 +58,7 @@ bool isEntryVisible(databaseClass e) {
   }
 }
 
+/// Rolling list of the latest detections.
 class dataBaseEntries extends StatefulWidget {
   const dataBaseEntries({
     super.key,
@@ -83,98 +86,100 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
 
   @override
   Widget build(BuildContext context) {
-    // No nested SingleChildScrollView>Column>Expanded anymore (that pumped
-    // an unbounded-height error and fought the inner list). Single ListView
-    // with a footer button instead.
+    // Filter once here instead of Visibility-per-row (which kept invalid
+    // rows in itemCount/separators and built them anyway).
     return Obx(() {
       final entries = widget.dcontroller.entries;
+      final visible = entries.where(isEntryVisible).toList();
+
       if (entries.isEmpty) {
-        return Container(
-          padding: const EdgeInsets.all(5),
-          height: 450,
-          decoration: BoxDecoration(
-              border: Border.all(color: purpule),
-              borderRadius: BorderRadius.circular(15)),
-          child: Center(
-            child: widget.dcontroller.isLoadingMore.value
-                ? const CircularProgressIndicator()
-                : Text(
-                    widget.dcontroller.loadError.value.isNotEmpty
-                        ? widget.dcontroller.loadError.value
-                        : 'رکوردی وجود ندارد',
-                    style: const TextStyle(color: Colors.white),
-                  ),
+        return SizedBox(
+          height: 220,
+          child: AppCard(
+            padding: EdgeInsets.zero,
+            child: Center(
+              child: widget.dcontroller.isLoadingMore.value
+                  ? const CircularProgressIndicator()
+                  : AppEmptyState(
+                      message: widget.dcontroller.loadError.value.isNotEmpty
+                          ? widget.dcontroller.loadError.value
+                          : 'رکوردی وجود ندارد',
+                    ),
+            ),
           ),
         );
       }
-      // Filter once here instead of Visibility-per-row (which kept invalid
-      // rows in itemCount/separators and built them anyway).
-      final visible = entries.where(isEntryVisible).toList();
-      return Container(
-        padding: const EdgeInsets.all(5),
-        decoration: BoxDecoration(
-            border: Border.all(color: purpule),
-            borderRadius: BorderRadius.circular(15)),
-        height: 450,
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView.separated(
-                controller: _scrollController,
-                itemBuilder: (context, index) {
-                  if (index >= visible.length) return const SizedBox.shrink();
-                  final entry = visible[index];
-                  // Map back to the full-list index for selection.
-                  final fullIndex =
-                      entries.indexWhere((e) => e.id == entry.id);
-                  return _EntryRow(
-                    entry: entry,
-                    fullIndex: fullIndex == -1 ? index : fullIndex,
-                    dcontroller: widget.dcontroller,
-                    mController: widget.mController,
-                    kcontroller: widget.kcontroller,
-                  );
-                },
-                separatorBuilder: (context, index) => const SizedBox(
-                  height: 5,
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.filter_list,
+                  size: 15, color: AppColors.textMuted),
+              const SizedBox(width: 6),
+              Text(
+                '${visible.length.toString().toPersianDigit()} تردد ثبت شده',
+                style: const TextStyle(
+                  fontSize: 11.5,
+                  color: AppColors.textMuted,
                 ),
-                itemCount: visible.length,
               ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Container(
+            height: 420,
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.border),
+              borderRadius: BorderRadius.circular(10),
             ),
-            Container(
-              margin: const EdgeInsets.all(10),
-              width: 450,
-              child: Obx(() => ElevatedButton(
-                  style: TextButton.styleFrom(backgroundColor: purpule),
-                  onPressed: widget.dcontroller.isLoadingMore.value
-                      ? null
-                      : () {
-                          widget.dcontroller.inilazedPage =
-                              widget.dcontroller.inilazedPage + 1;
-                          widget.dcontroller.fetchFirstData(
-                              widget.dcontroller.inilazedPage, 30);
-                        },
-                  child: widget.dcontroller.isLoadingMore.value
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
-                        )
-                      : const Text(
-                          "بار گزاری بیشتر",
-                          style: TextStyle(color: Colors.white),
-                        ))),
-            )
-          ],
-        ),
+            clipBehavior: Clip.antiAlias,
+            child: ListView.separated(
+              controller: _scrollController,
+              padding: const EdgeInsets.all(6),
+              itemBuilder: (context, index) {
+                final entry = visible[index];
+                // Map back to the full-list index for selection.
+                final fullIndex =
+                    entries.indexWhere((e) => e.id == entry.id);
+                return _EntryRow(
+                  entry: entry,
+                  fullIndex: fullIndex == -1 ? index : fullIndex,
+                  dcontroller: widget.dcontroller,
+                  mController: widget.mController,
+                  kcontroller: widget.kcontroller,
+                );
+              },
+              separatorBuilder: (context, index) => const SizedBox(height: 6),
+              itemCount: visible.length,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: OutlinedButton.icon(
+              onPressed: widget.dcontroller.isLoadingMore.value
+                  ? null
+                  : () {
+                      widget.dcontroller.inilazedPage =
+                          widget.dcontroller.inilazedPage + 1;
+                      widget.dcontroller.fetchFirstData(
+                          widget.dcontroller.inilazedPage, 30);
+                    },
+              icon: widget.dcontroller.isLoadingMore.value
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.expand_more, size: 16),
+              label: const Text('بار گزاری بیشتر'),
+            ),
+          ),
+        ],
       );
     });
-  }
-
-  bool isAllowed(int index) {
-    final plate = widget.dcontroller.entries[index].plateNum;
-    return widget.kcontroller.personFor(plate)?.role == 'مجاز';
   }
 }
 
@@ -196,127 +201,150 @@ class _EntryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final person = kcontroller.personFor(entry.plateNum);
-    final isArvand = entry.isarvand == 'arvand';
+    final status = statusForEntry(entry, kcontroller);
+
     return InkWell(
+      borderRadius: BorderRadius.circular(8),
       onTap: () {
         mController.isSelected.value = true;
         dcontroller.tableContect.value = entry;
         dcontroller.selectedIndex.value = fullIndex;
       },
       child: Container(
-        height: 80,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
-            color: purpule, borderRadius: BorderRadius.circular(5)),
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.border),
+        ),
         child: Row(
-          textDirection: TextDirection.rtl,
           children: [
             SizedBox(
-                width: 10.w,
-                child: isArvand
-                    ? ArvandPelak2(entry: entry)
-                    : LicanceNumber(entry: entry)),
-            const VerticalDivider(color: Colors.black),
-            SizedBox(
-              height: 48,
-              child: Center(
-                  child: SafeNetImage(
-                url: pbFileUrlOf('database', entry.id, entry.imgpath),
-                fit: BoxFit.fill,
-                width: 10.w,
-                height: 48,
-              )),
-            ),
-            const VerticalDivider(color: Colors.black),
-            Padding(
-              padding: const EdgeInsets.only(left: 8),
-              child: SizedBox(
-                width: 8.w,
-                height: 50,
-                child: person != null
-                    ? Container(
-                        decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(15),
-                            color: Colors.transparent),
-                        child: Center(
-                          child: Text(
-                            person.name ?? '-',
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                                color: person.role == 'مجاز'
-                                    ? Colors.green
-                                    : Colors.red),
-                          ),
-                        ),
-                      )
-                    : IconButton(
-                        onPressed: () async {
-                          final plateNum =
-                              (entry.plateNum ?? '').trim();
-                          final parsed = splitPlateSafe(plateNum);
-                          await showAdaptiveDialog(
-                            context: context,
-                            builder: (context) => add_or_edit_person(
-                                name: '',
-                                lastName: '',
-                                carName: '',
-                                firstTwoDigit: parsed['first'] ?? '',
-                                threeDigit: parsed['three'] ?? '',
-                                lastTwoDigit: parsed['last'] ?? '',
-                                role: "مجاز",
-                                arvandDigits:
-                                    isArvand ? plateNum : '',
-                                isArvand: isArvand,
-                                isEdit: false,
-                                index: fullIndex,
-                                isDiscover: true,
-                                engishAlphabet: parsed['ch'] ?? '',
-                                persianAlhpabet: parsed['fa'] ?? '',
-                                kcontroller: kcontroller),
-                          );
-                        },
-                        hoverColor:
-                            const Color.fromARGB(255, 29, 14, 55),
-                        icon: const Icon(Icons.add_box_outlined),
-                        color: Colors.white70,
-                        iconSize: 36,
-                      ),
+              width: 92,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: EntryPlate(entry: entry, height: 34),
               ),
             ),
-            const VerticalDivider(color: Colors.black),
+            const SizedBox(width: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: SafeNetImage(
+                url: pbFileUrlOf('database', entry.id, entry.imgpath),
+                fit: BoxFit.cover,
+                width: 56,
+                height: 40,
+              ),
+            ),
+            const SizedBox(width: 10),
             Expanded(
-                child: Center(
-                    child: Text(
-              Get.find<cameraController>().cameraNameFor(entry.rtpath),
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: Colors.white, fontSize: 12.sp),
-            ))),
-            const VerticalDivider(color: Colors.black),
-            SizedBox(
-              width: 6.w,
-              height: 50,
-              child: IconButton(
-                  onPressed: () async {
-                    // Capture id first: the old code read
-                    // cameras[index].id AFTER delete for the snackbar,
-                    // using a stale index (RangeError).
-                    final id = entry.id;
-                    if (id == null || id.isEmpty) return;
-                    try {
-                      await pb.collection('database').delete(id);
-                    } catch (e) {
-                      appLog('delete database record failed', e);
-                      if (context.mounted) {
-                        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                            const SnackBar(
-                                content: Text('خطا در حذف رکورد')));
-                      }
-                    }
-                  },
-                  icon: const Icon(
-                    Icons.delete,
-                    color: Colors.red,
-                  )),
-            )
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          person?.name ?? 'ثبت نشده',
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      StatusChip(status: status, dense: true),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      const Icon(Icons.videocam_outlined,
+                          size: 12, color: AppColors.textMuted),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          Get.find<cameraController>()
+                              .cameraNameFor(entry.rtpath),
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      const Icon(Icons.schedule,
+                          size: 12, color: AppColors.textMuted),
+                      const SizedBox(width: 4),
+                      Text(
+                        (entry.eTime ?? '-').toString().toPersianDigit(),
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            if (person == null)
+              IconButton(
+                onPressed: () async {
+                  final plateNum = (entry.plateNum ?? '').trim();
+                  final parsed = splitPlateSafe(plateNum);
+                  await showAdaptiveDialog(
+                    context: context,
+                    builder: (context) => add_or_edit_person(
+                      name: '',
+                      lastName: '',
+                      carName: '',
+                      firstTwoDigit: parsed['first'] ?? '',
+                      threeDigit: parsed['three'] ?? '',
+                      lastTwoDigit: parsed['last'] ?? '',
+                      role: "مجاز",
+                      arvandDigits:
+                          entry.isarvand == 'arvand' ? plateNum : '',
+                      isArvand: entry.isarvand == 'arvand',
+                      isEdit: false,
+                      index: fullIndex,
+                      isDiscover: true,
+                      engishAlphabet: parsed['ch'] ?? '',
+                      persianAlhpabet: parsed['fa'] ?? '',
+                      kcontroller: kcontroller,
+                    ),
+                  );
+                },
+                hoverColor: AppColors.primaryLight,
+                icon: const Icon(Icons.add_box_outlined),
+                color: AppColors.primary,
+                iconSize: 20,
+                tooltip: 'افزودن به لیست مجاز',
+              ),
+            IconButton(
+              onPressed: () async {
+                // Capture id first: the old code read cameras[index].id AFTER
+                // delete for the snackbar, using a stale index (RangeError).
+                final id = entry.id;
+                if (id == null || id.isEmpty) return;
+                try {
+                  await pb.collection('database').delete(id);
+                } catch (e) {
+                  appLog('delete database record failed', e);
+                  if (context.mounted) {
+                    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                        const SnackBar(content: Text('خطا در حذف رکورد')));
+                  }
+                }
+              },
+              icon: const Icon(Icons.delete_outline, color: AppColors.danger),
+              iconSize: 20,
+              tooltip: 'حذف',
+            ),
           ],
         ),
       ),

@@ -1,16 +1,17 @@
 import 'package:amnban/screens/details_screen.dart';
+import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/utils/safe.dart';
-import 'package:amnban/widgets/arvandpelak.dart';
-import 'package:amnban/widgets/lisancepage.dart';
+import 'package:amnban/widgets/app_card.dart';
+import 'package:amnban/widgets/iran_plate.dart';
 import 'package:amnban/widgets/pdf_printig.dart';
 import 'package:amnban/widgets/safe_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:persian_number_utility/persian_number_utility.dart';
-import 'package:responsive_sizer/responsive_sizer.dart';
 
+/// Detail row of the currently selected detection.
 class ExtendedTable extends StatelessWidget {
   ExtendedTable(
       {required this.dcontroller,
@@ -24,159 +25,128 @@ class ExtendedTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    
-    return Obx(() => Container(
-          margin: EdgeInsets.all(15),
-          height: 48,
-          child: Row(
-            textDirection: TextDirection.rtl,
-            children: [
-              Container(
-                  decoration: BoxDecoration(
-                      border: Border(left: BorderSide(color: purpule))),
-                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  width: 10.w,
-                  height: 48,
-                  child: dcontroller.tableContect.value.isarvand == 'arvand'
-                      ? ArvandPelak(entry: dcontroller.tableContect.value)
-                      : LicanceNumber(entry: dcontroller.tableContect.value)),
-              InkWell(
-                onTap: () async {
-                  final plate = dcontroller.tableContect.value.plateNum ?? '';
-                  if (plate.isEmpty) return;
-                  try {
-                    var record =
-                        await pb.collection('database').getFullList(
+    return Obx(() {
+      final entry = dcontroller.tableContect.value;
+      final person = kcontroller.personFor(entry.plateNum);
+
+      return AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const AppSectionTitle(
+              title: 'جزئیات تردد انتخاب شده',
+              icon: Icons.visibility_outlined,
+            ),
+            const SizedBox(height: 12),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 118,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: EntryPlate(entry: entry, height: 40),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  InkWell(
+                    onTap: () async {
+                      final plate = entry.plateNum ?? '';
+                      if (plate.isEmpty) return;
+                      try {
+                        final record = await pb
+                            .collection('database')
+                            .getFullList(
                               filter: 'plateNum="${pbEscape(plate)}"',
-                            ).timeout(const Duration(seconds: 15));
+                            )
+                            .timeout(const Duration(seconds: 15));
 
-                    Get.to(() => Detailedscreen(
-                      rec: record,
-
-                        selectedModel: dcontroller.tableContect.value,
-                        index: index,
-                        kcontroller: kcontroller));
-                  } catch (e) {
-                    appLog('extended detail fetch failed', e);
-                  }
-                },
-                child: Container(
-                  height: 48,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                      color: Colors.transparent,
-                      border: Border(left: BorderSide(color: purpule))),
-                  padding: EdgeInsets.symmetric(horizontal: 0),
-                  width: 10.w,
-                  child: Center(
-                    child: Hero(
-                      tag: 'heroTag${dcontroller.tableContect.value.id ?? dcontroller.selectedIndex.value}',
-                      child: SafeNetImage(
-                        url: pbFileUrlOf('database', dcontroller.tableContect.value.id, dcontroller.tableContect.value.imgpath),
-                        fit: BoxFit.fill,
-                        width: 205,
+                        Get.to(() => Detailedscreen(
+                          rec: record,
+                          selectedModel: entry,
+                          index: index,
+                          kcontroller: kcontroller,
+                        ));
+                      } catch (e) {
+                        appLog('extended detail fetch failed', e);
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(6),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(6),
+                      child: Hero(
+                        tag: 'heroTag${entry.id ?? dcontroller.selectedIndex.value}',
+                        child: SafeNetImage(
+                          url: pbFileUrlOf('database', entry.id, entry.imgpath),
+                          fit: BoxFit.cover,
+                          width: 120,
+                          height: 72,
+                        ),
                       ),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  _cell('نام و نام خانوادگی', person?.name ?? '-'),
+                  _cell('استان', _provinceOf(entry.provice)),
+                  _cell('شهر', _cityOf(entry.city)),
+                  _cell('نوع خودرو', _carTypeOf(entry.plateNum ?? '')),
+                  _cell('تاریخ ورود', (entry.eDate ?? '').toPersianDate()),
+                  _cell('ساعت ورود', (entry.eTime ?? '-').toPersianDigit()),
+                  const SizedBox(width: 10),
+                  PdfPrintig(kcontroller: kcontroller, dcontroller: dcontroller),
+                ],
               ),
-              Container(
-                  decoration: BoxDecoration(
-                      border: Border(left: BorderSide(color: purpule))),
-                  height: 98,
-                  width: 10.w,
-                  child: Center(
-                      child: Text(
-                    kcontroller
-                            .personFor(
-                                dcontroller.tableContect.value.plateNum)
-                            ?.name ??
-                        "-",
-                    textDirection: TextDirection.rtl,
-                    style: TextStyle(color: Colors.white, fontSize: 10.sp),
-                  ))),
-              Container(
-                  decoration: BoxDecoration(
-                      border: Border(left: BorderSide(color: purpule))),
-                  height: 98,
-                  width: 10.w,
-                  child: Center(
-                      child: Text(
-                        dcontroller.tableContect.value.provice=="None" ? "خوزستان"  : dcontroller.tableContect.value.provice!,
-                    // dcontroller.tableContect.value.platePercent.toString() +
-                    //     "%",
-                    textDirection: TextDirection.rtl,
-                    style: TextStyle(color: Colors.white, fontSize: 10.sp),
-                  ))),
-              Container(
-                  decoration: BoxDecoration(
-                      border: Border(left: BorderSide(color: purpule))),
-                  height: 98,
-                  width: 10.w,
-                  child: Center(
-                      child: Text(
-                           dcontroller.tableContect.value.city=="None" ? "اهواز"  : dcontroller.tableContect.value.city!,
-                    textDirection: TextDirection.rtl,
-                    style: TextStyle(color: Colors.white, fontSize: 10.sp),
-                  ))),
-              Container(
-                  decoration: BoxDecoration(
-                      border: Border(left: BorderSide(color: purpule))),
-                  height: 98,
-                  width: 10.w,
-                  child: Center(
-                      child: Text(
-                    (dcontroller.tableContect.value.plateNum ?? '').contains("x")
-                        ? 'تاکسی'
-                        : (dcontroller.tableContect.value.plateNum ?? '').contains( RegExp(r'(?<![A-Za-z])A(?![A-Za-z])'))
-                            ? "دولتی"
-                            : (dcontroller.tableContect.value.plateNum ?? '')
-                                    .contains('EIN')
-                                ? 'کامیون'
-                                : "شخصی",
-                    textDirection: TextDirection.rtl,
-                    style: TextStyle(color: Colors.white, fontSize: 10.sp),
-                  ))),
-              Container(
-                  decoration: BoxDecoration(
-                      border: Border(left: BorderSide(color: purpule))),
-                  height: 98,
-                  width: 10.w,
-                  child: Center(
-                      child: Text(
-                    (dcontroller.tableContect.value.eDate ?? '').toPersianDate(),
-                    textDirection: TextDirection.rtl,
-                    style: TextStyle(color: Colors.white, fontSize: 10.sp),
-                  ))),
-              Container(
-                  decoration: BoxDecoration(
-                      border: Border(left: BorderSide(color: purpule))),
-                  height: 98,
-                  width: 10.w,
-                  child: Center(
-                      child: Text(
-                    (dcontroller.tableContect.value.eTime ?? '-').toPersianDigit(),
-                    textDirection: TextDirection.rtl,
-                    style: TextStyle(color: Colors.white, fontSize: 10.sp),
-                  ))),
-              Container(
-                decoration: BoxDecoration(
-                    border: Border(left: BorderSide(color: purpule))),
-                width: 10.w,
-                child: PdfPrintig(
-                    kcontroller: kcontroller, dcontroller: dcontroller),
-              ),
-              //           Visibility(
-              //   visible: Get.find<Boxes>().settingbox.last.isRfid!,
-              //   child: IconButton(
-              //       onPressed: () {
-              //         onRelayOne();
-              //       },
-              //       icon: Icon(Icons.door_back_door)),
-              // )
-            ],
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _cell(String title, String value) {
+    return Container(
+      width: 140,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      margin: const EdgeInsets.only(left: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 10.5, color: AppColors.textMuted),
           ),
-          decoration: BoxDecoration(border: Border.all(color: purpule)),
-        ));
+          const SizedBox(height: 3),
+          Text(
+            value,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _provinceOf(String? value) =>
+      (value == null || value.isEmpty || value == 'None') ? 'خوزستان' : value;
+
+  static String _cityOf(String? value) =>
+      (value == null || value.isEmpty || value == 'None') ? 'اهواز' : value;
+
+  static String _carTypeOf(String plate) {
+    if (plate.contains('x')) return 'تاکسی';
+    if (plate.contains(RegExp(r'(?<![A-Za-z])A(?![A-Za-z])'))) return 'دولتی';
+    if (plate.contains('EIN')) return 'کامیون';
+    return 'شخصی';
   }
 }

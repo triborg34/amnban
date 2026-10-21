@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/utils/safe.dart';
@@ -10,11 +11,8 @@ import "package:http/http.dart" as http;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-
-
 class AddOrEditCamera extends StatefulWidget {
   const AddOrEditCamera({
-
     super.key,
     required this.ccontroller,
     required this.context,
@@ -30,8 +28,8 @@ class AddOrEditCamera extends StatefulWidget {
     required this.isEditing,
     required this.isDiscovery,
     required this.path,
-    this.id
-  }  );
+    this.id,
+  });
 
   final cameraController ccontroller;
   final dynamic context;
@@ -83,31 +81,28 @@ class _AddOrEditCameraState extends State<AddOrEditCamera> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Material(
-        color: Colors.transparent,
-        child: Container(
-          padding: EdgeInsets.all(15),
-          decoration: BoxDecoration(
-              color: Colors.indigo,
-              border: Border.all(color: Color.fromARGB(255, 25, 32, 71)),
-              borderRadius: BorderRadius.circular(15)),
-          width: 400,
-          height: 350,
+    return Dialog(
+      insetPadding: const EdgeInsets.all(16),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 440),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
           child: Directionality(
             textDirection: TextDirection.ltr,
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Center(
                   child: Text(
                     isEditing ? "ویرایش دوربین" : "اضافه کردن دوربین",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,color: Colors.white,fontFamily: 'nazanin',fontFamilyFallback: ['arial']),
+                    style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary),
                   ),
                 ),
-                SizedBox(
-                  height: 15,
-                ),
+                const SizedBox(height: 16),
                 Row(
                   textDirection: TextDirection.rtl,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -117,66 +112,61 @@ class _AddOrEditCameraState extends State<AddOrEditCamera> {
                         child: CoustomTextField2(
                             hint: 'نام',
                             tcontroller: ccontroller.nameController)),
-                    SizedBox(
-                      width: 40,
-                    ),
+                    const SizedBox(width: 24),
                     Obx(() => SizedBox(
                           width: 150,
                           child: Directionality(
                             textDirection: TextDirection.rtl,
                             child: DropdownButtonFormField(
-                            style: TextStyle(color: Colors.white,fontFamily: 'nazanin',fontFamilyFallback: ['arial']),
-                            dropdownColor:Color.fromARGB(255, 25, 32, 71) ,
-                                decoration: InputDecoration(
-                                  
-                                    focusColor: Colors.transparent,
-                                    fillColor: Color.fromARGB(255, 25, 32, 71),
-                                    filled: true,
-                                    focusedBorder: OutlineInputBorder(
-                                        borderSide: BorderSide(
-                                            color: Colors.transparent)),
-                                    enabledBorder: OutlineInputBorder(
-                                        borderSide: BorderSide(
-                                            color: Colors.transparent)),
-                                    border: OutlineInputBorder(
-                                        borderSide: BorderSide(
-                                            color: Colors.transparent))),
-                                borderRadius: BorderRadius.circular(15),
-                                initialValue: (ccontroller.gateWayc.value == 'entre' ||
-                                        ccontroller.gateWayc.value == 'exit')
-                                    ? ccontroller.gateWayc.value
-                                    : 'entre',
-                                items: [
-                                  DropdownMenuItem(
-                                      value: "entre", child: Text("ورود",style: TextStyle(fontFamily: 'nazanin',fontFamilyFallback: ['arial']),)),
-                                  DropdownMenuItem(
-                                      value: "exit", child: Text("خروج"))
-                                ],
-                                onChanged: (value) =>
-                                    ccontroller.gateWayc.value = value!),
+                              style: const TextStyle(
+                                  color: AppColors.textPrimary, fontSize: 12.5),
+                              dropdownColor: AppColors.surface,
+                              decoration: InputDecoration(
+                                  focusColor: Colors.transparent,
+                                  fillColor: AppColors.surfaceMuted,
+                                  filled: true,
+                                  focusedBorder: OutlineInputBorder(
+                                      borderSide:
+                                          BorderSide(color: AppColors.primary)),
+                                  enabledBorder: OutlineInputBorder(
+                                      borderSide:
+                                          BorderSide(color: AppColors.border)),
+                                  border: OutlineInputBorder(
+                                      borderSide:
+                                          BorderSide(color: AppColors.border))),
+                              borderRadius: BorderRadius.circular(8),
+                              initialValue: (ccontroller.gateWayc.value == 'entre' ||
+                                      ccontroller.gateWayc.value == 'exit')
+                                  ? ccontroller.gateWayc.value
+                                  : 'entre',
+                              items: const [
+                                DropdownMenuItem(
+                                    value: "entre", child: Text("ورود")),
+                                DropdownMenuItem(
+                                    value: "exit", child: Text("خروج"))
+                              ],
+                              onChanged: (value) =>
+                                  ccontroller.gateWayc.value = value!,
+                            ),
                           ),
-                        ))
+                        )),
                   ],
                 ),
-                SizedBox(
-                  height: 15,
-                ),
+                const SizedBox(height: 16),
                 Obx(() => AnimatedCrossFade(
                       firstChild: RtspOff(ccontroller: ccontroller),
                       secondChild: RtspOn(ccontroller: ccontroller),
                       crossFadeState: ccontroller.isRtspEnabled.value == false
                           ? CrossFadeState.showFirst
                           : CrossFadeState.showSecond,
-                      duration: Duration(milliseconds: 300),
+                      duration: const Duration(milliseconds: 250),
                     )),
-                SizedBox(
-                  height: 15,
-                ),
+                const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.start,
                   textDirection: TextDirection.ltr,
                   children: [
-                    SizedBox(
+                    const SizedBox(
                       width: 10,
                     ),
                     SizedBox(
@@ -184,8 +174,8 @@ class _AddOrEditCameraState extends State<AddOrEditCamera> {
                         child: CoustomTextField2(
                             hint: 'username',
                             tcontroller: ccontroller.usernameController)),
-                    SizedBox(
-                      width: 30,
+                    const SizedBox(
+                      width: 24,
                     ),
                     SizedBox(
                         width: 160,
@@ -194,14 +184,15 @@ class _AddOrEditCameraState extends State<AddOrEditCamera> {
                             tcontroller: ccontroller.passwordController))
                   ],
                 ),
-                Spacer(),
+                const SizedBox(height: 18),
                 Center(
-                    child: Container(
-                  width: 300,
-                  height: 50,
-                  child: ElevatedButton(
-                      style:
-                          TextButton.styleFrom(backgroundColor: Color.fromARGB(255, 25, 32, 71),textStyle: TextStyle(fontFamily: 'nazanin',fontFamilyFallback: ['arial'])),
+                    child: SizedBox(
+                  width: 260,
+                  height: 44,
+                  child: ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white),
                       onPressed: () async {
                         if (ccontroller.nameController.text.trim().isEmpty) {
                           ScaffoldMessenger.maybeOf(context)?.showSnackBar(
@@ -314,9 +305,10 @@ class _AddOrEditCameraState extends State<AddOrEditCamera> {
                                   content: Text('خطا در ذخیره دوربین')));
                         }
                       },
-                      child: Text(
+                      icon: const Icon(Icons.check, size: 16),
+                      label: const Text(
                         "ثبت",
-                        style: TextStyle(color: Colors.white, fontSize: 18,fontFamily: 'nazanin',fontFamilyFallback: ['arial']),
+                        style: TextStyle(color: Colors.white, fontSize: 14),
                       )),
                 ))
               ],

@@ -1,33 +1,37 @@
-import 'package:amnban/utils/consts.dart';
+import 'package:amnban/theme/app_colors.dart';
 import 'package:flutter/material.dart';
 
+/// Compact field used by the plate searcher.
 class ReportTextField extends StatelessWidget {
+  ReportTextField({double? width, required this.tcontroller});
   double? width;
   TextEditingController tcontroller;
-  ReportTextField({this.width, required this.tcontroller});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        color: purpule,
-        height: 40,
-        width: width,
-        child: Material(
-          color: purpule,
-          borderOnForeground: false,
-          child: TextField(
-            controller: tcontroller,
-            style: TextStyle(color: Colors.white, fontSize: 16),
-            cursorColor: Colors.white,
-            textDirection: TextDirection.ltr,
-            decoration: InputDecoration(
-                focusColor: Colors.white,
-                filled: true,
-                fillColor: Colors.deepPurpleAccent,
-                disabledBorder: OutlineInputBorder(),
-                border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(15))),
+    return SizedBox(
+      width: width,
+      child: TextField(
+        controller: tcontroller,
+        textDirection: TextDirection.ltr,
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+        decoration: InputDecoration(
+          isDense: true,
+          filled: true,
+          fillColor: AppColors.surfaceMuted,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
           ),
-        ));
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+        ),
+      ),
+    );
   }
 }

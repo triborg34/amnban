@@ -1,299 +1,248 @@
+import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/utils/converFunctions.dart';
 import 'package:amnban/widgets/AlphaBetSelector.dart';
 import 'package:amnban/widgets/add_or_edit_person.dart';
+import 'package:amnban/widgets/app_card.dart';
 import 'package:amnban/widgets/coustom_fieds.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:persian_number_utility/persian_number_utility.dart';
-import 'package:responsive_sizer/responsive_sizer.dart';
 
+/// Allow-list ("لیست پلاک") screen.
 class PersonScreen extends StatelessWidget {
   PersonScreen({
     super.key,
   });
 
   knowPersonController kcontroller = Get.find<knowPersonController>();
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(15),
-      height: MediaQuery.of(context).size.height,
-      width: MediaQuery.of(context).size.width,
-      // Slivers let the rows recycle instead of shrinkWrap-building every
-      // person row on each rebuild.
-      child: Obx(
-        () => CustomScrollView(
-          slivers: [
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: 25,
-              ),
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AppSectionTitle(
+              title: 'لیست پلاک ها',
+              icon: Icons.confirmation_number_outlined,
+              trailing: Obx(() => Text(
+                    '${kcontroller.knowPerson.length.toString().toPersianDigit()} پلاک',
+                    style: const TextStyle(
+                        fontSize: 11, color: AppColors.textMuted),
+                  )),
             ),
-            SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => Container(
-                      height: 50,
-                      width: MediaQuery.of(context).size.width,
-                      child: Row(
-                        textDirection: TextDirection.rtl,
-                        children: [
-                          SizedBox(
-                            height: 50,
-                            width: 4.w,
-                            child: Center(
-                              child: Text(
-                                (index + 1).toString(),
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ),
-                          VerticalDivider(
-                            color: purpule,
-                          ),
-                          SizedBox(
-                            height: 50,
-                            width: 6.w,
-                            child: Center(
-                              child: Text(
-                                kcontroller.knowPerson[index].name ?? '-',
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ),
-                          VerticalDivider(
-                            color: purpule,
-                          ),
-                          SizedBox(
-                            height: 50,
-                            width: 6.w,
-                            child: Center(
-                              child: Text(
-                                () {
-                                  final plate = kcontroller
-                                      .knowPerson[index].plateNumber;
-                                  if (plate == null || plate.isEmpty) {
-                                    return '-';
-                                  }
-                                  if (kcontroller.knowPerson[index].isarvand ==
-                                      'arvand') {
-                                    return plate;
-                                  }
-                                  try {
-                                    return convertToPersianString(
-                                            plate, alphabetP2)
-                                        .toString();
-                                  } catch (_) {
-                                    return '-';
-                                  }
-                                }(),
-                                textDirection: TextDirection.rtl,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ),
-                          VerticalDivider(
-                            color: purpule,
-                          ),
-                          SizedBox(
-                            height: 50,
-                            width: 6.w,
-                            child: Center(
-                              child: Text(
-                                kcontroller.knowPerson[index].carName ?? '-',
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ),
-                          VerticalDivider(
-                            color: purpule,
-                          ),
-                          SizedBox(
-                            height: 50,
-                            width: 6.w,
-                            child: Center(
-                              child: Text(
-                                kcontroller.knowPerson[index].eDate != null
-                                    ? kcontroller.knowPerson[index].eDate!
-                                        .toPersianDate()
-                                    : "-",
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ),
-                          VerticalDivider(
-                            color: purpule,
-                          ),
-                          SizedBox(
-                            height: 50,
-                            width: 6.w,
-                            child: Center(
-                              child: Text(
-                                kcontroller.knowPerson[index].eTime != null
-                                    ? kcontroller.knowPerson[index].eTime!
-                                        .toPersianDigit()
-                                    : "-",
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
-                          ),
-                          VerticalDivider(
-                            color: purpule,
-                          ),
-                          SizedBox(
-                            height: 50,
-                            width: 4.w,
-                            child: Center(
-                                child: IconButton(
-                                    onPressed: () async {
-                                      final p =
-                                          kcontroller.knowPerson[index];
-                                      String plateNum =
-                                          (p.plateNumber ?? '').trim();
-                                      String nameParts =
-                                          (p.name ?? '').trim();
-                                      List<String> nameSplit = nameParts.isEmpty
-                                          ? ['']
-                                          : nameParts.split(' ');
-                                      String name = nameSplit[0];
-                                      String lastName = nameSplit.length > 1 ? nameSplit.sublist(1).join(' ') : '';
-                                      String carName = p.carName ?? '';
-                                      String role = p.role ?? 'مجاز';
-                                      bool isEdit = true;
-                                      bool isDiscover = false;
-                                      bool isArvand =
-                                          p.isarvand == "arvand";
-                                      String arvandDigits = '';
-                                      String firstTwoDigit =
-                                          p.firstTwoDigit ?? '';
-                                      String threeDigit =
-                                          p.threeDigit ?? '';
-                                      String lastTwoDigit =
-                                          p.lastTwoDigit ?? '';
-                                      String persianAlhpabet =
-                                          p.persianAlhpabet ?? '';
-                                      String engishAlphabet =
-                                          p.engishAlphabet ?? '';
-                                      if (isArvand) {
-                                        arvandDigits = plateNum;
-                                      }
-        
-                                      await showAdaptiveDialog(
-                                        context: context,
-                                        builder: (context) => add_or_edit_person(
-                                            name: name,
-                                            lastName: lastName,
-                                            carName: carName,
-                                            firstTwoDigit: firstTwoDigit,
-                                            threeDigit: threeDigit,
-                                            lastTwoDigit: lastTwoDigit,
-                                            role: role,
-                                            arvandDigits: arvandDigits,
-                                            isArvand: isArvand,
-                                            isEdit: isEdit,
-                                            index: index,
-                                            isDiscover: isDiscover,
-                                            engishAlphabet: engishAlphabet,
-                                            persianAlhpabet: persianAlhpabet,
-                                            kcontroller: kcontroller),
-                                      );
-                                    },
-                                    icon: Icon(
-                                      Icons.edit,
-                                      color: Colors.white,
-                                    ))),
-                          ),
-                          VerticalDivider(
-                            color: purpule,
-                          ),
-                          SizedBox(
-                            height: 50,
-                            width: 4.w,
-                            child: Center(
-                                child: IconButton(
-                                    onPressed: () async {
-                                      final id = kcontroller
-                                          .knowPerson[index].id;
-                                      if (id == null || id.isEmpty) return;
-                                      try {
-                                        await pb
-                                            .collection('registredDb')
-                                            .delete(id)
-                                            .timeout(const Duration(
-                                                seconds: 15));
-                                      } catch (_) {
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.maybeOf(context)
-                                              ?.showSnackBar(const SnackBar(
-                                                  content: Text('خطا در حذف')));
-                                        }
-                                      }
-                                    },
-                                    icon: Icon(
-                                      Icons.delete,
-                                      color: Colors.red,
-                                    ))),
-                          ),
-                          VerticalDivider(
-                            color: purpule,
-                          ),
-                        ],
-                      ),
-                      decoration:
-                          BoxDecoration(border: Border.all(color: purpule)),
-                    ),
-                childCount: kcontroller.knowPerson.length,
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: SizedBox(
-                height: 20,
-              ),
-            ),
-            SliverToBoxAdapter(
-              child: Row(textDirection: TextDirection.rtl,
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 10,
+              runSpacing: 8,
               children: [
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton(
-                      onPressed: () async {
-                        await showAdaptiveDialog(
-                          context: context,
-                          builder: (context) {
-                            return add_or_edit_person(
-                              kcontroller: kcontroller,
-                              arvandDigits: '',
-                              carName: '',
-                              firstTwoDigit: '',
-                              isArvand: false,
-                              isDiscover: false,
-                              isEdit: false,
-                              lastName: '',
-                              lastTwoDigit: '',
-                              name: '',
-                              role: "مجاز",
-                              threeDigit: '',
-                              engishAlphabet: '',
-                              persianAlhpabet: '',
-                            );
-                          },
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    await showAdaptiveDialog(
+                      context: context,
+                      builder: (context) {
+                        return add_or_edit_person(
+                          kcontroller: kcontroller,
+                          arvandDigits: '',
+                          carName: '',
+                          firstTwoDigit: '',
+                          isArvand: false,
+                          isDiscover: false,
+                          isEdit: false,
+                          lastName: '',
+                          lastTwoDigit: '',
+                          name: '',
+                          role: "مجاز",
+                          threeDigit: '',
+                          engishAlphabet: '',
+                          persianAlhpabet: '',
                         );
                       },
-                      child: Text("اضافه کردن")),
+                    );
+                  },
+                  icon: const Icon(Icons.add, size: 16),
+                  label: const Text('اضافه کردن'),
                 ),
-                SizedBox(width: 15,),
-                ElevatedButton(onPressed: (){
-                  getBackup("registredDb");
-                }, child: Text("پشتیبان گیری"))  ,SizedBox(width: 15,),
-                      ElevatedButton(onPressed: (){
-                  restoreBackup("registredDb");
-                }, child: Text("بازگردانی "))
+                OutlinedButton.icon(
+                  onPressed: () => getBackup("registredDb"),
+                  icon: const Icon(Icons.backup_outlined, size: 16),
+                  label: const Text('پشتیبان گیری'),
+                ),
+                OutlinedButton.icon(
+                  onPressed: () => restoreBackup("registredDb"),
+                  icon: const Icon(Icons.restore_outlined, size: 16),
+                  label: const Text('بازگردانی'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Expanded(
+              child: Obx(() {
+                final people = kcontroller.knowPerson;
+                if (people.isEmpty) {
+                  return const AppEmptyState(
+                    message: 'پلاکی ثبت نشده است',
+                    icon: Icons.confirmation_number_outlined,
+                  );
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _headerRow(),
+                    const SizedBox(height: 6),
+                    Expanded(
+                      child: ListView.separated(
+                        itemCount: people.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 6),
+                        itemBuilder: (context, index) => _personRow(
+                          context,
+                          index,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _headerRow() {
+    Widget head(String title, double width) => SizedBox(
+          width: width,
+          child: Text(
+            title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            head('#', 40),
+            head('نام و نام خانوادگی', 180),
+            head('شماره پلاک', 180),
+            head('ماشین', 160),
+            head('تاریخ', 110),
+            head('ساعت', 80),
+            head('عملیات', 100),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _personRow(BuildContext context, int index) {
+    final person = kcontroller.knowPerson[index];
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            SizedBox(
+              width: 40,
+              child: Text(
+                '${index + 1}'.toPersianDigit(),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontSize: 11.5, color: AppColors.textMuted),
+              ),
+            ),
+            SizedBox(
+              width: 180,
+              child: Text(
+                person.name ?? '-',
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 180,
+              child: Text(
+                _plateOf(person),
+                textDirection: TextDirection.rtl,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 160,
+              child: Text(
+                person.carName ?? '-',
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                    fontSize: 12, color: AppColors.textSecondary),
+              ),
+            ),
+            SizedBox(
+              width: 110,
+              child: Text(
+                person.eDate != null ? person.eDate!.toPersianDate() : "-",
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontSize: 11.5, color: AppColors.textSecondary),
+              ),
+            ),
+            SizedBox(
+              width: 80,
+              child: Text(
+                person.eTime != null ? person.eTime!.toPersianDigit() : "-",
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontSize: 11.5, color: AppColors.textSecondary),
+              ),
+            ),
+            SizedBox(
+              width: 100,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    onPressed: () => _edit(context, index),
+                    icon: const Icon(Icons.edit_outlined, size: 18),
+                    tooltip: 'ویرایش',
+                  ),
+                  IconButton(
+                    onPressed: () => _delete(context, index),
+                    icon: const Icon(Icons.delete_outline,
+                        size: 18, color: AppColors.danger),
+                    tooltip: 'حذف',
+                  ),
                 ],
               ),
             ),
@@ -301,6 +250,65 @@ class PersonScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _plateOf(dynamic person) {
+    final plate = person.plateNumber;
+    if (plate == null || plate.isEmpty) return '-';
+    if (person.isarvand == 'arvand') return plate;
+    try {
+      return convertToPersianString(plate, alphabetP2).toString();
+    } catch (_) {
+      return '-';
+    }
+  }
+
+  Future<void> _edit(BuildContext context, int index) async {
+    final p = kcontroller.knowPerson[index];
+    final plateNum = (p.plateNumber ?? '').trim();
+    final nameParts = (p.name ?? '').trim();
+    final nameSplit = nameParts.isEmpty ? [''] : nameParts.split(' ');
+    final name = nameSplit[0];
+    final lastName =
+        nameSplit.length > 1 ? nameSplit.sublist(1).join(' ') : '';
+    final isArvand = p.isarvand == "arvand";
+
+    await showAdaptiveDialog(
+      context: context,
+      builder: (context) => add_or_edit_person(
+        name: name,
+        lastName: lastName,
+        carName: p.carName ?? '',
+        firstTwoDigit: p.firstTwoDigit ?? '',
+        threeDigit: p.threeDigit ?? '',
+        lastTwoDigit: p.lastTwoDigit ?? '',
+        role: p.role ?? 'مجاز',
+        arvandDigits: isArvand ? plateNum : '',
+        isArvand: isArvand,
+        isEdit: true,
+        index: index,
+        isDiscover: false,
+        engishAlphabet: p.engishAlphabet ?? '',
+        persianAlhpabet: p.persianAlhpabet ?? '',
+        kcontroller: kcontroller,
+      ),
+    );
+  }
+
+  Future<void> _delete(BuildContext context, int index) async {
+    final id = kcontroller.knowPerson[index].id;
+    if (id == null || id.isEmpty) return;
+    try {
+      await pb
+          .collection('registredDb')
+          .delete(id)
+          .timeout(const Duration(seconds: 15));
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+            const SnackBar(content: Text('خطا در حذف')));
+      }
+    }
   }
 }
 
@@ -338,13 +346,18 @@ class LicanceGrapper extends StatelessWidget {
           hint: "",
           width: 50,
         ),
-        SizedBox(
-          width: 15,
-        ),
+        const SizedBox(width: 15),
         SizedBox(
           height: 40,
           child: TextButton(
-            style: TextButton.styleFrom(backgroundColor: Colors.white),
+            style: TextButton.styleFrom(
+              backgroundColor: AppColors.surfaceMuted,
+              foregroundColor: AppColors.textPrimary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+                side: const BorderSide(color: AppColors.border),
+              ),
+            ),
             onPressed: () async {
               await showModalBottomSheet(
                 context: context,
@@ -368,30 +381,21 @@ class LicanceGrapper extends StatelessWidget {
                   kcontroller.persianAlhpabet.value == ''
                       ? "انتخاب حرف"
                       : kcontroller.persianAlhpabet.value,
-                  style: TextStyle(color: Colors.black),
+                  style: const TextStyle(color: AppColors.textPrimary),
                 )),
           ),
         ),
-        SizedBox(
-          width: 15,
-        ),
+        const SizedBox(width: 15),
         CoustomTextField1(
             controller: kcontroller.threeDigit, hint: '', width: 70),
-        SizedBox(
-          width: 15,
-        ),
-        Text(
+        const SizedBox(width: 15),
+        const Text(
           "/",
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: AppColors.textMuted),
         ),
-        SizedBox(
-          width: 15,
-        ),
+        const SizedBox(width: 15),
         CoustomTextField1(
-          hint: '',
-          controller: kcontroller.lastTwoDigit,
-          width: 50,
-        ),
+            hint: '', controller: kcontroller.lastTwoDigit, width: 50),
       ],
     );
   }

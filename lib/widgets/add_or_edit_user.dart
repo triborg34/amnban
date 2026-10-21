@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/widgets/coustom_fieds.dart';
@@ -56,85 +57,66 @@ class _add_or_edit_userState extends State<add_or_edit_user> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Material(
-        color: Colors.transparent,
-        child: Container(
-          padding: EdgeInsets.all(15),
-          width: 300,
-          height: 500,
-          decoration: BoxDecoration(
-              color: Colors.white, borderRadius: BorderRadius.circular(15)),
+    return Dialog(
+      insetPadding: const EdgeInsets.all(16),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 340),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             textDirection: TextDirection.rtl,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
                 isEdit ? "ویرایش کاربر" : "اضافه کردن کاربر",
-                style: TextStyle(fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 15,
+                  color: AppColors.textPrimary,
+                ),
               ),
-              SizedBox(
-                height: 15,
-              ),
+              const SizedBox(height: 16),
               CoustomTextField3(
                   controller: ucontroller.name, hint: 'نام', width: 250),
-              SizedBox(
-                height: 15,
-              ),
+              const SizedBox(height: 12),
               CoustomTextField3(
                   controller: ucontroller.lastName,
                   hint: 'نام خانوادگی',
                   width: 250),
-              SizedBox(
-                height: 15,
-              ),
+              const SizedBox(height: 12),
               CoustomTextField3(
                   controller: ucontroller.email, hint: 'ایمیل', width: 250),
-              SizedBox(
-                height: 15,
-              ),
+              const SizedBox(height: 12),
               CoustomTextField3(
                   controller: ucontroller.username,
                   hint: 'نام کاربری ',
                   width: 250),
-              SizedBox(
-                height: 15,
-              ),
+              const SizedBox(height: 12),
               CoustomTextField3(
                   controller: ucontroller.password,
                   hint: 'رمز عبور',
                   width: 250),
-              SizedBox(
-                height: 25,
-              ),
-              SizedBox(
-                width: 250,
-                child: Directionality(
-                  textDirection: TextDirection.rtl,
-                  child: Obx(() => DropdownButtonFormField(
-                      style: TextStyle(color: Colors.black),
-                      dropdownColor: Colors.white,
-                      decoration: InputDecoration(
+              const SizedBox(height: 16),
+              Directionality(
+                textDirection: TextDirection.rtl,
+                child: Obx(() => DropdownButtonFormField<String>(
+                      style: const TextStyle(
+                          color: AppColors.textPrimary, fontSize: 12.5),
+                      dropdownColor: AppColors.surface,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
                           focusColor: Colors.transparent,
-                          fillColor: Colors.white,
-                          filled: true,
-                          focusedBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.black)),
-                          enabledBorder: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.black)),
-                          border: OutlineInputBorder(
-                              borderSide: BorderSide(color: Colors.black))),
-                      borderRadius: BorderRadius.circular(15),
+                          fillColor: AppColors.surfaceMuted,
+                          filled: true),
+                      borderRadius: BorderRadius.circular(8),
                       initialValue: (ucontroller.accsesslvl.value == 'مدیر' ||
                               ucontroller.accsesslvl.value == 'ناظر')
                           ? ucontroller.accsesslvl.value
                           : 'مدیر',
-                      items: [
-                        DropdownMenuItem(
-                            value: "مدیر",
-                            child: Text(
-                              "مدیر",
-                              style: TextStyle(),
-                            )),
+                      items: const [
+                        DropdownMenuItem(value: "مدیر", child: Text("مدیر")),
                         DropdownMenuItem(value: "ناظر", child: Text("ناظر"))
                       ],
                       onChanged: (value) {
@@ -143,87 +125,76 @@ class _add_or_edit_userState extends State<add_or_edit_user> {
                         }
                       })),
                 ),
-              ),
-              SizedBox(
-                height: 25,
-              ),
-              SizedBox(
-                  width: 250,
-                  child: ElevatedButton(
-                      style: TextButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(5)),
-                          side: BorderSide(color: Colors.black),
-                          backgroundColor: Colors.white),
-                      onPressed: () async {
-                        if (ucontroller.username.text.trim().isEmpty ||
-                            ucontroller.password.text.isEmpty) {
-                          ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-                              const SnackBar(
-                                  content: Text(
-                            "نام کاربری و رمز عبور لازم است",
+              const SizedBox(height: 18),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  if (ucontroller.username.text.trim().isEmpty ||
+                      ucontroller.password.text.isEmpty) {
+                    ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+                        const SnackBar(
+                            content: Text(
+                          "نام کاربری و رمز عبور لازم است",
+                          textDirection: TextDirection.rtl,
+                        )));
+                    return;
+                  }
+                  try {
+                    final body = {
+                      "username": ucontroller.username.text.trim(),
+                      "password": base64
+                          .encode(utf8.encode(ucontroller.password.text)),
+                      "accsesslvl": ucontroller.accsesslvl.value,
+                      "email": ucontroller.email.text.trim(),
+                      "nickname":
+                          "${ucontroller.name.text.trim()} ${ucontroller.lastName.text.trim()}"
+                    };
+
+                    if (isEdit) {
+                      final id = (index != null &&
+                              index! >= 0 &&
+                              index! < ucontroller.users.length)
+                          ? ucontroller.users[index!].id
+                          : null;
+                      if (id == null || id.isEmpty) return;
+                      final record = await pb
+                          .collection('users')
+                          .update(id, body: body)
+                          .timeout(
+                              const Duration(seconds: 15));
+                      ScaffoldMessenger.maybeOf(context)
+                          ?.showSnackBar(SnackBar(
+                              content: Text(
+                            "با ویرایش  شد ${record.id}",
                             textDirection: TextDirection.rtl,
                           )));
-                          return;
-                        }
-                        try {
-                          final body = {
-                            "username": ucontroller.username.text.trim(),
-                            "password": base64
-                                .encode(utf8.encode(ucontroller.password.text)),
-                            "accsesslvl": ucontroller.accsesslvl.value,
-                            "email": ucontroller.email.text.trim(),
-                            "nickname":
-                                "${ucontroller.name.text.trim()} ${ucontroller.lastName.text.trim()}"
-                          };
-
-                          if (isEdit) {
-                            final id = (index != null &&
-                                    index! >= 0 &&
-                                    index! < ucontroller.users.length)
-                                ? ucontroller.users[index!].id
-                                : null;
-                            if (id == null || id.isEmpty) return;
-                            final record = await pb
-                                .collection('users')
-                                .update(id, body: body)
-                                .timeout(
-                                    const Duration(seconds: 15));
-                            ScaffoldMessenger.maybeOf(context)
-                                ?.showSnackBar(SnackBar(
-                                    content: Text(
-                              "با ویرایش  شد ${record.id}",
-                              textDirection: TextDirection.rtl,
-                            )));
-                          } else {
-                            final record = await pb
-                                .collection('users')
-                                .create(body: body)
-                                .timeout(
-                                    const Duration(seconds: 15));
-                            ScaffoldMessenger.maybeOf(context)
-                                ?.showSnackBar(SnackBar(
-                                    content: Text(
-                              "با موفقیت ساخته شد ${record.id}",
-                              textDirection: TextDirection.rtl,
-                            )));
-                          }
-
-                          if (context.mounted) Navigator.pop(context);
-                        } catch (e) {
-                          ScaffoldMessenger.maybeOf(context)
-                              ?.showSnackBar(const SnackBar(
-                                  content: Text(
-                            "خطا دوباره امتحان کنید",
+                    } else {
+                      final record = await pb
+                          .collection('users')
+                          .create(body: body)
+                          .timeout(
+                              const Duration(seconds: 15));
+                      ScaffoldMessenger.maybeOf(context)
+                          ?.showSnackBar(SnackBar(
+                              content: Text(
+                            "با موفقیت ساخته شد ${record.id}",
                             textDirection: TextDirection.rtl,
                           )));
-                          if (context.mounted) Navigator.pop(context);
-                        }
-                      },
-                      child: Text(
-                        "ثبت",
-                        style: TextStyle(color: Colors.black),
-                      )))
+                    }
+
+                    if (context.mounted) Navigator.pop(context);
+                  } catch (e) {
+                    ScaffoldMessenger.maybeOf(context)
+                        ?.showSnackBar(const SnackBar(
+                            content: Text(
+                          "خطا دوباره امتحان کنید",
+                          textDirection: TextDirection.rtl,
+                        )));
+                    if (context.mounted) Navigator.pop(context);
+                  }
+                },
+                icon: const Icon(Icons.check, size: 16),
+                label: const Text("ثبت"),
+              ),
             ],
           ),
         ),

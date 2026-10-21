@@ -37,7 +37,6 @@ dependencies:
   persian_number_utility: ^1.1.4
 
   persian_datetime_picker: ^3.2.0
-  splash_view: ^2.0.1
   easy_image_viewer: ^1.5.1
   
   audioplayers: ^6.1.0
@@ -47,6 +46,11 @@ dependencies:
   shared_preferences: ^2.5.3
   flutter_web_notification_platform: ^1.0.4
   web: ^1.0.0
+
+  # --- UI redesign (presentation layer only) ---
+  fl_chart: ^1.2.0
+  cached_network_image: ^3.4.1
+  shamsi_date: ^1.1.1
 
 
 
@@ -90,6 +94,15 @@ flutter:
   # list giving the asset and other descriptors for the font. For
   # example:
   fonts:
+    - family: Vazir
+      fonts:
+        - asset: assets/fonts/Vazirmatn-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Vazirmatn-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Vazirmatn-Bold.ttf
+          weight: 700
+
     - family: byekan
       fonts:
         - asset: assets/fonts/Yekan.ttf
@@ -97,7 +110,7 @@ flutter:
     - family: arial
       fonts:
         - asset: assets/fonts/arial.ttf
-        
+         
     - family : robots
       fonts:
         - asset: assets/fonts/sans.ttf

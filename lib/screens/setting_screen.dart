@@ -1,11 +1,12 @@
 import 'package:amnban/screens/general_setting.dart';
 import 'package:amnban/screens/user_box.dart';
-import 'package:amnban/utils/consts.dart';
+import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/utils/controller.dart';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+/// Settings screen with three collapsible sections.
 class SettingScreen extends StatelessWidget {
   SettingScreen({
     super.key,
@@ -16,173 +17,125 @@ class SettingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.maybeOf(context)?.size;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _section(
+            title: 'کاربران',
+            icon: Icons.group_outlined,
+            isOpen: scontroller.isUsers,
+            onTap: () =>
+                scontroller.isUsers.value = !scontroller.isUsers.value,
+            child: UserBox(
+              scontroller: scontroller,
+              ucontroller: ucontroller,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _section(
+            title: 'عمومی',
+            icon: Icons.tune_outlined,
+            isOpen: scontroller.isGeneral,
+            onTap: () =>
+                scontroller.isGeneral.value = !scontroller.isGeneral.value,
+            child: GeneralSetting(scontroller: scontroller),
+          ),
+          const SizedBox(height: 12),
+          _section(
+            title: 'درباره',
+            icon: Icons.info_outline,
+            isOpen: scontroller.isInfo,
+            onTap: () =>
+                scontroller.isInfo.value = !scontroller.isInfo.value,
+            child: const InfoBox(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _section({
+    required String title,
+    required IconData icon,
+    required RxBool isOpen,
+    required VoidCallback onTap,
+    required Widget child,
+  }) {
     return Container(
-      padding: EdgeInsets.all(15),
-      height: size?.height,
-      width: size?.width,
-      child: SingleChildScrollView(
-        child: Column(
-          textDirection: TextDirection.rtl,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            InkWell(
-              onTap: () {
-                scontroller.isUsers.value = !scontroller.isUsers.value;
-              },
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 15),
-                width: MediaQuery.of(context).size.width,
-                height: 50,
-                color: purpule,
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: Row(
-                    textDirection: TextDirection.rtl,
-                    children: [
-                      Text(
-                        "کاربران",
-                        style: TextStyle(color: Colors.white),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            onTap: onTap,
+            child: Obx(
+              () => Container(
+                height: 52,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                color: isOpen.value ? AppColors.primaryLight : Colors.transparent,
+                child: Row(
+                  children: [
+                    Icon(
+                      icon,
+                      size: 18,
+                      color: isOpen.value
+                          ? AppColors.primary
+                          : AppColors.textSecondary,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: isOpen.value
+                            ? AppColors.primary
+                            : AppColors.textPrimary,
                       ),
-                      Spacer(),
-                      Obx(
-                        () => scontroller.isUsers.value
-                            ? Icon(
-                                Icons.arrow_downward,
-                                color: Colors.white,
-                              )
-                            : Icon(
-                                Icons.arrow_back,
-                                color: Colors.white,
-                              ),
-                      )
-                    ],
-                  ),
+                    ),
+                    const Spacer(),
+                    Icon(
+                      isOpen.value
+                          ? Icons.keyboard_arrow_down
+                          : Icons.keyboard_arrow_left,
+                      size: 19,
+                      color: AppColors.textMuted,
+                    ),
+                  ],
                 ),
               ),
             ),
-            SizedBox(
-              height: 15,
-            ),
-            Obx(
-              () => AnimatedCrossFade(
-                firstChild: SizedBox.shrink(),
-                secondChild: UserBox(
-                  scontroller: scontroller,
-                  ucontroller: ucontroller,
-                ),
-                crossFadeState: scontroller.isUsers.value
-                    ? CrossFadeState.showSecond
-                    : CrossFadeState.showFirst,
-                duration: Duration(milliseconds: 350),
-                firstCurve: Curves.decelerate,
-                secondCurve: Curves.decelerate,
+          ),
+          Obx(
+            () => AnimatedCrossFade(
+              firstChild: const SizedBox.shrink(),
+              secondChild: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 4, 14, 14),
+                child: child,
               ),
+              crossFadeState: isOpen.value
+                  ? CrossFadeState.showSecond
+                  : CrossFadeState.showFirst,
+              duration: const Duration(milliseconds: 250),
+              firstCurve: Curves.decelerate,
+              secondCurve: Curves.decelerate,
             ),
-            SizedBox(
-              height: 15,
-            ),
-            InkWell(
-              onTap: () {
-                scontroller.isGeneral.value = !scontroller.isGeneral.value;
-              },
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 15),
-                width: MediaQuery.of(context).size.width,
-                height: 50,
-                color: purpule,
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: Row(
-                    textDirection: TextDirection.rtl,
-                    children: [
-                      Text(
-                        "عمومی",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      Spacer(),
-                      Obx(
-                        () => scontroller.isGeneral.value
-                            ? Icon(
-                                Icons.arrow_downward,
-                                color: Colors.white,
-                              )
-                            : Icon(
-                                Icons.arrow_back,
-                                color: Colors.white,
-                              ),
-                      )
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(
-              height: 15,
-            ),
-            Obx(() => AnimatedCrossFade(
-                  firstChild: SizedBox.shrink(),
-                  secondChild: GeneralSetting(scontroller: scontroller),
-                  crossFadeState: scontroller.isGeneral.value
-                      ? CrossFadeState.showSecond
-                      : CrossFadeState.showFirst,
-                  duration: Duration(milliseconds: 350),
-                  firstCurve: Curves.decelerate,
-                  secondCurve: Curves.decelerate,
-                )),
-            SizedBox(
-              height: 15,
-            ),
-            InkWell(
-              onTap: () {
-                scontroller.isInfo.value = !scontroller.isInfo.value;
-              },
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 15),
-                width: MediaQuery.of(context).size.width,
-                height: 50,
-                color: purpule,
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: Row(
-                    textDirection: TextDirection.rtl,
-                    children: [
-                      Text(
-                        "درباره",
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      Spacer(),
-                      Obx(
-                        () => scontroller.isInfo.value
-                            ? Icon(
-                                Icons.arrow_downward,
-                                color: Colors.white,
-                              )
-                            : Icon(
-                                Icons.arrow_back,
-                                color: Colors.white,
-                              ),
-                      )
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(
-              height: 15,
-            ),
-            Obx(() => AnimatedCrossFade(
-                  firstChild: SizedBox.shrink(),
-                  secondChild: InfoBox(),
-                  crossFadeState: scontroller.isInfo.value
-                      ? CrossFadeState.showSecond
-                      : CrossFadeState.showFirst,
-                  duration: Duration(milliseconds: 350),
-                  firstCurve: Curves.decelerate,
-                  secondCurve: Curves.decelerate,
-                )),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -195,36 +148,24 @@ class InfoBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(15),
-      width: Get.width,
-      height: 200,
-      decoration: BoxDecoration(
-          border: Border.all(color: purpule), borderRadius: BorderRadius.circular(15),),
-          child: Column(
-            children: [
-              KeyValueRow(
-                    keyString: "BuilDNumber", valueString: "SN/1404717"),
-                Divider(
-                  color: purpule,
-                ),
-                KeyValueRow(keyString: "UpdateNo", valueString: "14040828"),
-                Divider(
-                  color: purpule,
-                ),
-                KeyValueRow(
-                    keyString: "Last Update",
-                    valueString:
-                        "${DateTime.now().year.toString()}/${DateTime.now().month.toString()}/${DateTime.now().day.toString()}"),
-                Divider(color: purpule),
-                KeyValueRow(
-                    keyString: "Train Model Serial",
-                    valueString: "YOLOV5M100300"),
-                Divider(
-                  color: purpule,
-                ),
-            ],
-          ),
+    final now = DateTime.now();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        KeyValueRow(
+            keyString: "BuilDNumber", valueString: "SN/1404717"),
+        const Divider(color: AppColors.divider),
+        KeyValueRow(keyString: "UpdateNo", valueString: "14040828"),
+        const Divider(color: AppColors.divider),
+        KeyValueRow(
+            keyString: "Last Update",
+            valueString:
+                "${now.year}/${now.month}/${now.day}"),
+        const Divider(color: AppColors.divider),
+        KeyValueRow(
+            keyString: "Train Model Serial", valueString: "YOLOV5M100300"),
+        const Divider(color: AppColors.divider),
+      ],
     );
   }
 }
@@ -236,29 +177,35 @@ class KeyValueRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          color: Colors.transparent,
-          width: 150,
-          child: Text(
-            keyString + " : ",
-            style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'arial'),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 170,
+            child: Text(
+              keyString + " : ",
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                fontFamily: 'arial',
+              ),
+            ),
           ),
-        ),
-        Text(
-          "  " + valueString,
-          style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              fontFamily: "arial"),
-        )
-      ],
+          Expanded(
+            child: Text(
+              valueString,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                fontFamily: "arial",
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

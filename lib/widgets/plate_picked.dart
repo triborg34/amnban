@@ -1,9 +1,10 @@
-import 'package:amnban/utils/consts.dart';
+import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/utils/converFunctions.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+/// Preview of the plate the user is building in the "انتخاب" dialog.
 class PlatePicked extends StatelessWidget {
   const PlatePicked({
     super.key,
@@ -27,121 +28,85 @@ class PlatePicked extends StatelessWidget {
   }
 
   Widget _body() {
+    final complete = rcontroller.firstTwoDigit.text.length != 0 &&
+        rcontroller.threeDigit.text.length != 0 &&
+        rcontroller.lastTwoDigit.text.length != 0;
+
     return Container(
-          height: 40,
-          width: 210,
-          decoration: BoxDecoration(
-              color: purpule,
-              borderRadius: BorderRadius.circular(15)),
-          child: Center(
-            child: rcontroller.firstTwoDigit.text.length != 0 &&
-                    rcontroller.threeDigit.text.length != 0 &&
-                    rcontroller.lastTwoDigit.text.length != 0
-                // &&
-                // rcontroller.engishalphabet.value.length < 0
-                ? Text(
-                    convertToPersianString(
-                        rcontroller.pickerPlate.value,
-                        alphabetP2),
-                    textDirection: TextDirection.rtl,
-                    style: TextStyle(
-                        color: Colors.white, fontSize: 18),
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Container(
-                        margin: EdgeInsets.only(left: 10),
-                        height: 30,
-                        width: 36,
-                        decoration: BoxDecoration(
-                            color: Colors.deepPurple,
-                            borderRadius:
-                                BorderRadius.circular(10)),
-                        child: Center(
-                          child: Text(
-                            rcontroller.firstTwoDigit.text
-                                        .length !=
-                                    0
-                                ? rcontroller.firstTwoDigit.text
-                                : '-',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        margin: EdgeInsets.only(left: 10),
-                        height: 30,
-                        width: 36,
-                        decoration: BoxDecoration(
-                            color: Colors.deepPurple,
-                            borderRadius:
-                                BorderRadius.circular(10)),
-                        child: Center(
-                          child: Text(
-                            rcontroller.persianalhpabet.value,
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16),
-                          ),
-                        ),
-                      ),
-                      Container(
-                        margin: EdgeInsets.only(left: 10),
-                        height: 30,
-                        width: 36,
-                        decoration: BoxDecoration(
-                            color: Colors.deepPurple,
-                            borderRadius:
-                                BorderRadius.circular(10)),
-                        child: Center(
-                          child: Text(
-                            rcontroller.threeDigit.text.length !=
-                                    0
-                                ? rcontroller.threeDigit.text
-                                : '-',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16),
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 5,
-                      ),
-                      Text(
-                        '/',
-                        style: TextStyle(
-                            color: Colors.white, fontSize: 16),
-                      ),
-                      SizedBox(
-                        width: 5,
-                      ),
-                      Container(
-                        height: 30,
-                        width: 36,
-                        decoration: BoxDecoration(
-                            color: Colors.deepPurple,
-                            borderRadius:
-                                BorderRadius.circular(10)),
-                        child: Center(
-                          child: Text(
-                            rcontroller.lastTwoDigit.text
-                                        .length !=
-                                    0
-                                ? rcontroller.lastTwoDigit.text
-                                : '-',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16),
-                          ),
-                        ),
-                      ),
-                    ],
+      height: 42,
+      width: 210,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceMuted,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: Center(
+        child: complete
+            ? Text(
+                convertToPersianString(
+                    rcontroller.pickerPlate.value, alphabetP2),
+                textDirection: TextDirection.rtl,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _segment(
+                    rcontroller.firstTwoDigit.text.isEmpty
+                        ? '-'
+                        : rcontroller.firstTwoDigit.text,
                   ),
-          ),
-        );
+                  const SizedBox(width: 6),
+                  _segment(rcontroller.persianalhpabet.value),
+                  const SizedBox(width: 6),
+                  _segment(
+                    rcontroller.threeDigit.text.isEmpty
+                        ? '-'
+                        : rcontroller.threeDigit.text,
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    '/',
+                    style: TextStyle(
+                      color: AppColors.textMuted,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  _segment(
+                    rcontroller.lastTwoDigit.text.isEmpty
+                        ? '-'
+                        : rcontroller.lastTwoDigit.text,
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  Widget _segment(String value) {
+    return Container(
+      height: 28,
+      width: 34,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AppColors.primaryLight,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+      ),
+      child: Text(
+        value,
+        style: const TextStyle(
+          color: AppColors.primary,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
   }
 }

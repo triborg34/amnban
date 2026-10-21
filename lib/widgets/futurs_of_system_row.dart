@@ -1,19 +1,20 @@
+import 'package:amnban/theme/app_colors.dart';
 import 'package:flutter/material.dart';
-import 'package:responsive_sizer/responsive_sizer.dart';
 
+/// Fixed-width caption used next to the detection sliders.
 class FutursOfSystemRow extends StatelessWidget {
   String lable;
 
   FutursOfSystemRow({required this.lable});
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 6.w,
+    return SizedBox(
+      width: 110,
       child: Text(
         lable,
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 16,
+        style: const TextStyle(
+          color: AppColors.textSecondary,
+          fontSize: 12,
         ),
       ),
     );

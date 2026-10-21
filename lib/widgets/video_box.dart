@@ -1,9 +1,18 @@
+import 'package:amnban/screens/details_screen.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
-import 'package:amnban/widgets/CemraFeed.dart';
+import 'package:amnban/utils/dashboard_stats.dart';
+import 'package:amnban/utils/safe.dart';
+import 'package:amnban/widgets/app_card.dart';
+import 'package:amnban/widgets/camera_grid.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+/// Live camera grid shown on the dashboard.
+///
+/// The widget keeps its original name / constructor so the existing call
+/// sites keep working — only the presentation changed (responsive grid of
+/// camera cards instead of the old fixed-size tiles).
 class VideoBox extends StatelessWidget {
   const VideoBox({
     super.key,
@@ -15,110 +24,65 @@ class VideoBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ccontroller = Get.find<cameraController>();
+    final kcontroller = Get.find<knowPersonController>();
+    final dcontroller = Get.find<databaseController>();
+
     return Obx(() {
       if (ccontroller.cameras.isEmpty) {
-        return Container(
-          height: 450,
-          decoration: BoxDecoration(
-              border: Border.all(color: purpule),
-              borderRadius: BorderRadius.circular(15)),
-          child: Center(
-            child: ccontroller.isLoading.value
-                ? const CircularProgressIndicator()
-                : Text(
-                    ccontroller.error.value.isNotEmpty
-                        ? ccontroller.error.value
-                        : "No Camera",
-                    style: const TextStyle(color: Colors.white),
-                  ),
+        return const AppCard(
+          child: AppEmptyState(
+            message: 'دوربینی ثبت نشده است',
+            icon: Icons.videocam_off_outlined,
           ),
         );
       }
-      return GestureDetector(
-        onTap: () {
-          mController.videoIndex.value = (-1);
-        },
-        child: Container(
-          padding: const EdgeInsets.all(15),
-          decoration: BoxDecoration(
-              border: Border.all(color: purpule),
-              borderRadius: BorderRadius.circular(15)),
-          height: 450,
-          child: SingleChildScrollView(
-              child: Wrap(
-            spacing: 15,
-            runSpacing: 15,
-            alignment: WrapAlignment.start,
-            children: [
-              for (int i = 0; i < ccontroller.cameras.length; i++)
-                _CameraTile(
-                  index: i,
-                  mController: mController,
-                ),
-            ],
-          )),
-        ),
+
+      return CameraGrid(
+        cameras: ccontroller.cameras,
+        kcontroller: kcontroller,
+        onExpand: (camera) => _openLatest(context, camera, dcontroller, kcontroller),
       );
     });
   }
-}
 
-/// Own widget per camera so changing the selected index only rebuilds the
-/// two affected tiles — previously every CameraFeed was recreated (MJPEG
-/// reconnect + flicker) on each selection.
-class _CameraTile extends StatelessWidget {
-  const _CameraTile({required this.index, required this.mController});
-
-  final int index;
-  final mainPageConroller mController;
-
-  @override
-  Widget build(BuildContext context) {
-    final ccontroller = Get.find<cameraController>();
-  
-    return Obx(() {
-      final selected = mController.videoIndex.value == index;
-      final rtspUrl = index < ccontroller.cameras.length
-          ? ccontroller.cameras[index].rtspUrl!.replaceAll("&", "%26")
-          : null;
-      
-      final streamUrl =
-          'http://$url:$port/${role == 'ناظر' ? 'rtsp_feed' : 'video_feed'}/rt${index + 1}?source=${rtspUrl ?? ''}';
-      
-      return InkWell(
-        onTap: () {
-       
-          mController.videoIndex.value = index;
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          width: selected ? 500 : 225,
-          height: selected ? 375 : 100,
-          decoration: BoxDecoration(
-              color: Colors.transparent,
-              border: Border.all(
-                  color: selected ? selecetpurpule : purpule),
-              borderRadius: BorderRadius.circular(10)),
-          // Keyed by URL so selection resizes preserve the underlying
-          // platform view instead of reconnecting the stream.
-          child: RepaintBoundary(
-            child: Stack(
-              children: [
-                CameraFeed(
-                  key: ValueKey(streamUrl),
-                  streamUrl: streamUrl,
-                ),
-                        GestureDetector(
-                                onTap: () => mController.videoIndex.value = index,
-                                child: Container(
-                                  color: Colors.transparent,
-                                ),
-                              ),
-              ],
-            ),
-          ),
-        ),
+  /// Opens the detail view of the latest detection of the given camera.
+  Future<void> _openLatest(
+    BuildContext context,
+    dynamic camera,
+    databaseController dcontroller,
+    knowPersonController kcontroller,
+  ) async {
+    final latest =
+        DashboardStats.latestForCamera(dcontroller.entries, camera.path);
+    if (latest == null) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(content: Text('برای این دوربین ترددی ثبت نشده است')),
       );
-    });
+      return;
+    }
+
+    final plate = latest.plateNum ?? '';
+    if (plate.isEmpty) return;
+
+    try {
+      final record = await pb
+          .collection('database')
+          .getFullList(filter: 'plateNum="${pbEscape(plate)}"')
+          .timeout(const Duration(seconds: 15));
+
+      if (!context.mounted) return;
+      Get.to(() => Detailedscreen(
+            rec: record,
+            kcontroller: kcontroller,
+            selectedModel: latest,
+            index: 0,
+          ));
+    } catch (e) {
+      appLog('camera detail fetch failed', e);
+      if (!context.mounted) return;
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(content: Text('خطا در دریافت اطلاعات تردد')),
+      );
+    }
   }
 }

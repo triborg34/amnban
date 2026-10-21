@@ -1,4 +1,4 @@
-import 'package:amnban/utils/consts.dart';
+import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/widgets/coustom_fieds.dart';
 
@@ -31,7 +31,7 @@ class RtspOn extends StatelessWidget {
           child: IconButton(
             icon: Icon(
               Icons.change_circle,
-              color: purpule,
+              color: AppColors.primary,
               size: 28,
             ),
             onPressed: () => ccontroller.isRtspEnabled.value =
