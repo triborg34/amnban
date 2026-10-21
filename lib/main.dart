@@ -40,7 +40,7 @@ class MyApp extends StatelessWidget {
             }
             if (hostPort is String && hostPort.isNotEmpty) {
               port = hostPort;
-              port="8000";
+              // port="8000";
             
             }
           } catch (_) {
