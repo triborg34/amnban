@@ -157,7 +157,7 @@ class _add_or_edit_personState extends State<add_or_edit_person> {
                       },
                       isExpanded: true,
                       style: const TextStyle(
-                          fontSize: 12.5, color: AppColors.textPrimary),
+                          fontSize: 12.5, color: AppColors.textPrimary,fontFamily:"Vazir"),
                       items: const [
                         DropdownMenuItem(
                             value: 'مجاز', child: Text("مجاز")),

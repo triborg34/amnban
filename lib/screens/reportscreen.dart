@@ -406,7 +406,7 @@ class _ReportscreenState extends State<Reportscreen> {
             if (v != null) onChanged(v);
           },
           isExpanded: true,
-          style: const TextStyle(fontSize: 12.5, color: AppColors.textPrimary),
+          style: const TextStyle(fontSize: 12.5, color: AppColors.textPrimary,fontFamily:"Vazir",),
         ),
       ],
     );
@@ -625,7 +625,7 @@ class _ReportscreenState extends State<Reportscreen> {
                   },
                   isExpanded: true,
                   style: const TextStyle(
-                      fontSize: 12, color: AppColors.textPrimary),
+                      fontSize: 12, color: AppColors.textPrimary,fontFamily:"Vazir"),
                 ),
               ),
             ],

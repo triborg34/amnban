@@ -103,7 +103,7 @@ class _add_or_edit_userState extends State<add_or_edit_user> {
                 textDirection: TextDirection.rtl,
                 child: Obx(() => DropdownButtonFormField<String>(
                       style: const TextStyle(
-                          color: AppColors.textPrimary, fontSize: 12.5),
+                          color: AppColors.textPrimary, fontSize: 12.5,fontFamily:"Vazir"),
                       dropdownColor: AppColors.surface,
                       isExpanded: true,
                       decoration: InputDecoration(

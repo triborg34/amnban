@@ -23,6 +23,7 @@ class AppTheme {
     final base = ThemeData.dark(useMaterial3: true);
 
     return base.copyWith(
+      
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.background,
       canvasColor: AppColors.background,
@@ -47,6 +48,7 @@ class AppTheme {
           borderRadius: BorderRadius.all(Radius.circular(cardRadius)),
         ),
       ),
+      
       appBarTheme: const AppBarThemeData(
         backgroundColor: Colors.transparent,
         foregroundColor: AppColors.textPrimary,
@@ -77,49 +79,56 @@ class AppTheme {
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: AppColors.surface,
         surfaceTintColor: Colors.transparent,
+        
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
+        
         filled: true,
         fillColor: AppColors.surfaceHigh,
         isDense: true,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-        hintStyle: const TextStyle(fontSize: 12, color: AppColors.textMuted),
-        labelStyle: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-        floatingLabelStyle: const TextStyle(fontSize: 12, color: AppColors.primary),
+        hintStyle: const TextStyle(fontSize: 12, color: AppColors.textMuted,fontFamily: fontFamily,),
+        labelStyle: const TextStyle(fontSize: 12, color: AppColors.textSecondary,fontFamily: fontFamily,),
+        floatingLabelStyle: const TextStyle(fontSize: 12, color: AppColors.primary,fontFamily: fontFamily,),
         border: _fieldBorder(),
         enabledBorder: _fieldBorder(),
         focusedBorder: _fieldBorder(AppColors.primary, 1.4),
         errorBorder: _fieldBorder(AppColors.danger),
         focusedErrorBorder: _fieldBorder(AppColors.danger, 1.4),
       ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: const Color(0xFF04211F),
-          disabledBackgroundColor: AppColors.surfaceHigh,
-          disabledForegroundColor: AppColors.textMuted,
-          elevation: 0,
-          minimumSize: const Size(0, buttonHeight),
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(buttonRadius),
-          ),
-          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-        ),
-      ),
+     elevatedButtonTheme: ElevatedButtonThemeData(
+  style: ElevatedButton.styleFrom(
+    backgroundColor: AppColors.primary,
+    foregroundColor: const Color(0xFF04211F),
+    disabledBackgroundColor: AppColors.surfaceHigh,
+    disabledForegroundColor: AppColors.textMuted,
+    elevation: 0,
+    minimumSize: const Size(0, buttonHeight),
+    padding: const EdgeInsets.symmetric(horizontal: 20),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(buttonRadius),
+    ),
+    textStyle: const TextStyle(
+      fontFamily: fontFamily,
+      fontSize: 13,
+      fontWeight: FontWeight.w700,
+    ),
+  ),
+),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
+        
           backgroundColor: AppColors.primary,
           foregroundColor: const Color(0xFF04211F),
           minimumSize: const Size(0, buttonHeight),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(buttonRadius),
           ),
-          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700,fontFamily: fontFamily,),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -131,13 +140,13 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(buttonRadius),
           ),
-          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600,fontFamily: fontFamily,),
         ),
       ),
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600,fontFamily: fontFamily,),
         ),
       ),
       iconButtonTheme: IconButtonThemeData(
@@ -161,7 +170,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: AppColors.border),
         ),
-        textStyle: const TextStyle(fontSize: 11, color: AppColors.textPrimary),
+        textStyle: const TextStyle(fontSize: 11, color: AppColors.textPrimary,fontFamily: fontFamily,),
       ),
       switchTheme: SwitchThemeData(
         thumbColor: const WidgetStatePropertyAll<Color>(Colors.white),
@@ -212,6 +221,7 @@ class AppTheme {
       ),
       iconTheme: const IconThemeData(color: AppColors.textSecondary),
     );
+  
   }
 
   static OutlineInputBorder _fieldBorder([
@@ -231,29 +241,34 @@ class AppTheme {
             fontSize: 18,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
+            fontFamily: fontFamily,
           ),
           titleLarge: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
+            fontFamily: fontFamily,
           ),
           titleMedium: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
+            fontFamily: fontFamily,
           ),
           bodyMedium: const TextStyle(
             fontSize: 13,
             color: AppColors.textPrimary,
             height: 1.6,
+            fontFamily: fontFamily,
           ),
           bodySmall: const TextStyle(
             fontSize: 11.5,
             color: AppColors.textSecondary,
             height: 1.5,
+            fontFamily: fontFamily,
           ),
-          labelLarge: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-          labelSmall: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+          labelLarge: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600,fontFamily: fontFamily,),
+          labelSmall: const TextStyle(fontSize: 11, color: AppColors.textMuted,fontFamily: fontFamily,),
         )
         .apply(fontFamily: fontFamily);
   }

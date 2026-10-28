@@ -607,7 +607,7 @@ class _DetectionDetailState extends State<DetectionDetail> {
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary),
+          style: const TextStyle(fontSize: 11, color: AppColors.textSecondary,fontFamily:"Vazir"),
         ),
         const SizedBox(height: 5),
         DropdownButtonFormField<String>(
@@ -621,7 +621,7 @@ class _DetectionDetailState extends State<DetectionDetail> {
             if (v != null) onChanged(v);
           },
           isExpanded: true,
-          style: const TextStyle(fontSize: 12.5, color: AppColors.textPrimary),
+          style: const TextStyle(fontSize: 12.5, color: AppColors.textPrimary,fontFamily:"Vazir"),
         ),
       ],
     );

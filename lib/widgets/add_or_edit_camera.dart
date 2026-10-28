@@ -119,7 +119,7 @@ class _AddOrEditCameraState extends State<AddOrEditCamera> {
                             textDirection: TextDirection.rtl,
                             child: DropdownButtonFormField(
                               style: const TextStyle(
-                                  color: AppColors.textPrimary, fontSize: 12.5),
+                                  color: AppColors.textPrimary, fontSize: 12.5,fontFamily:"Vazir"),
                               dropdownColor: AppColors.surface,
                               decoration: InputDecoration(
                                   focusColor: Colors.transparent,
