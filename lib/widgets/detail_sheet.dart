@@ -1,3 +1,5 @@
+// ignore_for_file: unused_element
+
 import 'package:amnban/models/databaseEntry.dart';
 import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/utils/consts.dart';
@@ -12,7 +14,7 @@ import 'package:amnban/widgets/iran_plate.dart';
 import 'package:amnban/widgets/receipt_pdf.dart';
 import 'package:amnban/widgets/safe_image.dart';
 import 'package:amnban/widgets/status_chip.dart';
-import 'package:easy_image_viewer/easy_image_viewer.dart';
+import 'package:amnban/widgets/thumb_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:persian_number_utility/persian_number_utility.dart';
@@ -31,13 +33,15 @@ Future<void> showDetectionDetail(
   final wide = MediaQuery.sizeOf(context).width >= 760;
 
   if (wide) {
+
     return showDialog<void>(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.62),
       builder: (context) => Directionality(
         textDirection: TextDirection.rtl,
         child: Dialog(
-          insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
           alignment: AlignmentDirectional.centerStart,
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 620),
@@ -219,22 +223,43 @@ class _DetectionDetailState extends State<DetectionDetail> {
               ],
             ),
           ),
-          Flexible(
-            child: SingleChildScrollView(
-              controller: widget.scrollController,
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _cameraFrame(entry),
-                  const SizedBox(height: 14),
-                  _plateBlock(entry, person, direction),
-                  const SizedBox(height: 14),
-                  _infoGrid(entry, person, direction),
-                  const SizedBox(height: 14),
-                  _actions(entry),
-                ],
-              ),
+          Container(
+            padding: EdgeInsets.all(12),
+            // width: Get.width,
+            // height: 800,
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _cameraFrame(entry),
+                   
+                           
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 15,),
+                    Expanded(
+                      child: Column(
+                        children: [
+                           
+                                     _plateBlock(entry, person, direction),
+                          const SizedBox(height: 14),
+                          _infoGrid(entry, person, direction),
+                 
+                          // const SizedBox(height: 14),
+                          // _actions(entry),
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+                   const SizedBox(height: 14),
+                          _actions(entry),
+              ],
             ),
           ),
         ],
@@ -250,77 +275,93 @@ class _DetectionDetailState extends State<DetectionDetail> {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        height: 240,
-        color: AppColors.surfaceHigh,
+        height: 600,
+        color: AppColors.surface,
         alignment: Alignment.center,
         child: url.isEmpty
             ? const AppEmptyState(
                 message: 'تصویری موجود نیست',
                 icon: Icons.image_not_supported_outlined,
               )
-            : Hero(
-                tag: 'detectionThumb-${entry.id}',
-                child: EasyImageView(
-                  imageProvider: NetworkImage(url),
-                  onScaleChanged: (_) {},
-                ),
+            : ThumbImage(
+                url: url,
+                fit: BoxFit.contain,
+                width: double.infinity,
+                height: 600,
+                cacheWidth: 960,
+                borderRadius: 0,
               ),
       ),
     );
   }
 
-  Widget _plateBlock(
-      databaseClass entry, dynamic person, String direction) {
-    final imageUrl = pbFileUrlOf('database', entry.id, entry.imgpath);
-
+  Widget _plateBlock(databaseClass entry, dynamic person, String direction) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 520;
 
-        final preview = Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        final preview = Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          // crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Center(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: EntryPlate(entry: entry, height: 52),
+            Container(
+              width: 200,
+              height: 200,
+              child: Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: EntryPlate(entry: entry, height: 52),
+                ),
               ),
             ),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: SafeNetImage(
-                url: imageUrl,
-                fit: BoxFit.contain,
-                width: double.infinity,
-                height: 100,
+            Container(
+              height: 110,
+              color: Colors.transparent,
+              width: 200,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: _plateHero(entry),
               ),
-            ),
+            )
+
+            // const SizedBox(width: 12),
+            // ClipRRect(
+            //   borderRadius: BorderRadius.circular(10),
+            //   child: Container(
+            //     height: 110,
+            //     color: AppColors.surface,
+            //     alignment: Alignment.center,
+            //     // The Hero pairs the *same* picture as the thumbnail in the
+            //     // detection list (the cropped plate) and uses a stable id
+            //     // based tag.
+            //     child: _plateHero(entry),
+            //   ),
+            // ),
           ],
         );
 
-        final form = Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _dropdown(
-              label: 'نوع پلاک',
-              value: _plateType,
-              items: const ['عادی', 'اروند'],
-              onChanged: (v) => setState(() => _plateType = v),
-            ),
-            const SizedBox(height: 12),
-            _field('مدل خودرو', _modelController),
-            const SizedBox(height: 12),
-            _field('رنگ خودرو', _colorController),
-            const SizedBox(height: 12),
-            _dropdown(
-              label: 'وضعیت تردد',
-              value: _access,
-              items: const ['مجاز', 'غیر مجاز'],
-              onChanged: (v) => setState(() => _access = v),
-            ),
-          ],
-        );
+        // final form = Column(
+        //   crossAxisAlignment: CrossAxisAlignment.stretch,
+        //   children: [
+        //     _dropdown(
+        //       label: 'نوع پلاک',
+        //       value: _plateType,
+        //       items: const ['عادی', 'اروند'],
+        //       onChanged: (v) => setState(() => _plateType = v),
+        //     ),
+        //     const SizedBox(height: 12),
+        //     _field('مدل خودرو', _modelController),
+        //     const SizedBox(height: 12),
+        //     _field('رنگ خودرو', _colorController),
+        //     const SizedBox(height: 12),
+        //     _dropdown(
+        //       label: 'وضعیت تردد',
+        //       value: _access,
+        //       items: const ['مجاز', 'غیر مجاز'],
+        //       onChanged: (v) => setState(() => _access = v),
+        //     ),
+        //   ],
+        // );
 
         if (!wide) {
           return Column(
@@ -328,7 +369,7 @@ class _DetectionDetailState extends State<DetectionDetail> {
             children: [
               preview,
               const SizedBox(height: 16),
-              form,
+              // form,
             ],
           );
         }
@@ -338,31 +379,48 @@ class _DetectionDetailState extends State<DetectionDetail> {
           children: [
             Expanded(flex: 3, child: preview),
             const SizedBox(width: 16),
-            Expanded(flex: 2, child: form),
+            // Expanded(flex: 2, child: form),
           ],
         );
       },
     );
   }
 
-  Widget _infoGrid(
-      databaseClass entry, dynamic person, String direction) {
+  /// Cropped plate picture, wrapped in the stable Hero.
+  Widget _plateHero(databaseClass entry) {
+    final heroTag = detectionHeroTag(entry.id);
+    final image = ThumbImage(
+      url: pbFileUrlOf('database', entry.id, entry.imgpath),
+      fit: BoxFit.contain,
+      width: double.infinity,
+      height: 110,
+      cacheWidth: 480,
+      borderRadius: 0,
+    );
+
+    if (heroTag == null) return image;
+    return Hero(tag: heroTag, child: image);
+  }
+
+  Widget _infoGrid(databaseClass entry, dynamic person, String direction) {
     final rows = <List<String>>[
       ['جهت خودرو', direction],
       ['نوع خودرو', DetectionMeta.carType(entry.plateNum)],
       ['مدل خودرو', person?.carName ?? '-'],
-      [
-        'رنگ خودرو',
-        _colorController.text.isEmpty ? '-' : _colorController.text
-      ],
+      ['مالک', person?.name ?? 'ثبت نشده'],
+      
+      // [
+      //   'رنگ خودرو',
+      //   _colorController.text.isEmpty ? '-' : _colorController.text
+      // ],
       ['وضعیت تردد', person?.role ?? 'بدون مالک'],
-      ['مدل تشخیص پلاک', '${safeInt(entry.platePercent ?? 0)}٪'],
-      ['زمان دقیق ساخت', entry.created ?? '-'],
+      ['دقت تشخیص پلاک', '${safeInt(entry.charPercent ?? 0)}٪'],
+      // ['زمان دقیق ساخت', entry.created ?? '-'],
       [
         'موقعیت دقیق جغرافیایی',
         '${DetectionMeta.province(entry.provice)} - ${DetectionMeta.city(entry.city)}'
       ],
-      ['وضعیت پرداخت', 'پرداخت شده'],
+      // ['وضعیت پرداخت', 'پرداخت شده'],
       ['شماره پلاک', entry.plateNum ?? '-'],
       [
         'زمان دقیق ورود',
@@ -415,21 +473,22 @@ class _DetectionDetailState extends State<DetectionDetail> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: _save,
-                icon: const Icon(Icons.check_rounded, size: 16),
-                label: const Text('ثبت'),
-              ),
-            ),
-          ],
-        ),
+        // Row(
+        //   children: [
+        //     // Expanded(
+        //     //   child: ElevatedButton.icon(
+        //     //     onPressed: _save,
+        //     //     icon: const Icon(Icons.check_rounded, size: 16),
+        //     //     label: const Text('ثبت'),
+        //     //   ),
+        //     // ),
+        //   ],
+        // ),
         const SizedBox(height: 10),
-        Wrap(
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           spacing: 10,
-          runSpacing: 10,
+          // runSpacing: 10,
           children: [
             OutlinedButton.icon(
               onPressed: frameUrl.isEmpty
@@ -517,6 +576,7 @@ class _DetectionDetailState extends State<DetectionDetail> {
   }
 
   // ----------------------------------------------------------------- forms
+
 
   Widget _field(String label, TextEditingController controller) {
     return Column(

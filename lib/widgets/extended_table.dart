@@ -1,3 +1,4 @@
+import 'package:amnban/models/databaseEntry.dart';
 import 'package:amnban/screens/details_screen.dart';
 import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/utils/consts.dart';
@@ -7,6 +8,7 @@ import 'package:amnban/widgets/app_card.dart';
 import 'package:amnban/widgets/iran_plate.dart';
 import 'package:amnban/widgets/pdf_printig.dart';
 import 'package:amnban/widgets/safe_image.dart';
+import 'package:amnban/widgets/thumb_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:persian_number_utility/persian_number_utility.dart';
@@ -75,15 +77,7 @@ class ExtendedTable extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Hero(
-                        tag: 'heroTag${entry.id ?? dcontroller.selectedIndex.value}',
-                        child: SafeNetImage(
-                          url: pbFileUrlOf('database', entry.id, entry.imgpath),
-                          fit: BoxFit.cover,
-                          width: 112,
-                          height: 68,
-                        ),
-                      ),
+                      child: _thumb(entry),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -104,8 +98,26 @@ class ExtendedTable extends StatelessWidget {
     });
   }
 
-  Widget _cell(String title, String value) {
-    return Container(
+  /// Thumbnail of the selected detection.
+  ///
+  /// The Hero tag is derived from the record id only — an index based tag
+  /// changes whenever the list is re-ordered and makes Flutter drop the
+  /// flight (which shows a blank frame).
+  Widget _thumb(databaseClass entry) {
+    final heroTag = detectionHeroTag(entry.id);
+    final image = ThumbImage(
+      url: pbFileUrlOf('database', entry.id, entry.imgpath),
+      width: 112,
+      height: 68,
+      cacheWidth: 240,
+      borderRadius: 8,
+    );
+
+    if (heroTag == null) return image;
+    return Hero(tag: heroTag, child: image);
+  }
+
+  Widget _cell(String title, String value) {    return Container(
       width: 140,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       margin: const EdgeInsets.only(left: 8),

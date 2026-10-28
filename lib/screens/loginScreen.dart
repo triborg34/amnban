@@ -196,7 +196,7 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
         const CompanyName(fontSize: 22),
         const SizedBox(height: 8),
         const Text(
-          'سامانه پایش خودکار پلاک',
+          'سامانه جامع امن بان',
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 12.5,
@@ -226,7 +226,7 @@ class _ModernLoginPageState extends State<ModernLoginPage> {
           ),
           const SizedBox(height: 4),
           const Text(
-            'پنل مدیریت پارکینگ',
+           'سامانه پایش خودکار پلاک',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 12.5,

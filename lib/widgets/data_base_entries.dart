@@ -10,8 +10,10 @@ import 'package:amnban/utils/safe.dart';
 import 'package:amnban/widgets/add_or_edit_person.dart';
 import 'package:amnban/widgets/app_card.dart';
 import 'package:amnban/widgets/iran_plate.dart';
+import 'package:amnban/widgets/receipt_pdf.dart';
 import 'package:amnban/widgets/safe_image.dart';
 import 'package:amnban/widgets/status_chip.dart';
+import 'package:amnban/widgets/thumb_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:persian_number_utility/persian_number_utility.dart';
@@ -161,10 +163,14 @@ class _dataBaseEntriesState extends State<dataBaseEntries> {
               itemBuilder: (context, index) {
                 final entry = visible[index];
                 // Map back to the full-list index for selection.
-                final fullIndex =
-                    entries.indexWhere((e) => e.id == entry.id);
+                final fullIndex = entries.indexWhere((e) => e.id == entry.id);
                 return DetectionRow(
-                  key: ValueKey(entry.id ?? index),
+                  // A stable key based on the record id (never the list
+                  // index) keeps the row — and its cached image — alive
+                  // while the list is scrolled.
+                  key: entry.id != null && entry.id!.isNotEmpty
+                      ? ValueKey('detection_${entry.id}')
+                      : ObjectKey(entry),
                   entry: entry,
                   fullIndex: fullIndex == -1 ? index : fullIndex,
                   dcontroller: widget.dcontroller,
@@ -231,104 +237,131 @@ class _DetectionRowState extends State<DetectionRow> {
                   : AppColors.border,
             ),
           ),
-          child: Row(
-            children: [
-              // Thumbnail → opens the full detail page directly.
-              InkWell(
-                borderRadius: BorderRadius.circular(7),
-                onTap: () => _openDetail(),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(7),
-                  child: Hero(
-                    tag: 'detectionThumb-${entry.id}',
-                    child: SafeNetImage(
-                      url: pbFileUrlOf('database', entry.id, entry.imgpath),
-                      fit: BoxFit.cover,
-                      width: 52,
-                      height: 38,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              // Plate → expands the inline mini table (step 1).
-              InkWell(
-                borderRadius: BorderRadius.circular(6),
-                onTap: () => setState(() => _expanded = !_expanded),
-                child: Tooltip(
-                  message: _expanded ? 'بستن جزئیات' : 'نمایش جزئیات پلاک',
-                  child: Padding(
-                    padding: const EdgeInsets.all(2),
-                    child: SizedBox(
-                      width: 86,
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: EntryPlate(entry: entry, height: 30),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // The row adapts to the width of the panel so the plate keeps
+              // its size and nothing ever overflows.
+              final width = constraints.maxWidth;
+              final thumbWidth =
+                  width >= 480 ? 64.0 : (width >= 380 ? 48.0 : 0.0);
+              final plateHeight =
+                  width >= 480 ? 40.0 : (width >= 380 ? 34.0 : 28.0);
+              final plateWidth = (plateHeight * 3.2).roundToDouble();
+
+              return Row(
+                children: [
+                  // Thumbnail → opens the full detail page directly.
+                  if (thumbWidth > 0) ...[
+                    InkWell(
+                      borderRadius: BorderRadius.circular(7),
+                      onTap: () => _openDetail(),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(7),
+                        child: SizedBox(
+                          width: thumbWidth,
+                          height: plateHeight * 1.15,
+                          child: _thumbnail(entry),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      person?.name ?? 'ثبت نشده',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      Get.find<cameraController>().cameraNameFor(entry.rtpath),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 10,
-                        color: AppColors.textMuted,
-                      ),
-                    ),
+                    const SizedBox(width: 8),
                   ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              StatusChip(status: status, dense: true),
-              const SizedBox(width: 10),
-              SizedBox(
-                width: 54,
-                child: Text(
-                  (entry.eTime ?? '-').toString().toPersianDigit(),
-                  textAlign: TextAlign.end,
-                  style: AppTheme.numeric(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textSecondary,
+                  // Plate → expands the inline mini table (step 1).
+                  SizedBox(
+                    width: plateWidth,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(6),
+                      onTap: () => setState(() => _expanded = !_expanded),
+                      child: Tooltip(
+                        message:
+                            _expanded ? 'بستن جزئیات' : 'نمایش جزئیات پلاک',
+                        child: Padding(
+                          padding: const EdgeInsets.all(2),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: AlignmentDirectional.centerStart,
+                            child: EntryPlate(
+                              entry: entry,
+                              height: plateHeight,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              if (person == null)
-                IconButton(
-                  onPressed: () => _addPerson(),
-                  hoverColor: AppColors.primarySoft,
-                  icon: const Icon(Icons.add_box_outlined),
-                  color: AppColors.primary,
-                  iconSize: 18,
-                  tooltip: 'افزودن به لیست مجاز',
-                ),
-              IconButton(
-                onPressed: () => _delete(),
-                icon: const Icon(Icons.delete_outline, color: AppColors.danger),
-                iconSize: 18,
-                tooltip: 'حذف',
-              ),
-            ],
+                  const SizedBox(width: 8),
+                  Expanded(
+                    flex: 4,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          person?.name ?? 'ثبت نشده',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          Get.find<cameraController>()
+                              .cameraNameFor(entry.rtpath),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  StatusChip(status: status, dense: true),
+                  const SizedBox(width: 6),
+                  SizedBox(
+                    width: 60,
+                    child: Text(
+                      (entry.eTime ?? '-').toString().toPersianDigit(),
+                      textAlign: TextAlign.end,
+                      style: AppTheme.numeric(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                  if (person == null)
+                    IconButton(
+                      onPressed: () => _addPerson(),
+                      hoverColor: AppColors.primarySoft,
+                      icon: const Icon(Icons.add_box_outlined),
+                      color: AppColors.primary,
+                      iconSize: 18,
+                      tooltip: 'افزودن به لیست مجاز',
+                      visualDensity: VisualDensity.compact,
+                      padding: EdgeInsets.zero,
+                      constraints:
+                          const BoxConstraints.tightFor(width: 30, height: 30),
+                    ),
+                  IconButton(
+                    onPressed: () => _delete(),
+                    icon: const Icon(Icons.delete_outline,
+                        color: AppColors.danger),
+                    iconSize: 18,
+                    tooltip: 'حذف',
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints:
+                        const BoxConstraints.tightFor(width: 30, height: 30),
+                  ),
+                ],
+              );
+            },
           ),
         ),
         // Step 1 result — the inline mini table.
@@ -378,14 +411,23 @@ class _DetectionRowState extends State<DetectionRow> {
               Row(
                 children: [
                   SizedBox(
-                    width: 96,
+                    width: 112,
                     child: FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: AlignmentDirectional.centerStart,
-                      child: EntryPlate(entry: entry, height: 32),
+                      child: EntryPlate(entry: entry, height: 40),
                     ),
                   ),
                   const Spacer(),
+                  OutlinedButton.icon(
+                    onPressed: () => printReceipt(entry, widget.kcontroller),
+                    icon: const Icon(Icons.print_outlined, size: 16),
+                    label: const Text('چاپ رسید'),
+                                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(0, 32),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      textStyle: const TextStyle(fontSize: 11.5))
+                  ),SizedBox(width: 10,),
                   OutlinedButton.icon(
                     onPressed: () => _openDetail(),
                     icon: const Icon(Icons.open_in_new_rounded, size: 14),
@@ -443,6 +485,29 @@ class _DetectionRowState extends State<DetectionRow> {
         ),
       ),
     );
+  }
+
+  // ---------------------------------------------------------------- images
+
+  /// The cropped-plate thumbnail.
+  ///
+  /// It is a cached image with a fixed, small decode size so scrolling the
+  /// list never re-decodes (and never blanks) the picture. The Hero tag is
+  /// derived from the record id only — an index based tag changes while
+  /// scrolling and makes Flutter drop the flight.
+  Widget _thumbnail(databaseClass entry) {
+    final heroTag = detectionHeroTag(entry.id);
+    final image = ThumbImage(
+      url: pbFileUrlOf('database', entry.id, entry.imgpath),
+      width: 64,
+      height: 46,
+      fit: BoxFit.contain,
+      cacheWidth: 240,
+      borderRadius: 7,
+    );
+
+    if (heroTag == null) return image;
+    return Hero(tag: heroTag, child: image);
   }
 
   // ---------------------------------------------------------------- actions
@@ -507,8 +572,8 @@ class _DetectionRowState extends State<DetectionRow> {
     } catch (e) {
       appLog('delete database record failed', e);
       if (!mounted) return;
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          const SnackBar(content: Text('خطا در حذف رکورد')));
+      ScaffoldMessenger.maybeOf(context)
+          ?.showSnackBar(const SnackBar(content: Text('خطا در حذف رکورد')));
     }
   }
 }

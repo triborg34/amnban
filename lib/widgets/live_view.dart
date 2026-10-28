@@ -20,9 +20,10 @@ import 'CemraFeed.dart';
 
 /// LIVE VIEW section of the main page.
 ///
-/// Every registered camera is shown at the same time in a responsive grid
+/// Every registered camera is rendered at the same time in a responsive grid
 /// (two columns on tablet / desktop, one on phones). Tapping a tile enlarges
-/// it to the full row — tapping it again returns it to the grid.
+/// it to a full row — the other tiles stay in the grid, nothing is hidden and
+/// nothing is dimmed.
 class LiveViewSection extends StatefulWidget {
   const LiveViewSection({super.key});
 
@@ -31,16 +32,17 @@ class LiveViewSection extends StatefulWidget {
 }
 
 class _LiveViewSectionState extends State<LiveViewSection> {
-  /// Index of the enlarged camera (`null` = none).
-  int? _expanded;
+  /// Id of the camera that is shown enlarged (`null` = none).
+  String? _selectedCameraId;
 
   @override
   Widget build(BuildContext context) {
     final ccontroller = Get.find<cameraController>();
-    final dcontroller = Get.find<databaseController>();
     final kcontroller = Get.find<knowPersonController>();
 
     return Obx(() {
+      // `cameras` is the only value read here — it is the observable the
+      // camera controller keeps up to date.
       final cameras = ccontroller.cameras;
       if (cameras.isEmpty) {
         return const BentoCard(
@@ -51,10 +53,6 @@ class _LiveViewSectionState extends State<LiveViewSection> {
         );
       }
 
-      final expanded = (_expanded != null && _expanded! < cameras.length)
-          ? _expanded
-          : null;
-
       return BentoCard(
         padding: const EdgeInsets.all(14),
         child: Column(
@@ -64,7 +62,7 @@ class _LiveViewSectionState extends State<LiveViewSection> {
               title: 'نمای زنده',
               subtitle: 'تصویر زنده تمام دوربین ها',
               icon: Icons.sensors_outlined,
-              trailing: _LiveBadge(),
+              trailing: const _LiveBadge(),
             ),
             const SizedBox(height: 12),
             const GradientDivider(height: 1.2),
@@ -73,46 +71,33 @@ class _LiveViewSectionState extends State<LiveViewSection> {
               builder: (context, constraints) {
                 final columns = constraints.maxWidth >= 680 ? 2 : 1;
                 final gap = 12.0;
-                final tileWidth =
-                    (constraints.maxWidth - gap * (columns - 1)) / columns;
+                final width = constraints.maxWidth;
+                final tileWidth = (width - gap * (columns - 1)) / columns;
 
-                // The enlarged camera is moved to the front so it occupies the
-                // whole first row of the grid.
-                final ordered = <int>[
-                  if (expanded != null) expanded,
-                  for (var i = 0; i < cameras.length; i++)
-                    if (i != expanded) i,
-                ];
-
-                return AnimatedSize(
-                  duration: const Duration(milliseconds: 260),
-                  curve: Curves.easeOutCubic,
-                  alignment: Alignment.topCenter,
-                  child: Wrap(
-                    spacing: gap,
-                    runSpacing: gap,
-                    children: [
-                      for (final index in ordered)
-                        SizedBox(
-                          width: index == expanded
-                              ? constraints.maxWidth
-                              : tileWidth,
-                          child: _CameraLiveTile(
-                            camera: cameras[index],
-                            index: index,
-                            expanded: index == expanded,
-                            latest: DashboardStats.latestForCamera(
-                              dcontroller.entries,
-                              cameras[index].path,
-                            ),
-                            kcontroller: kcontroller,
-                            onTap: () => setState(() {
-                              _expanded = _expanded == index ? null : index;
-                            }),
-                          ),
-                        ),
-                    ],
-                  ),
+                // The camera order never changes: a tile is only re-sized
+                // when it is selected. Re-ordering the list would move the
+                // platform view of the live stream and drop the connection
+                // to the backend.
+                return Wrap(
+                  spacing: gap,
+                  runSpacing: gap,
+                  children: [
+                    for (final camera in cameras)
+                      _LiveCameraTile(
+                        key: ValueKey('live-camera-${camera.id ?? camera.path}'),
+                        camera: camera,
+                        kcontroller: kcontroller,
+                        selected: _selectedCameraId != null &&
+                            _selectedCameraId == (camera.id ?? camera.path),
+                        tileWidth: tileWidth,
+                        fullWidth: width,
+                        onTap: () => setState(() {
+                          final id = camera.id ?? camera.path;
+                          _selectedCameraId =
+                              _selectedCameraId == id ? null : id;
+                        }),
+                      ),
+                  ],
                 );
               },
             ),
@@ -124,81 +109,92 @@ class _LiveViewSectionState extends State<LiveViewSection> {
 }
 
 /// A single camera tile of the LIVE VIEW grid.
-class _CameraLiveTile extends StatelessWidget {
-  const _CameraLiveTile({
+class _LiveCameraTile extends StatelessWidget {
+  const _LiveCameraTile({
+    super.key,
     required this.camera,
-    required this.index,
-    required this.expanded,
-    required this.latest,
     required this.kcontroller,
+    required this.selected,
+    required this.tileWidth,
+    required this.fullWidth,
     required this.onTap,
   });
 
   final CameraClass camera;
-  final int index;
-  final bool expanded;
-  final databaseClass? latest;
   final knowPersonController kcontroller;
+  final bool selected;
+  final double tileWidth;
+  final double fullWidth;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final hasStream = (camera.rtspUrl ?? '').isNotEmpty;
-
-    return AnimatedScale(
-      scale: expanded ? 1.0 : 1.0,
-      duration: const Duration(milliseconds: 240),
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(
+        begin: tileWidth,
+        end: selected ? fullWidth : tileWidth,
+      ),
+      duration: const Duration(milliseconds: 260),
       curve: Curves.easeOutCubic,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 240),
-          curve: Curves.easeOutCubic,
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceHigh.withValues(alpha: expanded ? 0.9 : 0.45),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: expanded
-                  ? AppColors.primary.withValues(alpha: 0.55)
-                  : AppColors.border,
+      builder: (context, width, _) => SizedBox(
+        width: width,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 260),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              // The same surface for every tile — selecting a camera must not
+              // darken it.
+              color: AppColors.surfaceHigh,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: selected
+                    ? AppColors.primary.withValues(alpha: 0.55)
+                    : AppColors.border,
+              ),
+              boxShadow: [
+                if (selected)
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.20),
+                    blurRadius: 20,
+                    spreadRadius: -6,
+                  ),
+              ],
             ),
-            boxShadow: [
-              if (expanded)
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.22),
-                  blurRadius: 20,
-                  spreadRadius: -6,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _label(),
+                const SizedBox(height: 8),
+                _frame(),
+                const SizedBox(height: 8),
+                _LatestDetection(
+                  camera: camera,
+                  kcontroller: kcontroller,
                 ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _label(hasStream),
-              const SizedBox(height: 8),
-              _frame(hasStream),
-              const SizedBox(height: 8),
-              _latestPlate(),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _label(bool hasStream) {
+  Widget _label() {
+    final isEntry = (camera.gate ?? 'entre') == 'entre';
+    final hasStream = (camera.rtspUrl ?? '').isNotEmpty;
+
     return Row(
       children: [
         Container(
           width: 7,
           height: 7,
           decoration: BoxDecoration(
-            color: (camera.gate ?? 'entre') == 'entre'
-                ? AppColors.primary
-                : AppColors.warning,
+            color: isEntry ? AppColors.primary : AppColors.warning,
             shape: BoxShape.circle,
           ),
         ),
@@ -223,73 +219,103 @@ class _CameraLiveTile extends StatelessWidget {
     );
   }
 
-  Widget _frame(bool hasStream) {
-    final streamUrl = cameraStreamUrl(index, camera);
+  Widget _frame() {
+    final hasStream = (camera.rtspUrl ?? '').isNotEmpty;
+    final streamUrl = cameraStreamUrl(_indexOf(camera), camera);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: AspectRatio(
         aspectRatio: 16 / 9,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Container(color: AppColors.background),
-            if (hasStream)
-              CameraFeed(key: ValueKey(streamUrl), streamUrl: streamUrl)
-            else
-              _LastDetectionImage(latest: latest),
-            const PositionedDirectional(
-              bottom: 8,
-              start: 8,
-              child: _ClockOverlay(),
-            ),
-          ],
-        ),
+        child: hasStream
+            ? CameraFeed(key: ValueKey(streamUrl), streamUrl: streamUrl)
+            // No live stream — show the last detection of this camera.
+            : Obx(() {
+                final entries = Get.find<databaseController>().entries
+                    .toList(growable: false);
+                return _LastDetectionImage(
+                  latest: DashboardStats.latestForCamera(
+                    entries,
+                    camera.path,
+                  ),
+                );
+              }),
       ),
     );
   }
 
-  Widget _latestPlate() {
-    if (latest == null) {
-      return Container(
-        height: 34,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: AppColors.background.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: const Text(
-          'هنوز ترددی ثبت نشده است',
-          style: TextStyle(fontSize: 10.5, color: AppColors.textMuted),
-        ),
-      );
-    }
+  /// Position of the camera inside the controller list (the feed URL uses it).
+  int _indexOf(CameraClass item) {
+    final cameras = Get.find<cameraController>().cameras;
+    final index = cameras.indexWhere((c) => c.id == item.id);
+    return index == -1 ? 0 : index;
+  }
+}
 
-    return Row(
-      children: [
-        Flexible(
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: AlignmentDirectional.centerStart,
-            child: EntryPlate(entry: latest!, height: 30),
+/// The "آخرین تردد" block of a camera tile.
+///
+/// It reads the detections straight from the controller inside an `Obx`, so
+/// every poll that adds a record refreshes it — the very same observable the
+/// live feed uses.
+class _LatestDetection extends StatelessWidget {
+  const _LatestDetection({
+    required this.camera,
+    required this.kcontroller,
+  });
+
+  final CameraClass camera;
+  final knowPersonController kcontroller;
+
+  @override
+  Widget build(BuildContext context) {
+    return Obx(() {
+      // Read the observable here (not in initState) so GetX can track it.
+      // `toList` walks the RxList, which is what registers the dependency —
+      // reading the field alone would not.
+      final entries =
+          Get.find<databaseController>().entries.toList(growable: false);
+      final latest = DashboardStats.latestForCamera(entries, camera.path);
+
+      if (latest == null) {
+        return Container(
+          height: 34,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(8),
           ),
-        ),
-        const SizedBox(width: 8),
-        StatusChip(
-          status: statusForEntry(latest!, kcontroller),
-          dense: true,
-        ),
-        const Spacer(),
-        Text(
-          (latest!.eTime ?? '-').toString().toPersianDigit(),
-          style: AppTheme.numeric(
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textSecondary,
+          child: const Text(
+            'هنوز ترددی برای این دوربین ثبت نشده است',
+            style: TextStyle(fontSize: 10.5, color: AppColors.textMuted),
           ),
-        ),
-      ],
-    );
+        );
+      }
+
+      final status = statusForEntry(latest, kcontroller);
+
+      return Row(
+        children: [
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: AlignmentDirectional.centerStart,
+              child: EntryPlate(entry: latest, height: 30),
+            ),
+          ),
+          const SizedBox(width: 8),
+          StatusChip(status: status, dense: true),
+          const Spacer(),
+          Text(
+            (latest.eTime ?? '-').toString().toPersianDigit(),
+            style: AppTheme.numeric(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+      );
+    });
   }
 }
 
@@ -306,18 +332,24 @@ class _LastDetectionImage extends StatelessWidget {
         : pbFileUrlOf('database', latest!.id, latest!.scrnPath);
 
     if (url.isEmpty) {
-      return const Center(
-        child: Icon(Icons.videocam_off_outlined,
-            size: 30, color: AppColors.textMuted),
+      return Container(
+        color: AppColors.surface,
+        child: const Center(
+          child: Icon(Icons.videocam_off_outlined,
+              size: 30, color: AppColors.textMuted),
+        ),
       );
     }
 
     return Image.network(
       url,
       fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) => const Center(
-        child: Icon(Icons.broken_image_outlined,
-            size: 28, color: AppColors.textMuted),
+      errorBuilder: (context, error, stack) => Container(
+        color: AppColors.surface,
+        child: const Center(
+          child: Icon(Icons.broken_image_outlined,
+              size: 28, color: AppColors.textMuted),
+        ),
       ),
     );
   }

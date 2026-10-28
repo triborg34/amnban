@@ -2,12 +2,13 @@ import 'dart:convert';
 
 import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/theme/app_theme.dart';
+import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/utils/safe.dart';
 import 'package:amnban/widgets/add_or_edit_camera.dart';
 import 'package:amnban/widgets/app_card.dart';
 import 'package:persian_number_utility/persian_number_utility.dart';
-import 'package:amnban/widgets/camera_grid.dart';
+// import 'package:amnban/widgets/camera_grid.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -139,12 +140,87 @@ class CameraScreen extends StatelessWidget {
               message: 'دوربینی در این بخش ثبت نشده است',
               icon: Icons.videocam_off_outlined,
             )
+          // else
           else
-            CameraGrid(
-              cameras: cameras.cast(),
-              kcontroller: kcontroller,
-              onExpand: (camera) => _edit(context, camera),
-            ),
+            for (var (index,cam) in cameras.indexed)
+              Container(
+                margin: const EdgeInsets.only(bottom: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                    color: AppColors.surfaceHigh,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.border)),
+                height: 50,
+                width: Get.width,
+                child: Row(
+                  children: [
+                        Text((index+1).toString()),
+                           VerticalDivider(
+                      color: AppColors.textSecondary,
+                    ),
+                     const SizedBox(width: 8),
+                    const Icon(Icons.videocam_outlined,
+                        size: 16, color: AppColors.textMuted),
+                         const SizedBox(width: 8),
+                    Text(cam.id),
+                    const SizedBox(width: 8),
+                    VerticalDivider(
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(cam.name),
+                    const SizedBox(width: 8),
+                    VerticalDivider(
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(cam.ip),
+                    const SizedBox(width: 8),
+                    VerticalDivider(
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(cam.rtspUrl),
+                    const SizedBox(width: 8),
+                    VerticalDivider(
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(cam.port),
+                    const SizedBox(width: 8),
+                    VerticalDivider(
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () {
+                        _edit(context, cam);
+                      },
+                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      tooltip: 'ویرایش',
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    const SizedBox(width: 8),
+                    VerticalDivider(
+                      color: AppColors.textSecondary,
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () {_delete(context, cam);},
+                      icon: const Icon(Icons.delete_outline,
+                          size: 18, color: AppColors.danger),
+                      tooltip: 'حذف',
+                      visualDensity: VisualDensity.compact,
+                    )
+                  ],
+                ),
+              )
+          //   CameraGrid(
+          //     cameras: cameras.cast(),
+          //     kcontroller: kcontroller,
+          //     onExpand: (camera) => _edit(context, camera),
+          //   ),
         ],
       ),
     );
@@ -179,8 +255,8 @@ class CameraScreen extends StatelessWidget {
                 for (final item in found)
                   Container(
                     margin: const EdgeInsets.only(bottom: 6),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: AppColors.surfaceHigh,
                       borderRadius: BorderRadius.circular(10),
@@ -233,6 +309,13 @@ class CameraScreen extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _delete(BuildContext context, dynamic camera) async {
+    await pb.collection('cameras').delete(camera.id!);
+    ScaffoldMessenger.maybeOf(context)!.showSnackBar(SnackBar(
+        content: Text(
+            "Camera Number ${camera.id!} is Deleted")));
   }
 
   Future<void> _edit(BuildContext context, dynamic camera) async {

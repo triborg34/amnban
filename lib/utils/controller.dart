@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:amnban/models/cameraClass.dart';
+import 'package:amnban/models/cpu_stats.dart';
 import 'package:amnban/models/databaseEntry.dart';
 import 'package:amnban/models/knowPersonClass.dart';
 import 'package:amnban/models/settingClass.dart';
@@ -1065,6 +1066,55 @@ class userController extends GetxController {
     email.dispose();
     username.dispose();
     password.dispose();
+    super.onClose();
+  }
+}
+
+
+
+class CpuController extends GetxController {
+  String  _url = 'http://${url}:${port}/utils/cpu'; // your server
+  
+
+  final stats = Rxn<CpuStats>();
+  final error = RxnString();
+
+  Timer? _timer;
+  bool _busy = false;
+
+  @override
+  void onInit() {
+    super.onInit();
+    
+    _poll();
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) => _poll());
+  }
+
+  Future<void> _poll() async {
+    if (_busy) return; // skip if the previous request is still running
+    _busy = true;
+    try {
+      final res = await http
+          .get(Uri.parse(_url))
+          .timeout(const Duration(seconds: 3));
+      if (res.statusCode == 200) {
+        stats.value = CpuStats.fromJson(
+          jsonDecode(res.body) as Map<String, dynamic>,
+        );
+        error.value = null;
+      } else {
+        error.value = 'HTTP ${res.statusCode}';
+      }
+    } catch (_) {
+      error.value = 'اتصال برقرار نشد';
+    } finally {
+      _busy = false;
+    }
+  }
+
+  @override
+  void onClose() {
+    _timer?.cancel();
     super.onClose();
   }
 }

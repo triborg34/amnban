@@ -142,7 +142,7 @@ var alphabetP2 = {
   'M': 'م',
   'N': 'ن',
   'H': 'ه',
-  'H2': 'ه\u200c',
+  // 'HX': 'ه\u200c',
   'V': 'و',
   'P': 'پ',
   'ZHE': 'ژ (معلولین و جانبازان)',
@@ -203,7 +203,7 @@ var plateAlphabet = {
   'M': 'م',
   'N': 'ن',
   'H': 'ه',
-  'H2': 'ه\u200c',
+  // 'H2': 'ه\u200c',
   'V': 'و',
   'P': 'پ',
   'ZHE': 'ژ',
@@ -233,33 +233,34 @@ String convertString(String input) {
 /// Shared by [convertToPersian], [convertToPersianString] and the plate
 /// widgets so every renderer agrees on the exact character layout.
 String tokenizePlate(String input, Map<String, String> dictionary) {
+  String source = input.replaceAll('HX', 'H');
+  source=input.replaceAll('\u200c', "");
   String result = '';
 
-  // Loop through each character or group of characters in the input
-  for (int i = 0; i < input.length; i++) {
-    // Check if multi-character tokens exist in the dictionary
-    if (i + 2 < input.length &&
-        dictionary.containsKey(input.substring(i, i + 3))) {
-      result += dictionary[input.substring(i, i + 3)]!;
-      i += 2; // Skip next two characters since we used three
-    } else if (i + 1 < input.length &&
-        dictionary.containsKey(input.substring(i, i + 2))) {
-      result += dictionary[input.substring(i, i + 2)]!;
-      i += 1; // Skip next character since we used two
-    } else if (dictionary.containsKey(input[i])) {
-      result += dictionary[input[i]]!;
+  for (int i = 0; i < source.length; i++) {
+    if (i + 2 < source.length &&
+        dictionary.containsKey(source.substring(i, i + 3))) {
+      result += dictionary[source.substring(i, i + 3)]!;
+      i += 2;
+    } else if (i + 1 < source.length &&
+        dictionary.containsKey(source.substring(i, i + 2))) {
+      result += dictionary[source.substring(i, i + 2)]!;
+      i += 1;
+    } else if (dictionary.containsKey(source[i])) {
+      result += dictionary[source[i]]!;
     } else {
-      // If the character is not in the dictionary, just append it as is
-      result += input[i];
+      result += source[i];
     }
   }
-
+  
   return result;
 }
 
 List convertToPersian(String input, Map<String, String> dictionary) {
   String result = tokenizePlate(input, dictionary);
 
+
+ 
   try {
     var persianres = [
       "${result[3]}${result[4]}${result[5]} ${result[2]} ${result[0]}${result[1]}",
@@ -268,7 +269,7 @@ List convertToPersian(String input, Map<String, String> dictionary) {
 
     
 
- 
+    print(persianres);
     return persianres;
   } catch (e) {
     return ["-", "-"];

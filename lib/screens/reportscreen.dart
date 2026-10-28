@@ -1,4 +1,5 @@
 import 'package:amnban/models/databaseEntry.dart';
+import 'package:amnban/screens/details_screen.dart';
 import 'package:amnban/theme/app_colors.dart';
 import 'package:amnban/theme/app_theme.dart';
 import 'package:amnban/utils/consts.dart';
@@ -9,13 +10,13 @@ import 'package:amnban/utils/converFunctions.dart'
     show alphabetP2, convertToPersianString;
 import 'package:amnban/widgets/app_card.dart';
 import 'package:amnban/widgets/data_base_entries.dart' show isEntryVisible;
-import 'package:amnban/widgets/detail_sheet.dart';
 import 'package:amnban/widgets/iran_plate.dart';
 import 'package:amnban/widgets/jalali_picker.dart';
 import 'package:amnban/widgets/licance_searcher.dart';
 import 'package:amnban/widgets/plate_picked.dart';
-import 'package:amnban/widgets/safe_image.dart';
+import 'package:amnban/widgets/receipt_pdf.dart';
 import 'package:amnban/widgets/status_chip.dart';
+import 'package:amnban/widgets/thumb_image.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:persian_number_utility/persian_number_utility.dart';
@@ -34,6 +35,13 @@ class Reportscreen extends StatefulWidget {
 class _ReportscreenState extends State<Reportscreen> {
   reportController rcontroller = Get.find<reportController>();
   knowPersonController kcontroller = Get.find<knowPersonController>();
+
+  /// Horizontal scroll of the results table.
+  final ScrollController _tableScrollController = ScrollController();
+  double _lastMaxExtent = 0;
+
+  /// Minimum width of the results table (sum of all column widths).
+  static const double _kTableMinWidth = 900;
 
   bool _filtersOpen = true;
 
@@ -82,8 +90,16 @@ class _ReportscreenState extends State<Reportscreen> {
   ];
 
   /// Provinces / cities offered by the filter panel.
+  ///
+  /// The city list is scoped to the selected province so picking a province
+  /// narrows the cities down to that province only. "همه" keeps every city.
   List<String> get _provinceOptions => ['همه', ...kIranProvinces];
-  List<String> get _cityOptions => ['همه', ...kIranCities];
+
+  List<String> get _cityOptions {
+    final cities =
+        _province == 'همه' ? kIranCities : citiesOfProvince(_province);
+    return ['همه', ...cities];
+  }
 
   @override
   void initState() {
@@ -93,8 +109,34 @@ class _ReportscreenState extends State<Reportscreen> {
     super.initState();
   }
 
+  /// Keeps the horizontal table scrolled to the RTL "start" (the plate
+  /// column) after the content width changes.
+  ///
+  /// The controller is only touched once it is attached to a scrollable:
+  /// reading `position` before that throws "Unexpected null value".
+  void _syncTableScroll() {
+    if (!mounted) return;
+    if (!_tableScrollController.hasClients) return;
+    final position = _tableScrollController.position;
+    if (!position.hasContentDimensions) return;
+    final max = position.maxScrollExtent;
+    if (max == _lastMaxExtent) return;
+    _lastMaxExtent = max;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (!_tableScrollController.hasClients) return;
+      final pos = _tableScrollController.position;
+      if (!pos.hasContentDimensions) return;
+      final target = pos.maxScrollExtent;
+      if (target <= 0) return;
+      if ((pos.pixels - target).abs() < 0.5) return;
+      _tableScrollController.jumpTo(target);
+    });
+  }
+
   @override
   void dispose() {
+    _tableScrollController.dispose();
     _carModelController.dispose();
     _descriptionController.dispose();
     super.dispose();
@@ -162,9 +204,10 @@ class _ReportscreenState extends State<Reportscreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _fields(),
-                  const SizedBox(height: 14),
+                  
                   _plateField(),
+                  const SizedBox(height: 14),
+                  _fields(),
                   const SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -210,7 +253,7 @@ class _ReportscreenState extends State<Reportscreen> {
 
         final fields = <Widget>[
           _dropdownField(
-            label: 'نوع کاربر',
+            label: 'نوع مجوز',
             value: _userType,
             items: _userTypes,
             onChanged: (v) => setState(() => _userType = v),
@@ -271,34 +314,56 @@ class _ReportscreenState extends State<Reportscreen> {
             items: _plateTypes,
             onChanged: (v) => setState(() => _plateType = v),
           ),
-          _dropdownField(
-            label: 'رنگ خودرو',
-            value: _carColor,
-            items: _carColors,
-            onChanged: (v) => setState(() => _carColor = v),
-          ),
+          // _dropdownField(
+          //   label: 'رنگ خودرو',
+          //   value: _carColor,
+          //   items: _carColors,
+          //   onChanged: (v) => setState(() => _carColor = v),
+          // ),
           _dropdownField(
             label: 'استان',
             value: _province,
             items: _provinceOptions,
-            onChanged: (v) => setState(() => _province = v),
+            onChanged: (v) => setState(() {
+              _province = v;
+              // The city menu is scoped to the province, so drop a city that
+              // does not belong to the newly selected province.
+              if (_city != 'همه' && !_cityOptions.contains(_city)) {
+                _city = 'همه';
+              }
+              // Temporary diagnostic (debug builds only): prints to the
+              // `flutter run` terminal, proving the new filter code is loaded
+              // and how many cities the picked province has.
+              assert(() {
+                debugPrint('report-filter: province="$v", '
+                    'cities=${citiesOfProvince(v).length}');
+                return true;
+              }());
+            }),
           ),
-          _dropdownField(
-            label: 'شهر',
-            value: _city,
-            items: _cityOptions,
-            onChanged: (v) => setState(() => _city = v),
+          // The key includes the province so the city dropdown is rebuilt from
+          // scratch whenever the province changes — its own value ("همه")
+          // does not change, so without this the menu could keep its old
+          // (unfiltered) item list.
+          KeyedSubtree(
+            key: ValueKey<String>('city-$_province'),
+            child: _dropdownField(
+              label: 'شهر',
+              value: _city,
+              items: _cityOptions,
+              onChanged: (v) => setState(() => _city = v),
+            ),
           ),
           _textField(
             label: 'مدل خودرو',
             controller: _carModelController,
             onChanged: () => setState(() {}),
           ),
-          _textField(
-            label: 'توضیحات',
-            controller: _descriptionController,
-            onChanged: () => setState(() {}),
-          ),
+          // _textField(
+          //   label: 'توضیحات',
+          //   controller: _descriptionController,
+          //   onChanged: () => setState(() {}),
+          // ),
         ];
 
         final width = (constraints.maxWidth - 12 * (columns - 1)) / columns;
@@ -566,63 +631,82 @@ class _ReportscreenState extends State<Reportscreen> {
             ],
           ),
           const SizedBox(height: 12),
-          Obx(() {
-            if (rcontroller.isLoading.value) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 40),
-                child: Center(
-                  child: SizedBox(
-                    width: 26,
-                    height: 26,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                ),
-              );
-            }
-            if (rcontroller.searchError.value.isNotEmpty) {
-              return const AppEmptyState(
-                message: 'خطا در جستجو',
-                icon: Icons.error_outline_rounded,
-              );
-            }
-
-            final rows = _filtered();
-            if (rows.isEmpty) {
-              return const AppEmptyState(
-                message: 'رکوردی یافت نشد',
-                icon: Icons.search_off_rounded,
-              );
-            }
-
-            final visible = rows.take(_pageSize).toList();
-
-            return SizedBox(
-              height: 520,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SizedBox(
-                  width: 880,
-                  child: Column(
-                    children: [
-                      const _TableHeader(),
-                      const SizedBox(height: 6),
-                      Expanded(
-                        child: ListView.separated(
-                          itemCount: visible.length,
-                          separatorBuilder: (context, index) =>
-                              const SizedBox(height: 5),
-                          itemBuilder: (context, index) =>
-                              _TableRow(entry: visible[index]),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }),
+          Obx(() => _tableBody()),
         ],
       ),
+    );
+  }
+
+  /// The scrollable results table.
+  Widget _tableBody() {
+    if (rcontroller.isLoading.value) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 40),
+        child: Center(
+          child: SizedBox(
+            width: 26,
+            height: 26,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+    if (rcontroller.searchError.value.isNotEmpty) {
+      return const AppEmptyState(
+        message: 'خطا در جستجو',
+        icon: Icons.error_outline_rounded,
+      );
+    }
+
+    final rows = _filtered();
+    if (rows.isEmpty) {
+      return const AppEmptyState(
+        message: 'رکوردی یافت نشد',
+        icon: Icons.search_off_rounded,
+      );
+    }
+
+    final visible = rows.take(_pageSize).toList();
+
+    // Keep the horizontal table scrolled to the RTL start (the plate column).
+    // The sync runs after the frame, when the controller is attached.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncTableScroll());
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // The table is never narrower than the sum of its columns and never
+        // wider than the available space, so the "پلاک" column can not be
+        // pushed out of the card.
+        final tableWidth = constraints.maxWidth < _kTableMinWidth
+            ? _kTableMinWidth
+            : constraints.maxWidth;
+
+        return SizedBox(
+          height: 520,
+          child: SingleChildScrollView(
+            controller: _tableScrollController,
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: tableWidth,
+              child: Column(
+                children: [
+                  const _TableHeader(),
+                  const SizedBox(height: 6),
+                  Expanded(
+                    child: ListView.separated(
+                      itemCount: visible.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 5),
+                      itemBuilder: (context, index) =>
+                          _TableRow(entry: visible[index]),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -1055,7 +1139,7 @@ class _TableHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          head('پلاک', 130),
+          head('پلاک', 150),
           head('وضعیت تردد', 120),
           head('جهت', 80),
           head('استان', 110),
@@ -1078,6 +1162,7 @@ class _TableRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final kcontroller = Get.find<knowPersonController>();
+    // ignore: unused_local_variable
     final person = kcontroller.personFor(entry.plateNum);
     final status = statusForEntry(entry, kcontroller);
     final direction = DetectionMeta.direction(
@@ -1087,7 +1172,7 @@ class _TableRow extends StatelessWidget {
 
     return InkWell(
       borderRadius: BorderRadius.circular(10),
-      onTap: () => _open(context),
+      onTap: () => _open(context,kcontroller),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
@@ -1098,11 +1183,11 @@ class _TableRow extends StatelessWidget {
         child: Row(
           children: [
             SizedBox(
-              width: 130,
+              width: 150,
               child: Center(
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: EntryPlate(entry: entry, height: 34),
+                  child: EntryPlate(entry: entry, height: 40),
                 ),
               ),
             ),
@@ -1156,14 +1241,12 @@ class _TableRow extends StatelessWidget {
             SizedBox(
               width: 90,
               child: Center(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(7),
-                  child: SafeNetImage(
-                    url: pbFileUrlOf('database', entry.id, entry.imgpath),
-                    fit: BoxFit.cover,
-                    width: 72,
-                    height: 42,
-                  ),
+                child: ThumbImage(
+                  url: pbFileUrlOf('database', entry.id, entry.imgpath),
+                  width: 72,
+                  height: 42,
+                  cacheWidth: 240,
+                  borderRadius: 7,
                 ),
               ),
             ),
@@ -1198,24 +1281,36 @@ class _TableRow extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton(
-                    onPressed: () => _open(context),
+                    onPressed: () => _open(context,kcontroller),
                     icon: const Icon(Icons.visibility_outlined, size: 17),
                     tooltip: 'مشاهده جزئیات',
                     visualDensity: VisualDensity.compact,
+                    style: IconButton.styleFrom(
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      padding: EdgeInsets.zero,
+                    ),
                   ),
                   IconButton(
-                    onPressed: () => _open(context),
+                    onPressed: () =>  printReceipt(entry, kcontroller),
                     icon: const Icon(Icons.print_outlined, size: 17),
                     tooltip: 'چاپ رسید',
                     visualDensity: VisualDensity.compact,
-                  ),
-                  if (person != null)
-                    IconButton(
-                      onPressed: () => _open(context),
-                      icon: const Icon(Icons.person_outline, size: 17),
-                      tooltip: person.name ?? '',
-                      visualDensity: VisualDensity.compact,
+                    style: IconButton.styleFrom(
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      padding: EdgeInsets.zero,
                     ),
+                  ),
+                  // if (person != null)
+                  //   IconButton(
+                  //     onPressed: () => _open(context,kcontroller),
+                  //     icon: const Icon(Icons.person_outline, size: 17),
+                  //     tooltip: person.name ?? '',
+                  //     visualDensity: VisualDensity.compact,
+                  //     style: IconButton.styleFrom(
+                  //       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  //       padding: EdgeInsets.zero,
+                  //     ),
+                  //   ),
                 ],
               ),
             ),
@@ -1225,7 +1320,7 @@ class _TableRow extends StatelessWidget {
     );
   }
 
-  Future<void> _open(BuildContext context) async {
+  Future<void> _open(BuildContext context,knowPersonController kcontroller) async {
     final plate = entry.plateNum ?? '';
     if (plate.isEmpty) return;
     try {
@@ -1235,12 +1330,13 @@ class _TableRow extends StatelessWidget {
           .timeout(const Duration(seconds: 15));
 
       if (!context.mounted) return;
-      await showDetectionDetail(
-        context,
-        entry: entry,
+       Get.to(() => Detailedscreen(
+       index: 0 ,
+       selectedModel:  entry,
         rec: record,
-        kcontroller: Get.find<knowPersonController>(),
-      );
+        kcontroller: kcontroller,
+      ));
+      
     } catch (e) {
       appLog('report detail fetch failed', e);
     }

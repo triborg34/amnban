@@ -5,6 +5,7 @@ import 'package:amnban/utils/controller.dart';
 import 'package:amnban/utils/dashboard_stats.dart';
 import 'package:amnban/utils/system_info.dart';
 import 'package:amnban/widgets/app_card.dart';
+import 'package:amnban/widgets/cpu_observer.dart';
 import 'package:amnban/widgets/dashboard_charts.dart';
 import 'package:amnban/widgets/data_base_entries.dart';
 import 'package:amnban/widgets/amar_dialog.dart';
@@ -143,7 +144,7 @@ class _HomeSceenState extends State<HomeSceen> {
 
       final tiles = [
         StatTile(
-          label: 'موجود در پارکینگ',
+          label: 'کل تردد ها',
           caption: 'در حال حاضر',
           value: DashboardStats.presentInParking(today),
           icon: Icons.directions_car_filled_outlined,
@@ -237,10 +238,18 @@ class _HomeSceenState extends State<HomeSceen> {
             usedColor: AppColors.unauthorized,
           );
 
+          final cpu = const CpuObserverCard();
+
+          // The traffic report gets a full row, the three usage cards sit
+          // underneath it.
+          final smallSpan = columns >= 3 ? 1 : (columns == 2 ? 1 : 1);
+          final cpuSpan = columns >= 3 ? 1 : (columns == 2 ? 2 : 1);
+
           final items = <BentoItem>[
-            BentoItem(child: chart, span: columns >= 3 ? 2 : columns),
-            BentoItem(child: storage, span: columns >= 3 ? 1 : columns),
-            BentoItem(child: memory, span: columns >= 3 ? 1 : columns),
+            BentoItem(child: chart, span: columns),
+            BentoItem(child: storage, span: smallSpan),
+            BentoItem(child: memory, span: smallSpan),
+            BentoItem(child: cpu, span: cpuSpan,height: 325),
           ];
 
           return BentoGrid(items: items, columns: columns);

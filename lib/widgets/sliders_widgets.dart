@@ -70,7 +70,7 @@ class SlidersWidgets extends StatelessWidget {
           width: 46,
           child: Obx(
             () => Text(
-              '${safeInt(read() * 100)}٪',
+              label=="کیفیت عکس" ? "${safeInt(read())}%" : '${safeInt(read() * 100)}٪',
               textAlign: TextAlign.center,
               style: const TextStyle(
                 color: AppColors.primary,
