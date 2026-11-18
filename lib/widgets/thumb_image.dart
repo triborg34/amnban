@@ -9,7 +9,7 @@ import '../theme/app_colors.dart';
 /// * `gaplessPlayback: true` keeps the previous frame visible while the next
 ///   one loads, so a scrolling list never shows a black hole,
 /// * the placeholder is always the solid card colour — never transparent.
-class ThumbImage extends StatelessWidget { //TODO FIX ZOOM AND CAEMRAS 
+class ThumbImage extends StatelessWidget { 
   const ThumbImage({
     super.key,
     required this.url,

@@ -13,7 +13,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:web/web.dart' as web;
 import 'package:http/http.dart' as http;
-
+import 'dart:js_interop';
 class mainPageConroller extends GetxController {
   var navitaionIndex = 4.obs;
   var videoIndex = (-1).obs;
@@ -195,89 +195,192 @@ class cameraController extends GetxController {
   }
 }
 
+// class videoFeedController extends GetxController {
+//   final _cameras = <String, web.HTMLImageElement>{}.obs;
+//   final _urls = <String, String>{};
+//   bool _paused = false;
+
+//   void connect(String url, String viewId) {
+//     try {
+//       if (_cameras.containsKey(viewId)) return;
+//       final imgElement = web.HTMLImageElement()
+//         ..src = _paused ? '' : url
+//         ..id = viewId
+//         ..style.width = '100%'
+//         ..style.height = '100%'
+//         ..style.objectFit = 'cover';
+
+//       _cameras[viewId] = imgElement;
+//       _urls[viewId] = url;
+//     } catch (e) {
+//       appLog('video connect failed', e);
+//     }
+//   }
+
+//   /// Update the stored URL when the camera's RTSP changes while paused.
+//   void updateUrl(String viewId, String url) {
+//     _urls[viewId] = url;
+//     if (!_paused) {
+//       final el = _cameras[viewId];
+//       if (el != null) {
+//         try {
+//           el.src = url;
+//         } catch (_) {}
+//       }
+//     }
+//   }
+
+//   web.HTMLImageElement? getElement(String viewId) => _cameras[viewId];
+
+//   void disconnect(String viewId) {
+//     final element = _cameras[viewId];
+//     if (element != null) {
+//       try {
+//         element.src = '';
+//         element.remove();
+//       } catch (_) {}
+//       _cameras.remove(viewId);
+//     }
+//     _urls.remove(viewId);
+//   }
+
+//   /// Stop all MJPEG loads without destroying the platform-view elements.
+//   /// Called when Home tab becomes invisible (IndexedStack keeps the widget
+//   /// alive, so `dispose` never fires — without this the backend keeps
+//   /// streaming for every camera in the background).
+//   void pauseAll() {
+//     if (_paused) return;
+//     _paused = true;
+//     for (final el in _cameras.values) {
+//       try {
+//         el.src = '';
+//       } catch (_) {}
+//     }
+//     appLog('video paused (${_cameras.length} streams)');
+//   }
+
+//   void resumeAll() {
+//     if (!_paused) return;
+//     _paused = false;
+//     for (final entry in _cameras.entries) {
+//       final url = _urls[entry.key];
+//       if (url == null || url.isEmpty || url.endsWith('?source=')) continue;
+//       try {
+//         entry.value.src = url;
+//       } catch (_) {}
+//     }
+//     appLog('video resumed (${_cameras.length} streams)');
+//   }
+
+//   /// 🔌 Disconnects all active camera streams
+//   void disconnectAll() {
+//     _paused = false;
+//     final keys = _cameras.keys.toList(); // Avoid concurrent modification
+//     for (final viewId in keys) {
+//       disconnect(viewId);
+//     }
+//   }
+
+//   @override
+//   void onClose() {
+//     disconnectAll();
+//     super.onClose();
+//   }
+// }
+
 class videoFeedController extends GetxController {
-  final _cameras = <String, web.HTMLImageElement>{}.obs;
+  // Plain maps: elements are created once per viewId and reused.
+  final _elements = <String, web.HTMLImageElement>{};
   final _urls = <String, String>{};
+  final _retryTimers = <String, Timer>{};
   bool _paused = false;
 
-  void connect(String url, String viewId) {
-    try {
-      if (_cameras.containsKey(viewId)) return;
-      final imgElement = web.HTMLImageElement()
-        ..src = _paused ? '' : url
-        ..id = viewId
-        ..style.width = '100%'
-        ..style.height = '100%'
-        ..style.objectFit = 'cover';
+  web.HTMLImageElement? getElement(String viewId) => _elements[viewId];
 
-      _cameras[viewId] = imgElement;
-      _urls[viewId] = url;
-    } catch (e) {
-      appLog('video connect failed', e);
-    }
-  }
-
-  /// Update the stored URL when the camera's RTSP changes while paused.
-  void updateUrl(String viewId, String url) {
+  /// Creates the element once, then only updates its source.
+  /// Safe to call on every mount, rebuild, or resize.
+  web.HTMLImageElement connect(String url, String viewId) {
+    final img = _elements[viewId] ?? _create(viewId);
     _urls[viewId] = url;
-    if (!_paused) {
-      final el = _cameras[viewId];
-      if (el != null) {
-        try {
-          el.src = url;
-        } catch (_) {}
-      }
+    if (!_paused && img.getAttribute('src') != url) {
+      img.src = url;
     }
+    return img;
   }
 
-  web.HTMLImageElement? getElement(String viewId) => _cameras[viewId];
-
-  void disconnect(String viewId) {
-    final element = _cameras[viewId];
-    if (element != null) {
-      try {
-        element.src = '';
-        element.remove();
-      } catch (_) {}
-      _cameras.remove(viewId);
-    }
-    _urls.remove(viewId);
+  web.HTMLImageElement _create(String viewId) {
+    final img = web.HTMLImageElement()
+      ..id = viewId
+      ..style.width = '100%'
+      ..style.height = '100%'
+      ..style.objectFit = 'cover';
+    img.addEventListener(
+      'error',
+      ((web.Event _) => _scheduleRetry(viewId)).toJS,
+    );
+    _elements[viewId] = img;
+    return img;
   }
 
-  /// Stop all MJPEG loads without destroying the platform-view elements.
-  /// Called when Home tab becomes invisible (IndexedStack keeps the widget
-  /// alive, so `dispose` never fires — without this the backend keeps
-  /// streaming for every camera in the background).
+  void updateUrl(String viewId, String url) => connect(url, viewId);
+
+  /// Retries a dropped MJPEG stream with a cache-buster after a short delay.
+  void _scheduleRetry(String viewId) {
+    if (_paused || _retryTimers.containsKey(viewId)) return;
+    _retryTimers[viewId] = Timer(const Duration(seconds: 2), () {
+      _retryTimers.remove(viewId);
+      final img = _elements[viewId];
+      final url = _urls[viewId];
+      if (img == null || url == null || url.isEmpty || _paused) return;
+      final sep = url.contains('?') ? '&' : '?';
+      img.src = '$url${sep}t=${DateTime.now().millisecondsSinceEpoch}';
+    });
+  }
+
+  /// Stops loads but keeps the elements in the DOM.
   void pauseAll() {
     if (_paused) return;
     _paused = true;
-    for (final el in _cameras.values) {
-      try {
-        el.src = '';
-      } catch (_) {}
+    for (final t in _retryTimers.values) {
+      t.cancel();
     }
-    appLog('video paused (${_cameras.length} streams)');
+    _retryTimers.clear();
+    for (final el in _elements.values) {
+      el.src = '';
+    }
+    appLog('video paused (${_elements.length} streams)');
   }
 
   void resumeAll() {
     if (!_paused) return;
     _paused = false;
-    for (final entry in _cameras.entries) {
-      final url = _urls[entry.key];
-      if (url == null || url.isEmpty || url.endsWith('?source=')) continue;
-      try {
-        entry.value.src = url;
-      } catch (_) {}
-    }
-    appLog('video resumed (${_cameras.length} streams)');
+    _urls.forEach((viewId, url) {
+      final el = _elements[viewId];
+      if (el == null || url.isEmpty || url.endsWith('?source=')) return;
+      el.src = url;
+    });
+    appLog('video resumed (${_elements.length} streams)');
   }
 
-  /// 🔌 Disconnects all active camera streams
+  /// Only call this when a camera is actually deleted from the list.
+  void removeCamera(String viewId) {
+    _retryTimers.remove(viewId)?.cancel();
+    final el = _elements.remove(viewId);
+    _urls.remove(viewId);
+    if (el != null) {
+      el.src = '';
+      el.remove();
+    }
+  }
+
   void disconnectAll() {
     _paused = false;
-    final keys = _cameras.keys.toList(); // Avoid concurrent modification
-    for (final viewId in keys) {
-      disconnect(viewId);
+    for (final t in _retryTimers.values) {
+      t.cancel();
+    }
+    _retryTimers.clear();
+    for (final viewId in _elements.keys.toList()) {
+      removeCamera(viewId);
     }
   }
 

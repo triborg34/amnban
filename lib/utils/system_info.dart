@@ -1,3 +1,8 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
+import 'consts.dart';
 import 'system_info_io.dart' if (dart.library.js_interop) 'system_info_web.dart'
     as impl;
 import 'system_usage.dart';
@@ -32,4 +37,30 @@ class SystemInfo {
 
   /// Heap usage versus the heap limit.
   static SystemUsage? memoryUsage() => impl.memoryUsage();
+
+  /// Reads RAM and disk usage percentages from the backend.
+  static Future<Map<String, double>?> backendUsage() async {
+    try {
+      final response = await http
+          .get(Uri.parse('http://$url:$port/system/utils'))
+          .timeout(const Duration(seconds: 8));
+      if (response.statusCode != 200) return null;
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map) return null;
+      final ram = _number(decoded['ram']);
+      final disk = _number(decoded['disk']);
+      if (ram == null || disk == null) return null;
+      return {
+        'ram': ram.clamp(0, 100).toDouble(),
+        'disk': disk.clamp(0, 100).toDouble()
+      };
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static double? _number(Object? value) {
+    final parsed = value is num ? value.toDouble() : double.tryParse('$value');
+    return parsed != null && parsed.isFinite ? parsed : null;
+  }
 }

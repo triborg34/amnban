@@ -426,7 +426,7 @@ class _DetectionRowState extends State<DetectionRow> {
                                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(0, 32),
                       padding: const EdgeInsets.symmetric(horizontal: 10),
-                      textStyle: const TextStyle(fontSize: 11.5))
+                      textStyle: const TextStyle(fontSize: 11.5,fontFamily: 'Vazir'))
                   ),SizedBox(width: 10,),
                   OutlinedButton.icon(
                     onPressed: () => _openDetail(),
@@ -435,7 +435,7 @@ class _DetectionRowState extends State<DetectionRow> {
                     style: OutlinedButton.styleFrom(
                       minimumSize: const Size(0, 32),
                       padding: const EdgeInsets.symmetric(horizontal: 10),
-                      textStyle: const TextStyle(fontSize: 11.5),
+                      textStyle: const TextStyle(fontSize: 11.5,fontFamily: 'Vazir'),
                     ),
                   ),
                 ],

@@ -234,6 +234,7 @@ class _ChartLegend extends StatelessWidget {
                 e.label,
                 style: const TextStyle(
                   fontSize: 10.5,
+                  fontFamily: "Vazir",
                   color: AppColors.textSecondary,
                 ),
               ),
@@ -291,6 +292,7 @@ class UsageDonutChart extends StatelessWidget {
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontSize: 12.5,
+            fontFamily: "Vazir",
             fontWeight: FontWeight.w700,
             color: AppColors.textPrimary,
           ),
@@ -342,6 +344,7 @@ class UsageDonutChart extends StatelessWidget {
                     totalValue > 0 ? 'استفاده شده' : 'نامشخص',
                     style: const TextStyle(
                       fontSize: 10,
+                      fontFamily: "Vazir",
                       color: AppColors.textMuted,
                     ),
                   ),
@@ -371,8 +374,10 @@ class UsageDonutChart extends StatelessWidget {
           textAlign: TextAlign.center,
           style: AppTheme.numeric(
             fontSize: 10.5,
+
             fontWeight: FontWeight.w500,
             color: AppColors.textMuted,
+            
           ),
         ),
       ],
@@ -394,6 +399,7 @@ class UsageDonutChart extends StatelessWidget {
           style: const TextStyle(
             fontSize: 10,
             color: AppColors.textSecondary,
+            fontFamily: "Vazir"
           ),
         ),
       ],

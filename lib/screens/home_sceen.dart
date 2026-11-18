@@ -3,7 +3,7 @@ import 'package:amnban/theme/app_theme.dart';
 import 'package:amnban/utils/consts.dart';
 import 'package:amnban/utils/controller.dart';
 import 'package:amnban/utils/dashboard_stats.dart';
-import 'package:amnban/utils/system_info.dart';
+// import 'package:amnban/utils/system_info.dart';
 import 'package:amnban/widgets/app_card.dart';
 import 'package:amnban/widgets/cpu_observer.dart';
 import 'package:amnban/widgets/dashboard_charts.dart';
@@ -58,7 +58,7 @@ class _HomeSceenState extends State<HomeSceen> {
       },
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 26),
-            child: Column(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _stats(),
@@ -226,30 +226,14 @@ class _HomeSceenState extends State<HomeSceen> {
             ),
           );
 
-          final storage = UsageDonutCard(
-            title: 'گزارش فضای ذخیره سازی',
-            loader: SystemInfo.storageUsage,
-            usedColor: AppColors.warning,
-          );
-
-          final memory = UsageDonutCard(
-            title: 'گزارش فضای RAM',
-            loader: () async => SystemInfo.memoryUsage(),
-            usedColor: AppColors.unauthorized,
-          );
-
-          final cpu = const CpuObserverCard();
-
           // The traffic report gets a full row, the three usage cards sit
           // underneath it.
-          final smallSpan = columns >= 3 ? 1 : (columns == 2 ? 1 : 1);
-          final cpuSpan = columns >= 3 ? 1 : (columns == 2 ? 2 : 1);
-
           final items = <BentoItem>[
             BentoItem(child: chart, span: columns),
-            BentoItem(child: storage, span: smallSpan),
-            BentoItem(child: memory, span: smallSpan),
-            BentoItem(child: cpu, span: cpuSpan,height: 325),
+            BentoItem(
+              child: BackendUsageCards(cpuCard: const CpuObserverCard()),
+              span: columns,
+            ),
           ];
 
           return BentoGrid(items: items, columns: columns);

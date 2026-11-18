@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:persian_number_utility/persian_number_utility.dart';
 
-
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import 'app_card.dart';
+import 'dashboard_charts.dart';
 
 class CpuObserverCard extends StatelessWidget {
   const CpuObserverCard({super.key});
@@ -29,58 +29,25 @@ class CpuObserverCard extends StatelessWidget {
         }
 
         final load = s.load.clamp(0, 100).toDouble();
-        final color = _colorFor(load);
-
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
           children: [
-            const CardHeader(
-              title: 'پردازنده',
-              subtitle: 'بار واقعی سرور',
-              icon: Icons.memory_rounded,
+            UsageDonutChart(
+              title: '\u067e\u0631\u062f\u0627\u0632\u0646\u062f\u0647',
+              totalLabel: '\u06f1\u06f0\u06f0\u066a',
+              usedValue: load,
+              totalValue: 100,
+              usedLabel:
+                  '\u0628\u0627\u0631 \u067e\u0631\u062f\u0627\u0632\u0646\u062f\u0647',
+              freeLabel: '\u0622\u0632\u0627\u062f',
+              usedColor: AppColors.danger,
+              freeColor: AppColors.primary,
+              height: 170,
             ),
-            const SizedBox(height: 14),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${load.toStringAsFixed(0)}٪'.toPersianDigit(),
-                  style: AppTheme.numeric(
-                    fontSize: 30,
-                    fontWeight: FontWeight.w700,
-                    color: color,
-                    height: 1.05,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 4),
-                  child: Text(
-                    'بار پردازنده',
-                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: SizedBox(
-                height: 8,
-                child: Stack(
-                  children: [
-                    Container(color: AppColors.surface),
-                    FractionallySizedBox(
-                      widthFactor: (load / 100).clamp(0.02, 1.0),
-                      child: Container(color: color),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            _row('تعداد هسته', s.cores.toString().toPersianDigit()),
+            const SizedBox(height: 10),
+            _row('\u062a\u0639\u062f\u0627\u062f \u0647\u0633\u062a\u0647',
+                s.cores.toString().toPersianDigit()),
             const SizedBox(height: 6),
             _row(
               'فرکانس',
@@ -89,24 +56,20 @@ class CpuObserverCard extends StatelessWidget {
                   : '${s.freqMhz.toString().toPersianDigit()} مگاهرتز',
             ),
             const SizedBox(height: 6),
-            _row('حافظه', '${s.ramPercent.toStringAsFixed(0).toPersianDigit()}٪'),
+            _row('حافظه',
+                '${s.ramPercent.toStringAsFixed(0).toPersianDigit()}٪'),
             const SizedBox(height: 6),
             _row('مدل', s.model),
             if (err != null) ...[
               const SizedBox(height: 6),
               Text(err,
-                  style: const TextStyle(fontSize: 10, color: AppColors.danger)),
+                  style:
+                      const TextStyle(fontSize: 10, color: AppColors.danger)),
             ],
           ],
         );
       }),
     );
-  }
-
-  Color _colorFor(double load) {
-    if (load < 45) return AppColors.primary;
-    if (load < 75) return AppColors.warning;
-    return AppColors.danger;
   }
 
   Widget _row(String label, String value) {

@@ -79,15 +79,15 @@ class _ReportscreenState extends State<Reportscreen> {
     'کامیون',
   ];
   static const List<String> _plateTypes = ['همه', 'عادی', 'اروند'];
-  static const List<String> _carColors = [
-    'همه',
-    'سفید',
-    'مشکی',
-    'نقره ای',
-    'خاکستری',
-    'آبی',
-    'قرمز',
-  ];
+  // static const List<String> _carColors = [
+  //   'همه',
+  //   'سفید',
+  //   'مشکی',
+  //   'نقره ای',
+  //   'خاکستری',
+  //   'آبی',
+  //   'قرمز',
+  // ];
 
   /// Provinces / cities offered by the filter panel.
   ///

@@ -22,63 +22,46 @@ class _CameraFeedState extends State<CameraFeed> {
   // every rebuild (leaking factories + reconnecting MJPEG each time).
   late final String viewId =
       'camera-feed-${widget.streamUrl.hashCode}';
+  static final Set<String> _registered = <String>{};
 
   @override
   void initState() {
     super.initState();
     if (!kIsWeb) return;
+    if (!_registered.contains(viewId)) {
+      ui.platformViewRegistry.registerViewFactory(viewId, (int _) {
+        // Never throws: connect() always returns an element.
+        return controller.connect(widget.streamUrl, viewId);
+      });
+      _registered.add(viewId);
+    }
     try {
       controller.connect(widget.streamUrl, viewId);
-      // Registering the same viewType twice throws — ignore on re-mount
-      // since the element is already cached in the controller.
-      try {
-        // ignore: undefined_prefixed_name
-        ui.platformViewRegistry.registerViewFactory(
-          viewId,
-          (int viewId) =>
-              controller.getElement(this.viewId) ??
-              (throw StateError('missing camera element')),
-        );
-      } catch (e) {
-        // Already registered from a previous mount — reuse it.
-        appLog('camera factory reuse', e);
-      }
     } catch (e) {
       appLog('camera connect failed', e);
       widget.onError?.call();
     }
   }
 
+
   @override
   void didUpdateWidget(covariant CameraFeed oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.streamUrl != widget.streamUrl) {
-      try {
-        // Keep the same viewId / platform-view; just swap the underlying
-        // image source (honours the controller's paused state).
-        final el = controller.getElement(viewId);
-        if (el != null) {
-          controller.updateUrl(viewId, widget.streamUrl);
-        } else {
-          controller.disconnect(viewId);
-          controller.connect(widget.streamUrl, viewId);
-        }
-      } catch (e) {
-        appLog('camera reconnect failed', e);
-      }
+    if (kIsWeb && oldWidget.streamUrl != widget.streamUrl) {
+      controller.updateUrl(viewId, widget.streamUrl);
     }
   }
 
   @override
-  void dispose() {
-    // NOTE: do not disconnect here when the tile is only being resized —
-    // the ValueKey above keeps this State alive across selection changes,
-    // so dispose only runs when the camera is truly removed.
-    try {
-      controller.disconnect(viewId);
-    } catch (_) {}
-    super.dispose();
-  }
+  // void dispose() {
+  //   // NOTE: do not disconnect here when the tile is only being resized —
+  //   // the ValueKey above keeps this State alive across selection changes,
+  //   // so dispose only runs when the camera is truly removed.
+  //   try {
+  //     controller.disconnect(viewId);
+  //   } catch (_) {}
+  //   super.dispose();
+  // }
 
   @override
   Widget build(BuildContext context) {
